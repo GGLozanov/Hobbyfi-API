@@ -1,13 +1,13 @@
 <?php
 
     trait IdModel {
-        private $id;
+        private int $id;
 
         public function getId() {
             return $this->id;
         }
 
-        public function setId($id) {
+        public function setId($id = null) {
             $this->id = $id;
         }
     }

@@ -5,11 +5,11 @@
         use \ExpandedModel;
         use \ImageModel;
     
-        private $startDate;
-        private $date;
+        private string $startDate;
+        private string $date;
 
-        private $lat;
-        private $long;
+        private float $lat;
+        private float $long;
 
         public function __construct() {
             
@@ -35,19 +35,19 @@
             return $this->long;
         }
 
-        public function setStartDate($startDate) {
+        public function setStartDate(string $startDate = null) {
             $this->startDate = $startDate;
         }
 
-        public function setDate($date) {
+        public function setDate(string $date = null) {
             $this->date = $date;
         }
 
-        public function setLat($lat) {
+        public function setLat(float $lat = null) {
             $this->lat = $lat;
         }
 
-        public function setLong($long) {
+        public function setLong(float $long = null) {
             $this->long = $long;
         }
     }

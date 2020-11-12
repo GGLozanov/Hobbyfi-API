@@ -38,4 +38,6 @@
 
         APIUtils::displayAPIResult(array("response"=>$status), $code);
     }
+
+    $db->closeConnection();
 ?>

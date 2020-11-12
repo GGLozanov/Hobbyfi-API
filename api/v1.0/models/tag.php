@@ -1,8 +1,9 @@
 <?php
 
+    // TODO: Unnecessary?
     class Tag extends Model {
-        private $name;
-        private $colour;
+        private string $name;
+        private string $colour;
 
         public function __construct(string $name, string $colour) {
             $this->name = $name;

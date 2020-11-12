@@ -35,6 +35,7 @@
             $stmt->execute();
 
             // TODO: insert tags here
+            $this->connection->query($this->getTagArrayInsertQuery($user->getTags()));
 
             return mysqli_insert_id($this->connection); // TODO: Check if this still works properly
         }
@@ -76,19 +77,18 @@
             return null; // else return nothing and mark user as unauth'd
         }
 
+        // TODO: Use transaction in multiple SELECT queries like these?
         public function getUser(int $id) { // user already auth'd at this point due to token => get user by id
-            $stmt = $this->connection->prepare("SELECT description, username, email, has_image FROM users WHERE id = ?");
-            $stmt->bind_param("i", $id);
-            $stmt->execute();
+            $user_result = $this->executeSingleUserIdParamStatement($id, "SELECT description, username, email, has_image, user_chaatroom_id 
+                FROM users
+                WHERE id = ?"
+            )->get_result();
+            
+            if(mysqli_num_rows($user_result) > 0) {
+                $row = mysqli_fetch_assoc($user_result); // fetch the resulting rows in the form of a map (associative array)
 
-            $result = $stmt->get_result();
-
-            // TODO: JOIN for tags
-        
-            if(mysqli_num_rows($result) > 0) {
-                $row = mysqli_fetch_assoc($result); // fetch the resulting rows in the form of a map (associative array)
-                
-                return new User($id, $row['email'], $row['username'], $row['description'], $row['has_image'], $row['user_chatroom_id']);
+                $tags = $this->getTagsByUserId($id);
+                return new User($id, $row['email'], $row['username'], $row['description'], $row['has_image'], $row['user_chatrom_id'], $tags);              
             }
 
             return null;
@@ -107,15 +107,17 @@
 
             $stmt->execute();
 
-            return $stmt->affected_rows >= 0;
+            return $stmt->affected_rows > 0;
         }
         
         // gets all users with any id BUT this one;
         // TODO: Implement multiplier paging functionality with limit & offset (offset given in request query parameters)
-        public function getUsers(int $id, int $multiplier) {
+        public function getChatroomUsers(int $id, int $multiplier) {
             $stmt = $this->connection->prepare(
-                "SELECT id, description, username, email, has_image FROM users WHERE id != ? LIMIT 5 OFFSET 5*$multiplier"); // TODO: add more fetching client-side functionality through small fetches
-            $stmt->bind_param("i", $id);
+                "SELECT id, description, username, email, has_image FROM 
+                users 
+                WHERE id != ? AND user_chatroom_id = (SELECT user_chatroom_id WHERE id = ?) LIMIT 5 OFFSET 5*$multiplier");
+            $stmt->bind_param("ii", $id, $id);
             $stmt->execute();
 
             $result = $stmt->get_result();
@@ -124,14 +126,120 @@
                 $rows = mysqli_fetch_all($result, MYSQLI_ASSOC);
 
                 return array_map(function(array $row) {
-                    return new User($row['id'], $row['email'], $row['username'], $row['description'], $row['has_image'], $row['user_chatroom_id']);
+                    $tags = $this->getTagsByUserId($row['id']);
+                    
+                    return new User($row['id'], $row['email'], $row['username'], $row['description'], $row['has_image'], $row['user_chatroom_id'], $tags);
                 }, $rows); // might bug out with the mapping here FIXME
             }
 
             return null;
         }
 
+        // TODO: Assert these requests have authority to be performed in db
+        public function createChatroom(int $ownerId, Chatroom $chatroom) {
+
+        }
+
+        public function updateChatroom(int $ownerId, int $chatroomId, Chatroom $chatroom) {
+
+        }
+
+        public function deleteChatroom(int $ownerId, int $chatroomId) {
+
+        }
+
+        public function getChatrooms(int $userId, int $multiplier) {
+
+        }
+
+        public function getChatroomMessages(int $userId, int $multiplier) {
+            // handle user not in chatroom error
+        }
+
+        public function createChatroomMessage(int $userId, Message $message) {
+            // handle user not in chatroom error
+        }
+
+        public function deleteChatroomMessage(int $messageId) {
+            // assert message owner
+        }
+
+        public function updateChatroomMessage(int $userId, int $messageId, Message $message) {
+            // assert message owner & correct chatroom
+        }
+
+        public function createChatroomEvent(int $userId, Event $event) {
+
+        }
+
+        public function deleteChatroomEvent(int $userId, int $eventId) {
+            // assert chatroom owner & delete
+        }
+
+        public function updateChatroomEvent(int $userId, int $eventId, Event $event) {
+
+        }
+
+        public function updateUserTags(int $userId, array $tags) {
+            // INSERT tag if not in tags table => skip otherwise
+            // REPLACE query - all user tags
+            $userTagsStmt = $this->executeSingleUserIdParamStatement($userId, $this->getUserTagArrayReplaceQuery($userId, $tags));
+
+            return $userTagsStmt->affected_rows > 0;
+        }
 
         // TODO: Model CRUD operations here
+
+        private function executeSingleUserIdParamStatement(int $userId, string $sql) {
+            $stmt = $this->connection->prepare($sql);
+            $stmt->bind_param("i", $userId);
+            $stmt->execute();
+        
+            return $stmt;
+        }
+
+        // TODO: this doesn't use prepared statements either
+        private function getTagArrayInsertQuery(array $tags) {
+            $dataArray = array_map(function($tag) {
+                $name = $this->connection->real_escape_string($tag->getName());
+                $colour = $this->connection->real_escape_string($tag->getColour());
+        
+                return "('$name', '$colour')";
+            }, $tags);
+        
+            $sql = "INSERT IGNORE INTO tags (name, colour) VALUES "; // IGNORE ignores duplicate key errors and doesn't insert tags w/ same name
+            $sql .= implode(',', $dataArray);
+        
+            return $sql;
+        }
+
+        private function getUserTagArrayReplaceQuery(int $userId, array $tags) {
+            $dataArray = array_map(function($tag) use($userId) {
+                $name = $this->connection->real_escape_string($tag->getName());
+        
+                return "('$userId', '$name')";
+            }, $tags);
+        
+            $sql = "REPLACE INTO user_tags (user_id, tag_name) VALUES "; 
+            $sql .= implode(',', $dataArray);
+        
+            return $sql;
+        }
+
+        private function getTagsByUserId(int $userId) {
+            $tags_result = $this->executeSingleUserIdParamStatement($userId, "SELECT tag_name, colour FROM user_tags us_tags
+            INNER JOIN tags ts ON us_tags.tag_name LIKE ts.name
+            WHERE user_id = ?")->get_result();
+
+            if(mysqli_num_rows($tags_result) > 0) {
+                $rows = mysqli_fetch_assoc($tags_result);                
+
+                return array_map(function(array $row) {
+                    return new Tag($row['name'], $row['colour']);    
+                }, $rows);
+            }
+
+            return null;
+        }
     }
 ?>

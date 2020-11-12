@@ -14,7 +14,7 @@
         // TODO: Handle facebook token by pinging 
         // returns an assoc array of decoded jwt if valid; else displays API result (error) and returns false (invalid request)
         public static function validateAuthorisedRequest(string $jwt, string $expiredTokenError = null, string $invalidTokenError = null) {
-            require "../jwt/jwt_utils.php";
+            require "../utils/jwt_utils.php";
 
             if($expiredTokenError == null)
                 $expiredTokenError = "Expired token. Get refresh token.";

@@ -6,10 +6,15 @@
         use \IdModel;
         use \ImageModel;
 
-        private $ownerId;
-        private $lastEventId;
+        private int $ownerId;
+        private int $lastEventId;
 
-        function __construct($id, $name, $description, $hasImage, $ownerId, $lastEventId) {
+        function __construct(
+                int $id = null, 
+                string $name = null, 
+                string $description = null, 
+                bool $hasImage = null, 
+                int $ownerId = null, int $lastEventId = null) {
             $this->id = $id;
             $this->name = $name;
             $this->description = $description;
@@ -19,7 +24,7 @@
             $this->lastEventId = $lastEventId;
         }
 
-        function getUpdateQuery() {
+        function getUpdateQuery(string $userPassword = null) {
             
         }
     }

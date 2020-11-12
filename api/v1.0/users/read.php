@@ -21,7 +21,7 @@
     if($decoded = APIUtils::validateAuthorisedRequest($jwt)) {
         $id = $decoded['userId']; // id of auth'd user making the request; used to exempt from DB user query
 
-        if($users = $db->getUsers($id, $_GET['page'])) {
+        if($users = $db->getChatroomUsers($id, $_GET['page'])) {
             APIUtils::displayAPIResult(
                 array_reduce($users, function($result, User $user) {
                     $userId = $user->getId();
@@ -31,7 +31,7 @@
                         "description"=>$user->getDescription(),
                         "email"=>$user->getEmail(), 
                         "photo_url"=>$user->getHasImage() ? 
-                            'http://' . $_SERVER['SERVER_NAME'] . ':' . $_SERVER['SERVER_PORT'] .'/AuthIO-Service/uploads/' . $userId . '.jpg' 
+                            'http://' . $_SERVER['SERVER_NAME'] . ':' . $_SERVER['SERVER_PORT'] .'/AuthIO-Service/uploads/user_pfps' . $userId . '.jpg' 
                                 : null);
                     return $result;
             }, array())); // mapping twice; FIXME - refactor database to return JSON responses directly instead of model classes?

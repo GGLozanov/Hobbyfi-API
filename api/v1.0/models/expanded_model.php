@@ -2,8 +2,8 @@
 
     // TODO: Rename
     trait ExpandedModel {
-        private $name;
-        private $description;
+        private string $name;
+        private string $description;
 
         public function getName() {
             return $this->name;
@@ -13,11 +13,11 @@
             return $this->description;
         }
 
-        public function setName($name) {
+        public function setName(string $name = null) {
             $this->name = $name;
         }
 
-        public function setDescription($description) {
+        public function setDescription(string $description = null) {
             $this->description = $description;
         }
     }

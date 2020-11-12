@@ -1,13 +1,13 @@
 <?php
 
     trait ImageModel {
-        private $hasImage;
+        private bool $hasImage;
 
         public function getHasImage() {
             return $this->hasImage;
         }
 
-        public function setHasImage($hasImage) {
+        public function setHasImage(bool $hasImage = null) {
             $this->hasImage = $hasImage;
         }
     }

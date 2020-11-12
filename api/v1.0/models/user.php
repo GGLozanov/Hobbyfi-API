@@ -4,11 +4,19 @@
         use \ImageModel;
         use \ExpandedModel;
         
-        private $email;
+        private string $email;
 
-        public $chatroomId; // FK
+        private int $chatroomId; // FK
 
-        public function __construct($id, $email, $username, $description, $hasImage, $chatroomId) {     
+        private array $tags;
+
+        public function __construct(
+                int $id = null, 
+                string $email = null, 
+                string $username = null, 
+                string $description = null, bool $hasImage = null, 
+                int $chatroomId = null, 
+                array $tags = null) {     
             $this->id = $id;
             $this->email = $email;
             $this->name = $username;
@@ -16,6 +24,7 @@
             $this->hasImage = $hasImage;
 
             $this->chatroomId = $chatroomId;
+            $this->tags = $tags;
         }
 
         // TODO: Banal and dumb function; there has to be a better way to do this
@@ -55,7 +64,7 @@
             return $this->email;
         }
 
-        public function setEmail($email) {
+        public function setEmail(string $email = null) {
             $this->email = $email;
         }
 
@@ -63,8 +72,16 @@
             return $this->chatroomId;
         }
 
-        public function setChatroomId($chatroomId) {
+        public function setChatroomId(int $chatroomId = null) {
             $this->chatroomId = $chatroomId;
+        }
+
+        public function getTags() {
+            return $this->tags;
+        }
+
+        public function setTags(array $tags = null) {
+            $this->tags = $tags;
         }
     }
 ?>
