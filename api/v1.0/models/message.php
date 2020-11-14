@@ -1,5 +1,7 @@
 <?php
-
+    require_once("./model.php");
+    require_once("./id_model.php");
+    
     class Message extends Model {
         use \IdModel;
 

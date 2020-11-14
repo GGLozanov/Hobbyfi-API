@@ -13,7 +13,7 @@
     $hasDescription = array_key_exists('description', $_POST);
     $hasChatroomId = array_key_exists('chatroom_id', $_POST);
 
-    if(!$hasEmail && !$hasPassword && !$hasUsername && !$hasDescription) {
+    if(!$hasEmail && !$hasPassword && !$hasUsername && !$hasDescription && !$hasChatroomId) {
         APIUtils::displayAPIResult(array("response"=>"Bad request. No credentials for update."), 400);
         return;
     }

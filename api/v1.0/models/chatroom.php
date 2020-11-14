@@ -1,4 +1,8 @@
 <?php
+    require_once("model.php");
+    require_once("id_model.php");
+    require_once("expanded_model.php");
+    require_once("image_model.php");
 
     // TODO: Decide if mixin approach or class hierarchy is better
     class Chatroom extends Model {

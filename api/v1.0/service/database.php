@@ -34,10 +34,13 @@
 
             $stmt->execute();
 
-            // TODO: insert tags here
-            $this->connection->query($this->getTagArrayInsertQuery($user->getTags()));
+            $userId = mysqli_insert_id($this->connection);
 
-            return mysqli_insert_id($this->connection); // TODO: Check if this still works properly
+            if($user->getTags()) { // insert user tags here
+                $this->connection->query($this->getTagArrayInsertQuery($user->getTags()));
+            }
+
+            return $userId;
         }
 
         public function setUserHasImage(int $id, bool $hasImage) {
@@ -137,15 +140,15 @@
 
         // TODO: Assert these requests have authority to be performed in db
         public function createChatroom(int $ownerId, Chatroom $chatroom) {
-
+        
         }
 
         public function updateChatroom(int $ownerId, int $chatroomId, Chatroom $chatroom) {
-
+            // handle user not owner error
         }
 
         public function deleteChatroom(int $ownerId, int $chatroomId) {
-
+            // handle user not owner error
         }
 
         public function getChatrooms(int $userId, int $multiplier) {
@@ -161,28 +164,32 @@
         }
 
         public function deleteChatroomMessage(int $messageId) {
-            // assert message owner
+            // assert message owner OR chatroom owner
         }
 
         public function updateChatroomMessage(int $userId, int $messageId, Message $message) {
             // assert message owner & correct chatroom
         }
 
-        public function createChatroomEvent(int $userId, Event $event) {
-
+        public function createChatroomEvent(int $ownerId, Event $event) {
+            // assert chatroom owner and update
         }
 
-        public function deleteChatroomEvent(int $userId, int $eventId) {
+        public function deleteChatroomEvent(int $ownerId, int $eventId) {
             // assert chatroom owner & delete
         }
 
-        public function updateChatroomEvent(int $userId, int $eventId, Event $event) {
-
+        public function updateChatroomEvent(int $ownerId, int $eventId, Event $event) {
+            // assert chatroom owner & update
         }
 
         public function updateUserTags(int $userId, array $tags) {
             // INSERT tag if not in tags table => skip otherwise
             // REPLACE query - all user tags
+            if(!$tags) {
+                return false;
+            }
+
             $userTagsStmt = $this->executeSingleUserIdParamStatement($userId, $this->getUserTagArrayReplaceQuery($userId, $tags));
 
             return $userTagsStmt->affected_rows > 0;

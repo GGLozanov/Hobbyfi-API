@@ -1,6 +1,8 @@
 <?php
 
     // TODO: Unnecessary?
+    require_once("model.php");
+   
     class Tag extends Model {
         private string $name;
         private string $colour;
