@@ -9,13 +9,13 @@
     require "../utils/api_utils.php";
     require "../models/user.php";
 
-    if(!$jwt = APIUtils::getJwtFromHeaders()) {
+    if(!$token = APIUtils::getTokenFromHeaders()) {
         return;
     }
 
-    if($decoded = APIUtils::validateAuthorisedRequest($jwt)) {
+    if($userId = APIUtils::validateAuthorisedRequest($token)) {
         if($db->deleteUser(
-            $decoded['userId']
+            $userId
         )) {
             $status = "ok";
             $code = 200;

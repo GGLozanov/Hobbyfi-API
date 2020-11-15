@@ -3,7 +3,7 @@
     require "../utils/api_utils.php";
     require "../models/user.php";
 
-    if(!$jwt = APIUtils::getJwtFromHeaders()) {
+    if(!$token = APIUtils::getTokenFromHeaders()) {
         return;
     }
 
@@ -18,10 +18,10 @@
         return;
     }
 
-    if($decoded = APIUtils::validateAuthorisedRequest($jwt)) {
+    if($userId = APIUtils::validateAuthorisedRequest($token)) {
         if($db->updateUser(
             new User(
-                $decoded['userId'], 
+                $userId, 
                 $hasEmail ? $_POST['email'] : null, 
                 $hasUsername ? $_POST['username'] : null, 
                 $hasDescription ? $_POST['description'] : null, 

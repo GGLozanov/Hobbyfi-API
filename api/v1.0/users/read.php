@@ -6,7 +6,7 @@
     require "../models/user.php";
     require "../../vendor/autoload.php";
 
-    if(!$jwt = APIUtils::getJwtFromHeaders()) {
+    if(!$token = APIUtils::getTokenFromHeaders()) {
         return;
     }
 
@@ -18,9 +18,7 @@
     // TODO: fetch chatroom id from user model (support Facebook id fetch as well)
     // TODO: pass page number as query param?
 
-    if($decoded = APIUtils::validateAuthorisedRequest($jwt)) {
-        $id = $decoded['userId']; // id of auth'd user making the request; used to exempt from DB user query
-
+    if($id = APIUtils::validateAuthorisedRequest($token)) {
         if($users = $db->getChatroomUsers($id, $_GET['page'])) {
             APIUtils::displayAPIResult(
                 array_reduce($users, function($result, User $user) {

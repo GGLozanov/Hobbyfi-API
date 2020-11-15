@@ -9,7 +9,7 @@
     require "../utils/jwt_utils.php";
     require "../utils/api_utils.php";
 
-    // TODO: allow facebook access token to be sent in authorization header and handled here to see whether
+    // allow facebook access token to be sent in authorization header and handled here to see whether
     // the user should be allowed to register without password, email, etc.
     
     if(!array_key_exists('username', $_POST)) { // username is mandatory no matter if FB user or normal user
@@ -17,15 +17,24 @@
         return;
     }
 
+    $hasPassword = array_key_exists('password', $_POST);
+    $hasEmail = array_key_exists('email', $_POST);
+    $isFacebookUser = (!$hasPassword || !$hasEmail); // at least one of the main auth credentials is missing with a facebook user
+
+    if($isFacebookUser && 
+            !($token = APIUtils::getTokenFromHeaders())) {
+        APIUtils::displayAPIResult(array("response"=>"Missing Facebook access token to create Facebook user"), 401);
+    }
+
     $email = null;
-    if(array_key_exists('email', $_POST)) {
+    if($hasEmail) {
         $email = $_POST["email"];
     }
     
     $username = $_POST["username"];
 
     $password = null;
-    if(!($isFacebookUser = !array_key_exists('password', $_POST))) {
+    if(!$isFacebookUser) {
         $password = password_hash($_POST["password"], PASSWORD_DEFAULT);
     }
 

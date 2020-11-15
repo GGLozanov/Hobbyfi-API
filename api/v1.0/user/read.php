@@ -7,12 +7,12 @@
     require "../models/user.php";
     require "../../vendor/autoload.php";
 
-    if(!$jwt = APIUtils::getJwtFromHeaders()) {
+    if(!$token = APIUtils::getTokenFromHeaders()) {
         return;
     }
 
-    if($decoded = APIUtils::validateAuthorisedRequest($jwt)) {
-        if($user = $db->getUser($decoded['userId'])) {
+    if($userId = APIUtils::validateAuthorisedRequest($token)) {
+        if($user = $db->getUser($userId)) {
             $status = "ok";
 
             APIUtils::displayAPIResult(array(

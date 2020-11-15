@@ -11,37 +11,38 @@
             echo json_encode($response, JSON_UNESCAPED_SLASHES);
         }
 
-        // TODO: Handle facebook token by pinging 
-        // returns an assoc array of decoded jwt if valid; else displays API result (error) and returns false (invalid request)
-        public static function validateAuthorisedRequest(string $jwt, string $expiredTokenError = null, string $invalidTokenError = null) {
+        // returns a user id from decoded jwt if valid jwt;
+        // return facebook user id if valid facebook access token;
+        // else displays API result (error) and returns false (invalid request)
+        public static function validateAuthorisedRequest(string $token, string $expiredTokenError = "Expired token. Get refresh token.", 
+            string $invalidTokenError = "Unauthorised access. Invalid token.") {
             require "../utils/jwt_utils.php";
 
-            if($expiredTokenError == null)
-                $expiredTokenError = "Expired token. Get refresh token.";
 
-            if($invalidTokenError == null)
-                $invalidTokenError = "Unauthorised access. Invalid token.";
-
-            // TODO: Check if passed token is jwt or facebook
-            // TODO: Ping facebook for user Id with token
-            // TODO: Fetch other information that's received from Facebook (like email, username, description?) and compare/update it
-            // TODO: return user Id and continue operations
-
-            $decoded = JWTUtils::validateAndDecodeJWT($jwt);
+            $decoded = JWTUtils::validateAndDecodeJWT($token);
 
             if($decoded) {
                 if(($decodedAssoc = (array) $decoded) && 
                     array_key_exists('userId', $decodedAssoc) && $decodedAssoc['userId']) // check if the token is one generated from here also has a username field
-                        return $decodedAssoc;
+                        return $decodedAssoc['userId'];
                 else {
                     $status = "Missing token info.";
                     $code = 406;
                 }
             } else {
-                if($decoded == false) 
+                if($decoded == null) { // means the token isn't JWT and try Facebook decoding
+                    if($userId = FacebookTokenUtils::validateAccessToken($token)) {
+                        // TODO: Fetch other information that's received from Facebook 
+                        // (like email, username, description?) and compare/update it
+                        return $userId;
+                    } else {
+                        if($tokenValidity == null) 
+                            $status = $invalidTokenError;
+                        else
+                            $status = $expiredTokenError;        
+                    }
+                } else
                     $status = $expiredTokenError;
-                else
-                    $status = $invalidTokenError;
 
                 $code = 401;
             }
@@ -50,7 +51,7 @@
             return false;
         }
 
-        public static function getJwtFromHeaders() {
+        public static function getTokenFromHeaders() {
             $headers = apache_request_headers();
 
             if(!array_key_exists('Authorization', $headers)) {
@@ -61,4 +62,3 @@
             return str_replace('Bearer: ', '', $headers['Authorization']);
         }
     }
-?>
