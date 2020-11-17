@@ -16,7 +16,7 @@
                 "iat" => $iat,
                 "nbf" => $nbf,
                 "exp" => $time,
-                "userId" => $userId
+                Constants::$userIdJwtKey => $userId
             ); // token contains the Ids of any resources the user might be associated with/own
         }
     

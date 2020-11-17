@@ -14,19 +14,23 @@
         // returns a user id from decoded jwt if valid jwt;
         // return facebook user id if valid facebook access token;
         // else displays API result (error) and returns false (invalid request)
-        public static function validateAuthorisedRequest(string $token, string $expiredTokenError = "Expired token. Get refresh token.", 
-            string $invalidTokenError = "Unauthorised access. Invalid token.") {
+        public static function validateAuthorisedRequest(string $token, string $expiredTokenError = null, 
+            string $invalidTokenError = null) {
             require "../utils/jwt_utils.php";
-
 
             $decoded = JWTUtils::validateAndDecodeJWT($token);
 
-            if($decoded) {
+            if($expiredTokenError == null)
+                $expiredTokenError = Constants::$defaultTokenExpiredError;
+            if($invalidTokenError == null)
+                $invalidTokenError = Constants::$defaultTokenInvalidError;
+
+            if($decoded) { 
                 if(($decodedAssoc = (array) $decoded) && 
-                    array_key_exists('userId', $decodedAssoc) && $decodedAssoc['userId']) // check if the token is one generated from here also has a username field
-                        return $decodedAssoc['userId'];
+                    array_key_exists(Constants::$userIdJwtKey, $decodedAssoc) && $decodedAssoc[Constants::$userIdJwtKey]) // check if the token is one generated from here also has a username field
+                        return $decodedAssoc[Constants::$userIdJwtKey];
                 else {
-                    $status = "Missing token info.";
+                    $status = Constants::$missingTokenInfoError;
                     $code = 406;
                 }
             } else {
@@ -47,7 +51,7 @@
                 $code = 401;
             }
 
-            APIUtils::displayAPIResult(array("response"=>$status), $code);
+            APIUtils::displayAPIResult(array(Constants::$response=>$status), $code);
             return false;
         }
 
@@ -55,7 +59,7 @@
             $headers = apache_request_headers();
 
             if(!array_key_exists('Authorization', $headers)) {
-                APIUtils::displayAPIResult(array("response"=>"Bad request. No Authorization header."), 400);
+                APIUtils::displayAPIResult(array(Constants::$response=>Constants::$noAuthorizationHeaderError), 400);
                 return null;
             }
 

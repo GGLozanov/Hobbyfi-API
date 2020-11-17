@@ -21,19 +21,27 @@
 
         public function createUser(User $user, string $password) {
             $stmt = $this->connection->prepare("INSERT INTO users(id, email, username, password, description, has_image, user_chatroom_id) 
-            VALUES(NULL, ?, ?, ?, ?, ?, ?)");
+            VALUES(?, ?, ?, ?, ?, ?, ?)");
+
+            // bind_param accepts only references... bruh...
+            $id = $user->getId();
+            $email = $user->getEmail();
+            $name = $user->getName();
+            $description = $user->getDescription();
+            $hasImage = $user->getHasImage();
+            $chatroomId = $user->getChatroomId();
 
             $stmt->bind_param("issssii", 
-                $user->getId(), 
-                $user->getEmail(),
-                $user->getName(), 
+                $id, 
+                $email,
+                $name, 
                 $password, 
-                $user->getDescription(), 
-                $user->getHasImage(), 
-                $user->getChatroomId());
+                $description, 
+                $hasImage, 
+                $chatroomId);
 
             $stmt->execute();
-
+            
             $userId = mysqli_insert_id($this->connection);
 
             if($user->getTags()) { // insert user tags here
@@ -52,7 +60,11 @@
             return $stmt->affected_rows >= 0; // TODO: Check if this still works properly
         }
 
-        public function userExistsOrPasswordTaken(string $username, string $password) { // user exists if username or password are taken
+        public function userExistsOrPasswordTaken(string $username, $password) { // user exists if username or password are taken
+            if(!$password) {
+                return false;
+            }
+
             $stmt = $this->connection->prepare("SELECT username FROM users WHERE username = ? OR password = ?");
             $stmt->bind_param("ss", $username, $password);
             $stmt->execute();
@@ -183,16 +195,16 @@
             // assert chatroom owner & update
         }
 
-        public function updateUserTags(int $userId, array $tags) {
+        public function updateUserTags(int $userId, ?array $tags) {
             // INSERT tag if not in tags table => skip otherwise
             // REPLACE query - all user tags
             if(!$tags) {
                 return false;
             }
 
-            $userTagsStmt = $this->executeSingleUserIdParamStatement($userId, $this->getUserTagArrayReplaceQuery($userId, $tags));
+            $result = $this->connection->query($this->getUserTagArrayReplaceQuery($userId, $tags));
 
-            return $userTagsStmt->affected_rows > 0;
+            return mysqli_affected_rows($this->connection) > 0 || mysqli_num_rows($result) > 0;
         }
 
         // TODO: Model CRUD operations here
@@ -234,6 +246,8 @@
         }
 
         private function getTagsByUserId(int $userId) {
+            require "../models/tag.php";
+
             $tags_result = $this->executeSingleUserIdParamStatement($userId, "SELECT tag_name, colour FROM user_tags us_tags
             INNER JOIN tags ts ON us_tags.tag_name LIKE ts.name
             WHERE user_id = ?")->get_result();

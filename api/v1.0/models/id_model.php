@@ -1,7 +1,7 @@
 <?php
 
     trait IdModel {
-        private int $id;
+        private ?int $id;
 
         public function getId() {
             return $this->id;

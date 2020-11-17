@@ -12,7 +12,7 @@
             $this->colour = $colour;
         }
 
-        public function getUpdateQuery() {
+        public function getUpdateQuery(string $password = null) {
             
         }
 

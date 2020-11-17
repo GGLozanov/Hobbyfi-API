@@ -1,7 +1,7 @@
 <?php
 
     trait ImageModel {
-        private bool $hasImage;
+        private ?bool $hasImage;
 
         public function getHasImage() {
             return $this->hasImage;

@@ -11,7 +11,7 @@
     }
 
     if(!array_key_exists('page', $_GET)) {
-        APIUtils::displayAPIResult(array("response"=>"Missing data."), 400);
+        APIUtils::displayAPIResult(array(Constants::$response=>Constants::$missingDataError), 400);
         return;
     }
 
@@ -34,9 +34,7 @@
                     return $result;
             }, array())); // mapping twice; FIXME - refactor database to return JSON responses directly instead of model classes?
         } else {
-            $status = "Internal server error.";
-            $code = 500;
-            APIUtils::displayAPIResult(array("response"=>$status, $code));
+            APIUtils::displayAPIResult(array(Constants::$response=>Constants::$internalServerError, 500));
         }
     }
 ?>

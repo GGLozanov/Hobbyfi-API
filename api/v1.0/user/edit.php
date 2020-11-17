@@ -14,7 +14,7 @@
     $hasChatroomId = array_key_exists('chatroom_id', $_POST);
 
     if(!$hasEmail && !$hasPassword && !$hasUsername && !$hasDescription && !$hasChatroomId) {
-        APIUtils::displayAPIResult(array("response"=>"Bad request. No credentials for update."), 400);
+        APIUtils::displayAPIResult(array(Constants::$response=>Constants::$noCredentialsForUpdateError), 400);
         return;
     }
 
@@ -29,14 +29,14 @@
                 $hasChatroomId ? $_POST['chatroom_id'] : null)
             , $hasPassword ? password_hash($_POST['password'], PASSWORD_DEFAULT) : null)) {
             
-            $status = "ok";
+            $status = Constants::$ok;
             $code = 200;
         } else {
-            $status = "User not updated";
+            $status = Constants::$userNotUpdated;
             $code = 500;
         }
 
-        APIUtils::displayAPIResult(array("response"=>$status), $code);
+        APIUtils::displayAPIResult(array(Constants::$response=>$status), $code);
     }
 
     $db->closeConnection();

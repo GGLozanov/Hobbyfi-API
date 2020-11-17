@@ -9,11 +9,11 @@
         use \ImageModel;
         use \ExpandedModel;
         
-        private string $email;
+        private ?string $email;
 
-        private int $chatroomId; // FK
+        private ?int $chatroomId; // FK
 
-        private array $tags;
+        private ?array $tags;
 
         public function __construct(
                 int $id = null, 

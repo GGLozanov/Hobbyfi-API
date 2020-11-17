@@ -17,13 +17,13 @@
         if($db->deleteUser(
             $userId
         )) {
-            $status = "ok";
+            $status = Constants::$ok;
             $code = 200;
         } else {
-            $status = "User not deleted";
+            $status = Constants::$userNotDeleted;
             $code = 500;
         }
 
-        APIUtils::displayAPIResult(array("response"=>$status), $code);
+        APIUtils::displayAPIResult(array(Constants::$response=>$status), $code);
     }
 ?>

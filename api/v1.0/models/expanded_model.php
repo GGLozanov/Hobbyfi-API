@@ -3,7 +3,7 @@
     // TODO: Rename
     trait ExpandedModel {
         private string $name;
-        private string $description;
+        private ?string $description;
 
         public function getName() {
             return $this->name;

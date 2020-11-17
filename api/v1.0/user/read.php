@@ -13,10 +13,9 @@
 
     if($userId = APIUtils::validateAuthorisedRequest($token)) {
         if($user = $db->getUser($userId)) {
-            $status = "ok";
 
             APIUtils::displayAPIResult(array(
-                "response"=>$status, 
+                Constants::$response=>Constants::$ok, 
                 "id"=>$user->getId(), 
                 "email"=>$user->getEmail(), 
                 "username"=>$user->getName(), 
@@ -29,9 +28,7 @@
             $db->closeConnection();
             return;
         } else {
-            $status = "User not found.";
-            $code = 404;
-            APIUtils::displayAPIResult(array("response"=>$status), $code);
+            APIUtils::displayAPIResult(array(Constants::$response=>Constants::$userNotFound), 404);
         }
     }
 
