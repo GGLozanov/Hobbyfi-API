@@ -6,8 +6,6 @@
     require "../init.php";
     include_once '../config/core.php';
     require "../models/user.php";
-    require "../../vendor/autoload.php";
-    require "../utils/api_utils.php";
 
     if(!$refresh_jwt = APIUtils::getTokenFromHeaders()) {
         return;

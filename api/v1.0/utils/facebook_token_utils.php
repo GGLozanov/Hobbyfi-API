@@ -31,7 +31,7 @@ require "../../../vendor/autoload.php";
                 return false;
             }
 
-            return $tokenMetadata->getUserId();
+            return intval($tokenMetadata->getUserId());
         }
     }
 ?>

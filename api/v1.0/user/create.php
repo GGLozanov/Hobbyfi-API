@@ -1,11 +1,13 @@
 <?php
     header("Access-Control-Allow-Origin: *");
+    header("Access-Control-Allow-Methods: POST");
     header("Content-Type: application/json; charset=UTF-8");
 
     require "../init.php"; // set up dependency for this script to init php script
     require "../config/core.php";
     require "../models/user.php";
     require "../models/tag.php";
+    require "../utils/facebook_token_utils.php";
     require "../../../vendor/autoload.php";
     require "../utils/jwt_utils.php";
     require "../utils/api_utils.php";
@@ -13,31 +15,39 @@
     // allow facebook access token to be sent in authorization header and handled here to see whether
     // the user should be allowed to register without password, email, etc.
 
-    if(!array_key_exists('username', $_POST)) { // username is mandatory no matter if FB user or normal user
+    if(!array_key_exists(Constants::$username, $_POST)) { // username is mandatory no matter if FB user or normal user
         APIUtils::displayAPIResult(array(Constants::$response=>Constants::$missingDataError), 400);
         return;
     }
 
-    $hasPassword = array_key_exists('password', $_POST);
-    $hasEmail = array_key_exists('email', $_POST);
+    $hasPassword = array_key_exists(Constants::$password, $_POST);
+    $hasEmail = array_key_exists(Constants::$email, $_POST);
     $isFacebookUser = (!$hasPassword || !$hasEmail); // at least one of the main auth credentials is missing with a facebook user
 
+    $userId = null;
+    $token = null;
     if($isFacebookUser && 
             !($token = APIUtils::getTokenFromHeaders())) {
-        APIUtils::displayAPIResult(array(Constants::$response=>Constants::$facebookAuthUserCreateError), 401);
         return;
+    }
+
+    if($token != null) {
+        if(($userId = FacebookTokenUtils::validateAccessToken($token)) == null || $userId == false) {
+            APIUtils::displayAPIResult(array(Constants::$response=>Constants::$facebookAuthUserCreateError));
+            return;
+        }
     }
 
     $email = null;
     if($hasEmail) {
-        $email = $_POST["email"];
+        $email = $_POST[Constants::$email];
     }
     
-    $username = $_POST["username"];
+    $username = $_POST[Constants::$username];
 
     $password = null;
     if(!$isFacebookUser) {
-        $password = password_hash($_POST["password"], PASSWORD_DEFAULT);
+        $password = password_hash(Constants::$password, PASSWORD_DEFAULT);
     }
  
     if($db->userExistsOrPasswordTaken($username, $password)) {
@@ -45,26 +55,19 @@
         $code = 409; // 409 - conflict; resource already exists
     } else {
         $description = null;
-        if(array_key_exists('description', $_POST)) {
-            $description = $_POST["description"];
+        if(array_key_exists(Constants::$description, $_POST)) {
+            $description = $_POST[Constants::$description];
         }
     
         // TODO: Extract into util function
         $tags = array();
-        if(array_key_exists('tags', $_POST)) {
-            $jsonTags = json_decode('{' . implode(',', $_POST["tags"]) . '}', true);
-    
-            // TODO: Error handling for incorrect info here
-            // example JSON structure for tags:
-                // tags: [ "tag_name" : { "colour" : "#FFFFFF" }, "tag_name2" : { "colour" : "#FFFFFF" } ]
-            foreach($jsonTags as $name => $info) {      
-                $tags[] = new Tag($name, $info[0]['colour']);
-            }    
+        if(array_key_exists(Constants::$tags, $_POST)) {
+            $tags = TagUtils::extractTagsFromJson();
         }
     
-        $hasImage = array_key_exists('image', $_POST) && ($image = $_POST["image"]) != null;
+        $hasImage = array_key_exists(Constants::$image, $_POST) && ($image = $_POST[Constants::$image]) != null;
 
-        if($id = $db->createUser(new User(null, $email, $username, $description, $hasImage, null, $tags), $password)) { // hopefully short-circuit eval works here and doesn't perform a wrong sql query on an empty tag array
+        if($id = $db->createUser(new User($userId, $email, $username, $description, $hasImage, null, $tags), $password)) { // hopefully short-circuit eval works here and doesn't perform a wrong sql query on an empty tag array
             
             // FIXME: Code repetition here
             if($tags) {

@@ -3,6 +3,7 @@
     require_once("id_model.php");
     require_once("expanded_model.php");
     require_once("image_model.php");
+    require_once("../init.php");
 
     class User extends Model {
         use \IdModel;
@@ -49,15 +50,15 @@
 
             $commaCount = substr_count(decbin($condStatus), 1);
 
-            $this->addUpdateFieldToQuery($condStatus & 0b10000, $sql, $commaCount, "email", $this->email, 
+            $this->addUpdateFieldToQuery($condStatus & 0b10000, $sql, $commaCount, Constants::$email, $this->email, 
                 $firstField == 5);
-            $this->addUpdateFieldToQuery($condStatus & 0b01000, $sql, $commaCount, "password", $userPassword,
+            $this->addUpdateFieldToQuery($condStatus & 0b01000, $sql, $commaCount, Constants::$password, $userPassword,
                 $firstField == 4);
-            $this->addUpdateFieldToQuery($condStatus & 0b00100, $sql, $commaCount, "username", $this->username,
+            $this->addUpdateFieldToQuery($condStatus & 0b00100, $sql, $commaCount, Constants::$username, $this->username,
                 $firstField == 3);
-            $this->addUpdateFieldToQuery($condStatus & 0b00010, $sql, $commaCount, "description", $this->description,
+            $this->addUpdateFieldToQuery($condStatus & 0b00010, $sql, $commaCount, Constants::$description, $this->description,
                 $firstField == 2);
-            $this->addUpdateFieldToQuery($condStatus & 0b00001, $sql, $commaCount, "user_chatroom_id", $this->chatroomId, 
+            $this->addUpdateFieldToQuery($condStatus & 0b00001, $sql, $commaCount, Constants::$userChatroomId, $this->chatroomId, 
                 $firstField == 1);
 
             $sql .= " WHERE id = $this->id";

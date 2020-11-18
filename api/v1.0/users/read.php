@@ -24,11 +24,11 @@
                 array_reduce($users, function($result, User $user) {
                     $userId = $user->getId();
                     $result["user" . $userId] = array(
-                        "id"=>$userId,
-                        "username"=>$user->getName(), 
-                        "description"=>$user->getDescription(),
-                        "email"=>$user->getEmail(), 
-                        "photo_url"=>$user->getHasImage() ? 
+                        Constants::$id=>$userId,
+                        Constants::$username=>$user->getName(), 
+                        Constants::$description=>$user->getDescription(),
+                        Constants::$email=>$user->getEmail(), 
+                        Constants::$photoUrl=>$user->getHasImage() ? 
                             'http://' . $_SERVER['SERVER_NAME'] . ':' . $_SERVER['SERVER_PORT'] .'/AuthIO-Service/uploads/user_pfps' . $userId . '.jpg' 
                                 : null);
                     return $result;

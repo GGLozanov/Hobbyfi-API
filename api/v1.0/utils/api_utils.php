@@ -1,4 +1,6 @@
 <?php
+    require_once("../utils/facebook_token_utils.php");
+
     class APIUtils { // might rename this class; improper name
         // helper function designed to set response codes and display a response in a JSON format for interpretation by clients
         public static function displayAPIResult(array $response, $responseCode = 200, string $error = null) {

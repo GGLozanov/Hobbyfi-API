@@ -3,9 +3,7 @@
     // id inside token -> query db
     require "../init.php";
     include_once '../config/core.php';
-    require "../utils/api_utils.php";
     require "../models/user.php";
-    require "../../vendor/autoload.php";
 
     if(!$token = APIUtils::getTokenFromHeaders()) {
         return;
@@ -16,11 +14,11 @@
 
             APIUtils::displayAPIResult(array(
                 Constants::$response=>Constants::$ok, 
-                "id"=>$user->getId(), 
-                "email"=>$user->getEmail(), 
-                "username"=>$user->getName(), 
-                "description"=>$user->getDescription(),
-                "photo_url"=> $user->getHasImage() ? 
+                Constants::$id=>$user->getId(), 
+                Constants::$email=>$user->getEmail(), 
+                Constants::$username=>$user->getName(), 
+                Constants::$description=>$user->getDescription(),
+                Constants::$photoUrl=> $user->getHasImage() ? 
                     'http://' . $_SERVER['SERVER_NAME'] . ':' . $_SERVER['SERVER_PORT'] .'/AuthIO-Service/uploads/' . $user->getId() . '.jpg'
                         : null
                 )

@@ -1,7 +1,19 @@
 <?php
 
     class Constants {
-        // TODO: Add GET/POST keys & DB constants
+        public static string $id = "id";
+        public static string $username = "username";
+        public static string $password = "password";
+        public static string $email = "email"; 
+        public static string $description = "description";
+        public static string $tags = "tags";
+        public static string $image = "image";
+        public static string $name = "name";
+        public static string $colour = "colour";
+        public static string $chatroomId = "chatroom_id";
+        public static string $userChatroomId = "user_chatroom_id";
+        public static string $photoUrl = "photo_url";
+        public static string $hasImage = "has_image";
 
         public static string $response = "response";
         public static string $jwt = "jwt";
@@ -15,14 +27,14 @@
         public static string $facebookAccessGranted = "Access granted";
         public static string $facebookUserCreated = "Facebook user created";
 
-        public static string $facebookAuthUserCreateError = "Missing Facebook access token to create Facebook user";
-        public static string $expiredTokenError = "Expired refresh token. Reauthenticate.";
-        public static string $invalidTokenError = "Unauthorised access. Invalid token. Reauthenticate.";
+        public static string $facebookAuthUserCreateError = "Missing or invalid Facebook access token to create Facebook user";
+        public static string $expiredTokenError = "Expired refresh token. Reauthenticate";
+        public static string $invalidTokenError = "Unauthorised access. Invalid token. Reauthenticate";
         public static string $internalServerError = "Internal server error";
-        public static string $noAuthorizationHeaderError = "No Authorization header.";
+        public static string $noAuthorizationHeaderError = "No Authorization header";
         public static string $missingTokenInfoError = "Missing token info";
-        public static string $defaultTokenExpiredError = "Expired token. Get refresh token.";
-        public static string $defaultTokenInvalidError = "Unauthorised access. Invalid token.";
+        public static string $defaultTokenExpiredError = "Expired token. Get refresh token";
+        public static string $defaultTokenInvalidError = "Unauthorised access. Invalid token";
         public static string $missingDataError = "Missing data";
         public static string $noCredentialsForUpdateError = "No credentials for update";
         public static string $authenticationErrorInvalidCredentials = "Invalid credentials";

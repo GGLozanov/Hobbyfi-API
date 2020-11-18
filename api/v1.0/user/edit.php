@@ -7,13 +7,15 @@
         return;
     }
 
-    $hasEmail = array_key_exists('email', $_POST);
-    $hasPassword = array_key_exists('password', $_POST);
-    $hasUsername = array_key_exists('username', $_POST);
-    $hasDescription = array_key_exists('description', $_POST);
-    $hasChatroomId = array_key_exists('chatroom_id', $_POST);
+    // FIXME: Code repetition
+    $hasEmail = array_key_exists(Constants::$email, $_POST);
+    $hasPassword = array_key_exists(Constants::$password, $_POST);
+    $hasUsername = array_key_exists(Constants::$username, $_POST);
+    $hasDescription = array_key_exists(Constants::$description, $_POST);
+    $hasChatroomId = array_key_exists(Constants::$chatroomId, $_POST);
+    $hasTags = array_key_exists(Constants::$tags, $_POST);
 
-    if(!$hasEmail && !$hasPassword && !$hasUsername && !$hasDescription && !$hasChatroomId) {
+    if(!$hasEmail && !$hasPassword && !$hasUsername && !$hasDescription && !$hasChatroomId && !$hasTags) {
         APIUtils::displayAPIResult(array(Constants::$response=>Constants::$noCredentialsForUpdateError), 400);
         return;
     }
@@ -22,12 +24,13 @@
         if($db->updateUser(
             new User(
                 $userId, 
-                $hasEmail ? $_POST['email'] : null, 
-                $hasUsername ? $_POST['username'] : null, 
-                $hasDescription ? $_POST['description'] : null, 
+                $hasEmail ? $_POST[Constants::$email] : null, 
+                $hasUsername ? $_POST[Constants::$username] : null, 
+                $hasDescription ? $_POST[Constants::$description] : null, 
                 null,
-                $hasChatroomId ? $_POST['chatroom_id'] : null)
-            , $hasPassword ? password_hash($_POST['password'], PASSWORD_DEFAULT) : null)) {
+                $hasChatroomId ? $_POST[Constants::$chatroomId] : null,
+                $hasTags ? TagUtils::extractTagsFromPostArray($_POST[Constants::$tags]) : null), 
+            $hasPassword ? password_hash($_POST[Constants::$password], PASSWORD_DEFAULT) : null)) {
             
             $status = Constants::$ok;
             $code = 200;

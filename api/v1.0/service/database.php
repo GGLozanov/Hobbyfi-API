@@ -1,4 +1,6 @@
 <?php
+    include_once "../consts/constants.php";
+
     class Database { 
         public $host = "localhost"; // to be changed if hosted on server
         public $user_name = "root";
@@ -19,7 +21,7 @@
             mysqli_close($this->connection);
         }
 
-        public function createUser(User $user, string $password) {
+        public function createUser(User $user, ?string $password) {
             $stmt = $this->connection->prepare("INSERT INTO users(id, email, username, password, description, has_image, user_chatroom_id) 
             VALUES(?, ?, ?, ?, ?, ?, ?)");
 
@@ -40,7 +42,7 @@
                 $hasImage, 
                 $chatroomId);
 
-            $stmt->execute();
+            $insertSuccess = $stmt->execute();
             
             $userId = mysqli_insert_id($this->connection);
 
@@ -48,7 +50,10 @@
                 $this->connection->query($this->getTagArrayInsertQuery($user->getTags()));
             }
 
-            return $userId;
+            if($insertSuccess) { // if at least one row inserted => success
+                return $id == null ? $userId : $id;
+            }
+            return null;
         }
 
         public function setUserHasImage(int $id, bool $hasImage) {
@@ -61,10 +66,6 @@
         }
 
         public function userExistsOrPasswordTaken(string $username, $password) { // user exists if username or password are taken
-            if(!$password) {
-                return false;
-            }
-
             $stmt = $this->connection->prepare("SELECT username FROM users WHERE username = ? OR password = ?");
             $stmt->bind_param("ss", $username, $password);
             $stmt->execute();
@@ -81,11 +82,11 @@
             if(mysqli_num_rows($result) > 0 && ($rows = mysqli_fetch_all($result, MYSQLI_ASSOC))) {
                     
                 $filteredRows = array_filter($rows, function (array $row) use ($password) {
-                    return password_verify($password, $row['password']);
+                    return password_verify($password, $row[Constants::$password]);
                 });
 
                 if(count($filteredRows) && $row = $filteredRows[0]) {
-                    return $row['id'];
+                    return $row[Constants::$id];
                 } // if more than one row found AND the passwords match => auth'd user => return id for token
             }
 
@@ -103,7 +104,7 @@
                 $row = mysqli_fetch_assoc($user_result); // fetch the resulting rows in the form of a map (associative array)
 
                 $tags = $this->getTagsByUserId($id);
-                return new User($id, $row['email'], $row['username'], $row['description'], $row['has_image'], $row['user_chatrom_id'], $tags);              
+                return new User($id, $row[Constants::$email], $row[Constants::$username], $row[Constants::$description], $row[Constants::$hasImage], $row[Constants::$userChatroomId], $tags);              
             }
 
             return null;
@@ -141,9 +142,9 @@
                 $rows = mysqli_fetch_all($result, MYSQLI_ASSOC);
 
                 return array_map(function(array $row) {
-                    $tags = $this->getTagsByUserId($row['id']);
+                    $tags = $this->getTagsByUserId($row[Constants::$id]);
                     
-                    return new User($row['id'], $row['email'], $row['username'], $row['description'], $row['has_image'], $row['user_chatroom_id'], $tags);
+                    return new User($row[Constants::$id], $row[Constants::$email], $row[Constants::$username], $row[Constants::$description], $row[Constants::$hasImage], $row[Constants::$userChatroomId], $tags);
                 }, $rows); // might bug out with the mapping here FIXME
             }
 

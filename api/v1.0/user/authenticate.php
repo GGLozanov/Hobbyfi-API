@@ -6,18 +6,15 @@
     
     require "../init.php";
     require "../config/core.php";
-    require "../../../vendor/autoload.php";
-    require "../utils/jwt_utils.php";
-    require "../utils/api_utils.php";
 
-    if(!array_key_exists('email', $_GET) || 
-    !array_key_exists('password', $_GET)) {
+    if(!array_key_exists(Constants::$email, $_GET) || 
+    !array_key_exists(Constants::$password, $_GET)) {
         APIUtils::displayAPIResult(array(Constants::$response=>Constants::$missingDataError), 400);
         return;
     }
 
-    $email = $_GET["email"];
-    $password = $_GET["password"]; // password is transmitted as plain-text over client; use TLS/HTTPS in future for securing client-server communication and avoiding MiTM
+    $email = $_GET[Constants::$email];
+    $password = $_GET[Constants::$password]; // password is transmitted as plain-text over client; use TLS/HTTPS in future for securing client-server communication and avoiding MiTM
 
     if($id = $db->validateUser($email, $password)) {
         // Create token and send it here (without id and other information; just unique username)
