@@ -18,7 +18,6 @@
         // else displays API result (error) and returns false (invalid request)
         public static function validateAuthorisedRequest(string $token, string $expiredTokenError = null, 
             string $invalidTokenError = null) {
-            require "../utils/jwt_utils.php";
 
             $decoded = JWTUtils::validateAndDecodeJWT($token);
 
@@ -36,19 +35,20 @@
                     $code = 406;
                 }
             } else {
-                if($decoded == null) { // means the token isn't JWT and try Facebook decoding
+                if($decoded == false) // means the token isn't JWT and try Facebook decoding
+                    $status = $expiredTokenError;
+                else {
                     if($userId = FacebookTokenUtils::validateAccessToken($token)) {
                         // TODO: Fetch other information that's received from Facebook 
                         // (like email, username, description?) and compare/update it
                         return $userId;
                     } else {
-                        if($tokenValidity == null) 
-                            $status = $invalidTokenError;
+                        if($userId == false) 
+                            $status = $expiredTokenError;
                         else
-                            $status = $expiredTokenError;        
+                            $status = $invalidTokenError;        
                     }
-                } else
-                    $status = $expiredTokenError;
+                }
 
                 $code = 401;
             }

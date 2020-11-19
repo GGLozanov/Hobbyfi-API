@@ -8,10 +8,10 @@
             // example JSON structure for tags:
                 // tags: [ "tag_name" : { "colour" : "#FFFFFF" }, "tag_name2" : { "colour" : "#FFFFFF" } ]
             foreach($jsonTags as $name => $info) {      
-                $tags[] = new Tag($name, $info[0][Constants::$colour]);
+                $newTags[] = new Tag($name, $info[0][Constants::$colour]);
             }
 
-            return $tags;
+            return $newTags;
         }
     }
 

@@ -1,11 +1,12 @@
 <?php
-    require 'service/database.php';
-    require 'consts/constants.php';
-    require "utils/facebook_token_utils.php";
-    require "../../vendor/autoload.php";
-    require "utils/jwt_utils.php";
-    require "utils/tag_utils.php";
-    require "utils/api_utils.php";
+    // DO not put config/core.php here
+    require_once("service/database.php");
+    require_once("consts/constants.php");
+    require_once("utils/facebook_token_utils.php");
+    require_once(__DIR__ . "/../../vendor/autoload.php");
+    require_once("utils/jwt_utils.php");
+    require_once("utils/tag_utils.php");
+    require_once("utils/api_utils.php");
 
     $db = new Database(); // connects to DB with given web server params
 ?>

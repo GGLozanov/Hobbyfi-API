@@ -2,8 +2,6 @@
 
 use Facebook\Exceptions\FacebookSDKException;
 
-require "../../../vendor/autoload.php";
-
     class FacebookTokenUtils {
 
         public static function validateAccessToken(string $accessToken) {

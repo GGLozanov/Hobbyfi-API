@@ -7,10 +7,7 @@
     require "../config/core.php";
     require "../models/user.php";
     require "../models/tag.php";
-    require "../utils/facebook_token_utils.php";
-    require "../../../vendor/autoload.php";
-    require "../utils/jwt_utils.php";
-    require "../utils/api_utils.php";
+    require "../utils/image_utils.php";
 
     // allow facebook access token to be sent in authorization header and handled here to see whether
     // the user should be allowed to register without password, email, etc.
@@ -47,7 +44,7 @@
 
     $password = null;
     if(!$isFacebookUser) {
-        $password = password_hash(Constants::$password, PASSWORD_DEFAULT);
+        $password = password_hash($_POST[Constants::$password], PASSWORD_DEFAULT);
     }
  
     if($db->userExistsOrPasswordTaken($username, $password)) {
@@ -59,10 +56,9 @@
             $description = $_POST[Constants::$description];
         }
     
-        // TODO: Extract into util function
         $tags = array();
         if(array_key_exists(Constants::$tags, $_POST)) {
-            $tags = TagUtils::extractTagsFromJson();
+            $tags = TagUtils::extractTagsFromPostArray($_POST[Constants::$tags]);
         }
     
         $hasImage = array_key_exists(Constants::$image, $_POST) && ($image = $_POST[Constants::$image]) != null;

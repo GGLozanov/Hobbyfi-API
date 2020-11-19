@@ -33,7 +33,7 @@
                 $decoded = JWT::decode($jwt, $publicKey, array('RS256'));
             } catch(ExpiredException $expired) {
                 return false; // false = token is not valid anymore (expired)
-            } catch(Exception $e) {
+            } catch(UnexpectedValueException $e) {
                 return null; // null = token is invalid and shouldn't exist
             }
 
