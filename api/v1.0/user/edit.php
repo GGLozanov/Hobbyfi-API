@@ -1,26 +1,41 @@
 <?php
+    header("Access-Control-Allow-Origin: *");
+    header("Access-Control-Allow-Methods: POST");
+    header("Content-Type: application/json; charset=UTF-8");
+
     require "../init.php";
-    require "../utils/api_utils.php";
     require "../models/user.php";
+    /** @var $db */
 
     if(!$token = APIUtils::getTokenFromHeaders()) {
         return;
     }
 
-    // FIXME: Code repetition
-    $hasEmail = array_key_exists(Constants::$email, $_POST);
-    $hasPassword = array_key_exists(Constants::$password, $_POST);
-    $hasUsername = array_key_exists(Constants::$username, $_POST);
-    $hasDescription = array_key_exists(Constants::$description, $_POST);
-    $hasChatroomId = array_key_exists(Constants::$chatroomId, $_POST);
-    $hasTags = array_key_exists(Constants::$tags, $_POST);
-
-    if(!$hasEmail && !$hasPassword && !$hasUsername && !$hasDescription && !$hasChatroomId && !$hasTags) {
-        APIUtils::displayAPIResult(array(Constants::$response=>Constants::$noCredentialsForUpdateError), 400);
-        return;
-    }
-
     if($userId = APIUtils::validateAuthorisedRequest($token)) {
+        // FIXME: Code repetition
+        $hasEmail = array_key_exists(Constants::$email, $_POST);
+        $hasPassword = array_key_exists(Constants::$password, $_POST);
+        $hasUsername = array_key_exists(Constants::$username, $_POST);
+        $hasDescription = array_key_exists(Constants::$description, $_POST);
+        $hasChatroomId = array_key_exists(Constants::$chatroomId, $_POST);
+        $hasTags = array_key_exists(Constants::$tags, $_POST);
+        $hasImage = array_key_exists(Constants::$image, $_POST);
+
+        $shouldNotUpdateUser = !$hasEmail && !$hasPassword && !$hasUsername && !$hasDescription && !$hasChatroomId && !$hasTags;
+
+        if($hasImage) {
+            ImageUtils::uploadImageToPath($userId, Constants::$userProfileImagesDir, $_POST[Constants::$image]);
+            if($shouldNotUpdateUser) { // FIXME: better logic flow here for only image handling
+                APIUtils::displayAPIResult(array(Constants::$response=>Constants::$ok), 200);
+                return;
+            }
+        }
+
+        if($shouldNotUpdateUser) {
+            APIUtils::displayAPIResult(array(Constants::$response=>Constants::$noCredentialsForUpdateError), 400);
+            return;
+        }
+
         if($db->updateUser(
             new User(
                 $userId, 
@@ -31,7 +46,7 @@
                 $hasChatroomId ? $_POST[Constants::$chatroomId] : null,
                 $hasTags ? TagUtils::extractTagsFromPostArray($_POST[Constants::$tags]) : null), 
             $hasPassword ? password_hash($_POST[Constants::$password], PASSWORD_DEFAULT) : null)) {
-            
+
             $status = Constants::$ok;
             $code = 200;
         } else {

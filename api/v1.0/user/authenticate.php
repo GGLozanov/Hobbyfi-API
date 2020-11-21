@@ -6,6 +6,7 @@
     
     require "../init.php";
     require "../config/core.php";
+    /** @var $db */
 
     if(!array_key_exists(Constants::$email, $_GET) || 
     !array_key_exists(Constants::$password, $_GET)) {

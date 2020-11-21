@@ -95,45 +95,59 @@
 
         // TODO: Use transaction in multiple SELECT queries like these?
         public function getUser(int $id) { // user already auth'd at this point due to token => get user by id
-            $user_result = $this->executeSingleUserIdParamStatement($id, "SELECT description, username, email, has_image, user_chaatroom_id 
-                FROM users
+            require "../models/tag.php";
+
+            $user_result = $this->executeSingleUserIdParamStatement($id, "SELECT 
+                us.description, us.username, us.email, us.has_image, us.user_chatroom_id, us_tags.tag_name, tgs.colour
+                FROM users us
+                INNER JOIN user_tags us_tags ON us.id = us_tags.user_id
+                INNER JOIN tags tgs ON tgs.name LIKE us_tags.tag_name
                 WHERE id = ?"
             )->get_result();
             
             if(mysqli_num_rows($user_result) > 0) {
-                $row = mysqli_fetch_assoc($user_result); // fetch the resulting rows in the form of a map (associative array)
+                $rows = mysqli_fetch_all($user_result, MYSQLI_ASSOC); // fetch the resulting rows in the form of a map (associative array)
 
-                $tags = $this->getTagsByUserId($id);
-                return new User($id, $row[Constants::$email], $row[Constants::$username], $row[Constants::$description], $row[Constants::$hasImage], $row[Constants::$userChatroomId], $tags);              
+                return new User($id,
+                    $rows[0][Constants::$email], $rows[0][Constants::$username],
+                    $rows[0][Constants::$description], $rows[0][Constants::$hasImage],
+                    $rows[0][Constants::$userChatroomId], array_map(function(array $row) {
+                        return new Tag($row[Constants::$tagName], $row[Constants::$colour]);
+                    }, $rows));
             }
 
             return null;
         }
 
         // only place void of prepared stmtns
-        public function updateUser(User $user, string $password) {
-            $result = mysqli_query($this->connection, $user->getUpdateQuery($password));
+        public function updateUser(User $user, ?string $password) {
+            mysqli_query($this->connection, $user->getUpdateQuery($password));
 
-            return mysqli_affected_rows($this->connection) >= 0;
+            $wereTagsUpdated = true;
+            if($tags = $user->getTags()) { // somewhat unnecessary check given the method..
+                $wereTagsUpdated = $this->updateUserTags($user->getId(), $tags);
+            }
+
+            return mysqli_affected_rows($this->connection) >= 0 && $wereTagsUpdated;
         }
 
         public function deleteUser(int $id) {
-            $stmt = $this->connection->prepare("DELETE FROM users WHERE id = ?");
-            $stmt->bind_param("i", $id);
+            $stmt = $this->executeSingleUserIdParamStatement($id, "DELETE FROM users WHERE id = ?");
 
-            $stmt->execute();
+            // FCM if user in chatroom => send notification
 
             return $stmt->affected_rows > 0;
         }
         
         // gets all users with any id BUT this one;
-        // TODO: Implement multiplier paging functionality with limit & offset (offset given in request query parameters)
-        public function getChatroomUsers(int $id, int $multiplier) {
+        public function getChatroomUsers(int $userId, int $multiplier = 1) { // multiplier starts from 1
             $stmt = $this->connection->prepare(
-                "SELECT id, description, username, email, has_image FROM 
-                users 
-                WHERE id != ? AND user_chatroom_id = (SELECT user_chatroom_id WHERE id = ?) LIMIT 5 OFFSET 5*$multiplier");
-            $stmt->bind_param("ii", $id, $id);
+                "SELECT us.id, us.description, us.username, us.email, us.has_image, us_tags.tag_name, tgs.colour FROM 
+                users us
+                INNER JOIN user_tags us_tags ON us_tags.user_id = us.id
+                INNER JOIN tags tgs ON tgs.name LIKE us_tags.tag_name
+                WHERE id != ? AND us.user_chatroom_id = (SELECT user_chatroom_id WHERE id = ?) LIMIT 5 OFFSET 5*(? - 1)");
+            $stmt->bind_param("iii", $userId, $userId, $multiplier);
             $stmt->execute();
 
             $result = $stmt->get_result();
@@ -141,11 +155,19 @@
             if(mysqli_num_rows($result) > 0) {
                 $rows = mysqli_fetch_all($result, MYSQLI_ASSOC);
 
-                return array_map(function(array $row) {
-                    $tags = $this->getTagsByUserId($row[Constants::$id]);
-                    
-                    return new User($row[Constants::$id], $row[Constants::$email], $row[Constants::$username], $row[Constants::$description], $row[Constants::$hasImage], $row[Constants::$userChatroomId], $tags);
-                }, $rows); // might bug out with the mapping here FIXME
+                $tags = $this->extractTagsFromJoinQuery($rows);
+
+                return array_map(function(array $row) use ($tags) {
+                    return new User(
+                        $row[Constants::$id],
+                        $row[Constants::$email],
+                        $row[Constants::$username],
+                        $row[Constants::$description],
+                        $row[Constants::$hasImage],
+                        $row[Constants::$userChatroomId],
+                        $tags[$row[Constants::$id]]
+                    );
+                }, $rows);
             }
 
             return null;
@@ -158,14 +180,44 @@
 
         public function updateChatroom(int $ownerId, int $chatroomId, Chatroom $chatroom) {
             // handle user not owner error
+            // FCM
         }
 
         public function deleteChatroom(int $ownerId, int $chatroomId) {
             // handle user not owner error
+            // FCM
         }
 
         public function getChatrooms(int $userId, int $multiplier) {
+            $stmt = $this->prepare(
+                "SELECT ch.id, ch.name, ch,description, ch.has_image, ch.owner_id, ch.last_event_id, ch_tags.tag_name, tgs.colour FROM chatrooms ch
+                    INNER JOIN chatroom_tags ch_tags ON ch.id = ch_tags.chatroom_id 
+                    INNER JOIN tags tgs ON ch_tags.tag_name LIKE tgs.name
+                    WHERE (SELECT user_chatroom_id FROM users WHERE ? = id) = ? LIMIT 5 OFFSET 5*(? - 1)"
+            );
+            $stmt->bind_param("ii", $userId, $multiplier);
+            $stmt->execute();
 
+            $result = $stmt->get_result();
+
+            if(mysqli_num_rows($result) > 0) {
+                $rows = mysqli_fetch_all($result, MYSQLI_ASSOC);
+
+                $tags = $this->extractTagsFromJoinQuery($rows);
+                
+                array(function(array $row) use($tags) {
+                    return new Chatroom(
+                        $row[Constants::$id],
+                        $row[Constants::$name],
+                        $row[Constants::$description],
+                        $row[Constants::$hasImage],
+                        $row[Constants::$ownerId],
+                        $row[Constants::$lastEventId],
+                        $tags
+                    );
+                }, $rows);
+            }
+            return null;
         }
 
         public function getChatroomMessages(int $userId, int $multiplier) {
@@ -174,26 +226,33 @@
 
         public function createChatroomMessage(int $userId, Message $message) {
             // handle user not in chatroom error
+            // FCM
         }
 
         public function deleteChatroomMessage(int $messageId) {
             // assert message owner OR chatroom owner
+
+            // FCM
         }
 
         public function updateChatroomMessage(int $userId, int $messageId, Message $message) {
             // assert message owner & correct chatroom
+            // FCM
         }
 
         public function createChatroomEvent(int $ownerId, Event $event) {
             // assert chatroom owner and update
+            // FCM
         }
 
         public function deleteChatroomEvent(int $ownerId, int $eventId) {
             // assert chatroom owner & delete
+            // FCM
         }
 
         public function updateChatroomEvent(int $ownerId, int $eventId, Event $event) {
             // assert chatroom owner & update
+            // FCM
         }
 
         public function updateUserTags(int $userId, ?array $tags) {
@@ -203,7 +262,7 @@
                 return false;
             }
 
-            $result = $this->connection->query($this->getUserTagArrayReplaceQuery($userId, $tags));
+            $result = $this->connection->query($this->getTagArrayReplaceQuery(Constants::$userTagsTable, $userId, $tags));
 
             return mysqli_affected_rows($this->connection) > 0 || mysqli_num_rows($result) > 0;
         }
@@ -233,20 +292,21 @@
             return $sql;
         }
 
-        private function getUserTagArrayReplaceQuery(int $userId, array $tags) {
+        private function getTagArrayReplaceQuery(string $table, int $userId, array $tags) {
             $dataArray = array_map(function($tag) use($userId) {
                 $name = $this->connection->real_escape_string($tag->getName());
         
                 return "('$userId', '$name')";
             }, $tags);
         
-            $sql = "REPLACE INTO user_tags (user_id, tag_name) VALUES "; 
+            $sql = "REPLACE INTO $table (user_id, tag_name) VALUES ";
             $sql .= implode(',', $dataArray);
         
             return $sql;
         }
 
-        private function getTagsByUserId(int $userId) {
+
+        /* private function getTagsByUserId(int $userId) {
             require "../models/tag.php";
 
             $tags_result = $this->executeSingleUserIdParamStatement($userId, "SELECT tag_name, colour FROM user_tags us_tags
@@ -254,14 +314,44 @@
             WHERE user_id = ?")->get_result();
 
             if(mysqli_num_rows($tags_result) > 0) {
-                $rows = mysqli_fetch_assoc($tags_result);                
+                $rows = mysqli_fetch_assoc($tags_result);
 
                 return array_map(function(array $row) {
-                    return new Tag($row['name'], $row['colour']);    
+                    return new Tag($row['name'], $row['colour']);
                 }, $rows);
             }
 
             return null;
+        }
+
+        private function getTagsByChatroomId(int $chatroomId) {
+            require "../models/tag.php";
+
+            $tags_result = $this->executeSingleUserIdParamStatement($chatroomId, "SELECT tag_name, colour FROM chatroom_tags ch_tags
+            INNER JOIN tags ts ON ch_tags.tag_name LIKE ts.name
+            WHERE ch_tags.chatroom_id = ?")->get_result();
+
+            if(mysqli_num_rows($tags_result) > 0) {
+                $rows = mysqli_fetch_assoc($tags_result);
+
+                return array_map(function(array $row) {
+                    return new Tag($row['name'], $row['colour']);
+                }, $rows);
+            }
+
+            return null;
+        } */
+
+        private function extractTagsFromJoinQuery(array $rows) {
+            require "../models/tag.php";
+
+            $userTags = array();
+            foreach($rows as $row) {
+                if(!isset($userTags[$row[Constants::$id]])) {
+                    $userTags[$row[Constants::$id]][] = new Tag($row[Constants::$tagName], $row[Constants::$colour]);
+                }
+            } // might bug out with the mapping here FIXME
+            return $userTags;
         }
     }
 ?>

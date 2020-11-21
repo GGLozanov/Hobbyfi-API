@@ -1,18 +1,22 @@
 <?php
-
-use Facebook\Exceptions\FacebookSDKException;
+    use Facebook\Exceptions\FacebookSDKException;
 
     class FacebookTokenUtils {
 
         public static function validateAccessToken(string $accessToken) {
             require "../config/core.php";
+            /* @var $fbAppId */
 
-            $fb = new Facebook\Facebook([
-                'app_id' => $fbAppId,
-                'app_secret' => file_get_contents('../keys/fb_app_secret.txt'),
-                'default_graph_version' => 'v8.0',
-                ]
-            ); // TODO: Extract into singleton
+            try {
+                $fb = new Facebook\Facebook([
+                        'app_id' => $fbAppId,
+                        'app_secret' => file_get_contents('../keys/fb_app_secret.txt'),
+                        'default_graph_version' => 'v8.0',
+                    ]
+                );
+            } catch (FacebookSDKException $e) {
+                return null;
+            } // TODO: Extract into singleton
 
             $oAuth2Client = $fb->getOAuth2Client();
 

@@ -6,6 +6,7 @@
     require "../init.php";
     include_once '../config/core.php';
     require "../models/user.php";
+    /** @var $db */
 
     if(!$refresh_jwt = APIUtils::getTokenFromHeaders()) {
         return;

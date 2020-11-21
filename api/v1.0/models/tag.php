@@ -3,7 +3,7 @@
     // TODO: Unnecessary?
     require_once("model.php");
    
-    class Tag extends Model {
+    class Tag extends Model implements JsonSerializable {
         private string $name;
         private string $colour;
 
@@ -22,6 +22,13 @@
 
         public function getColour() {
             return $this->colour;
+        }
+
+        public function jsonSerialize() {
+            return [
+                Constants::$name => $this->name,
+                Constants::$colour => $this->colour
+            ];
         }
     }
 

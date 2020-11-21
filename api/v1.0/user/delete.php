@@ -6,6 +6,7 @@
 
     require "../init.php";
     require "../models/user.php";
+    /** @var $db */
 
     if(!$token = APIUtils::getTokenFromHeaders()) {
         return;

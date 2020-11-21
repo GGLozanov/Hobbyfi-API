@@ -1,0 +1,140 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="BranchesTreeState">
+    <expand>
+      <path>
+        <item name="ROOT" type="e8cecc67:BranchNodeDescriptor" />
+        <item name="LOCAL_ROOT" type="e8cecc67:BranchNodeDescriptor" />
+      </path>
+      <path>
+        <item name="ROOT" type="e8cecc67:BranchNodeDescriptor" />
+        <item name="REMOTE_ROOT" type="e8cecc67:BranchNodeDescriptor" />
+      </path>
+      <path>
+        <item name="ROOT" type="e8cecc67:BranchNodeDescriptor" />
+        <item name="REMOTE_ROOT" type="e8cecc67:BranchNodeDescriptor" />
+        <item name="GROUP_NODE:origin" type="e8cecc67:BranchNodeDescriptor" />
+      </path>
+    </expand>
+    <select />
+  </component>
+  <component name="ChangeListManager">
+    <list default="true" id="1ba16d1b-5e7e-476a-9cc1-ac6a9edbf432" name="Default Changelist" comment="">
+      <change afterPath="$PROJECT_DIR$/api/v1.0/models/tag_model.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/api/v1.0/consts/constants.php" beforeDir="false" afterPath="$PROJECT_DIR$/api/v1.0/consts/constants.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/api/v1.0/models/chatroom.php" beforeDir="false" afterPath="$PROJECT_DIR$/api/v1.0/models/chatroom.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/api/v1.0/models/tag.php" beforeDir="false" afterPath="$PROJECT_DIR$/api/v1.0/models/tag.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/api/v1.0/models/user.php" beforeDir="false" afterPath="$PROJECT_DIR$/api/v1.0/models/user.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/api/v1.0/service/database.php" beforeDir="false" afterPath="$PROJECT_DIR$/api/v1.0/service/database.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/api/v1.0/user/authenticate.php" beforeDir="false" afterPath="$PROJECT_DIR$/api/v1.0/user/authenticate.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/api/v1.0/user/create.php" beforeDir="false" afterPath="$PROJECT_DIR$/api/v1.0/user/create.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/api/v1.0/user/delete.php" beforeDir="false" afterPath="$PROJECT_DIR$/api/v1.0/user/delete.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/api/v1.0/user/edit.php" beforeDir="false" afterPath="$PROJECT_DIR$/api/v1.0/user/edit.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/api/v1.0/user/read.php" beforeDir="false" afterPath="$PROJECT_DIR$/api/v1.0/user/read.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/api/v1.0/user/refresh_token.php" beforeDir="false" afterPath="$PROJECT_DIR$/api/v1.0/user/refresh_token.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/api/v1.0/users/read.php" beforeDir="false" afterPath="$PROJECT_DIR$/api/v1.0/users/read.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/api/v1.0/utils/facebook_token_utils.php" beforeDir="false" afterPath="$PROJECT_DIR$/api/v1.0/utils/facebook_token_utils.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/api/v1.0/utils/image_utils.php" beforeDir="false" afterPath="$PROJECT_DIR$/api/v1.0/utils/image_utils.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/api/v1.0/utils/tag_utils.php" beforeDir="false" afterPath="$PROJECT_DIR$/api/v1.0/utils/tag_utils.php" afterDir="false" />
+    </list>
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="ComposerSettings" doNotAsk="true" synchronizationState="SYNCHRONIZE">
+    <pharConfigPath>$PROJECT_DIR$/composer.json</pharConfigPath>
+    <execution />
+  </component>
+  <component name="FileTemplateManagerImpl">
+    <option name="RECENT_TEMPLATES">
+      <list>
+        <option value="composer.json" />
+      </list>
+    </option>
+  </component>
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+  </component>
+  <component name="PhpDebugGeneral" listening_started="true" />
+  <component name="PhpWorkspaceProjectConfiguration">
+    <include_path>
+      <path value="$PROJECT_DIR$/vendor/firebase/php-jwt" />
+      <path value="$PROJECT_DIR$/vendor/ralouphie/getallheaders" />
+      <path value="$PROJECT_DIR$/vendor/composer" />
+      <path value="$PROJECT_DIR$/vendor/psr/http-message" />
+      <path value="$PROJECT_DIR$/vendor/guzzlehttp/psr7" />
+      <path value="$PROJECT_DIR$/vendor/facebook/graph-sdk" />
+      <path value="$PROJECT_DIR$/vendor/php-http/promise" />
+      <path value="$PROJECT_DIR$/vendor/php-http/discovery" />
+      <path value="$PROJECT_DIR$/vendor/php-http/message" />
+      <path value="$PROJECT_DIR$/vendor/php-http/curl-client" />
+      <path value="$PROJECT_DIR$/vendor/php-http/httplug" />
+      <path value="$PROJECT_DIR$/vendor/php-http/message-factory" />
+      <path value="$PROJECT_DIR$/vendor/clue/stream-filter" />
+    </include_path>
+  </component>
+  <component name="ProjectId" id="1kY3RmCSKXW1hf6Dqve0q9b2Dds" />
+  <component name="ProjectViewState">
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent">
+    <property name="DatabaseDriversLRU" value="mysql" />
+    <property name="RunOnceActivity.OpenProjectViewOnStart" value="true" />
+    <property name="WebServerToolWindowFactoryState" value="false" />
+    <property name="last_opened_file_path" value="$PROJECT_DIR$" />
+    <property name="php.override.implement.member.chooser.php.doc" value="NONE" />
+    <property name="vue.rearranger.settings.migration" value="true" />
+  </component>
+  <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="1ba16d1b-5e7e-476a-9cc1-ac6a9edbf432" name="Default Changelist" comment="" />
+      <created>1605863698420</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1605863698420</updated>
+      <workItem from="1605863707629" duration="18506000" />
+      <workItem from="1605953215267" duration="5010000" />
+    </task>
+    <servers />
+  </component>
+  <component name="TypeScriptGeneratedFilesManager">
+    <option name="version" value="3" />
+  </component>
+  <component name="Vcs.Log.Tabs.Properties">
+    <option name="TAB_STATES">
+      <map>
+        <entry key="MAIN">
+          <value>
+            <State />
+          </value>
+        </entry>
+      </map>
+    </option>
+    <option name="oldMeFiltersMigrated" value="true" />
+  </component>
+  <component name="WindowStateProjectService">
+    <state x="336" y="361" key="#SQL_Dialects" timestamp="1605864058037">
+      <screen x="0" y="0" width="1920" height="1040" />
+    </state>
+    <state x="336" y="361" key="#SQL_Dialects/0.0.1920.1040@0.0.1920.1040" timestamp="1605864058037" />
+    <state x="552" y="178" key="#com.intellij.execution.impl.EditConfigurationsDialog" timestamp="1605864887543">
+      <screen x="0" y="0" width="1920" height="1040" />
+    </state>
+    <state x="552" y="178" key="#com.intellij.execution.impl.EditConfigurationsDialog/0.0.1920.1040@0.0.1920.1040" timestamp="1605864887543" />
+    <state x="765" y="202" key="#com.intellij.ide.util.MemberChooser" timestamp="1605879529738">
+      <screen x="0" y="0" width="1920" height="1040" />
+    </state>
+    <state x="765" y="202" key="#com.intellij.ide.util.MemberChooser/0.0.1920.1040@0.0.1920.1040" timestamp="1605879529738" />
+    <state x="794" y="443" key="NewPhpFileDialog" timestamp="1605866878176">
+      <screen x="0" y="0" width="1920" height="1040" />
+    </state>
+    <state x="794" y="443" key="NewPhpFileDialog/0.0.1920.1040@0.0.1920.1040" timestamp="1605866878176" />
+    <state x="667" y="119" width="585" height="801" key="find.popup" timestamp="1605959129742">
+      <screen x="0" y="0" width="1920" height="1040" />
+    </state>
+    <state x="667" y="119" width="585" height="801" key="find.popup/0.0.1920.1040@0.0.1920.1040" timestamp="1605959129742" />
+  </component>
+</project>

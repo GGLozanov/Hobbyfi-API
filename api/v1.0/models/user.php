@@ -3,18 +3,18 @@
     require_once("id_model.php");
     require_once("expanded_model.php");
     require_once("image_model.php");
+    require_once ("tag_model.php");
     require_once("../init.php");
 
     class User extends Model {
         use \IdModel;
         use \ImageModel;
         use \ExpandedModel;
+        use \TagModel;
         
         private ?string $email;
 
         private ?int $chatroomId; // FK
-
-        private ?array $tags;
 
         public function __construct(
                 int $id = null, 
@@ -42,7 +42,7 @@
 
             $condStatus |= ($this->email != null) << 4; // 10000
             $condStatus |= ($userPassword != null) << 3; // 01000
-            $condStatus |= ($this->username != null) << 2; // 00100
+            $condStatus |= ($this->name != null) << 2; // 00100
             $condStatus |= ($this->description != null) << 1; // 00010
             $condStatus |= $this->chatroomId != null;
 
@@ -54,7 +54,7 @@
                 $firstField == 5);
             $this->addUpdateFieldToQuery($condStatus & 0b01000, $sql, $commaCount, Constants::$password, $userPassword,
                 $firstField == 4);
-            $this->addUpdateFieldToQuery($condStatus & 0b00100, $sql, $commaCount, Constants::$username, $this->username,
+            $this->addUpdateFieldToQuery($condStatus & 0b00100, $sql, $commaCount, Constants::$username, $this->name,
                 $firstField == 3);
             $this->addUpdateFieldToQuery($condStatus & 0b00010, $sql, $commaCount, Constants::$description, $this->description,
                 $firstField == 2);
@@ -80,14 +80,6 @@
 
         public function setChatroomId(int $chatroomId = null) {
             $this->chatroomId = $chatroomId;
-        }
-
-        public function getTags() {
-            return $this->tags;
-        }
-
-        public function setTags(array $tags = null) {
-            $this->tags = $tags;
         }
     }
 ?>

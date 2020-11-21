@@ -8,6 +8,7 @@
     require "../models/user.php";
     require "../models/tag.php";
     require "../utils/image_utils.php";
+    /** @var $db */
 
     // allow facebook access token to be sent in authorization header and handled here to see whether
     // the user should be allowed to register without password, email, etc.
@@ -75,7 +76,7 @@
             }
 
             // if facebook user authenticates here, send the token back but just don't use it and authenticate facebook user client-side
-            $jwt = JWTUtils::encodeJWT(JWTUtils::getPayload($id, time() + (60 * 10))); // encodes specific jwt w/ expiry time for access token
+            $jwt = JWTUtils::encodeJWT(JWTUtils::getPayload($id, time() + (8 * 60 * 60))); // encodes specific jwt w/ expiry time for access token
             $refresh_jwt = JWTUtils::encodeJWT(JWTUtils::getPayload($id, time() + (24 * 60 * 60))); // encode refresh token w/ long expiry
 
             if($hasImage) {
@@ -85,7 +86,7 @@
 
             APIUtils::displayAPIResult(array(
                 Constants::$response=>Constants::$ok, 
-                Constants::$jwt=>$isFacebookUser ? Constants::$facebookUserCreated : $jwt, // FIXME: potential security threat with this no password FB user inferrence
+                Constants::$jwt=>$isFacebookUser ? Constants::$facebookUserCreated : $jwt,
                 Constants::$refreshJwt=>$isFacebookUser ? Constants::$facebookAccessGranted : $refresh_jwt), 201); // 201 - created; not the best API design... lol
             $db->closeConnection(); // make sure to close the connection after that (don't allow too many auths in one instance of the web service)
             return;
@@ -97,9 +98,8 @@
 
     APIUtils::displayAPIResult(array(Constants::$response=>$status), $code);
         // output the result in the form of a json encoded response (response<->status & new user id<->last insert id)
-        // last inser Id might cause problems in the future and return incorrect ids if multiple queries are occurring at the same time
+        // last insert Id might cause problems in the future and return incorrect ids if multiple queries are occurring at the same time
 
-        // need id for image upload; might need to rework that and have image upload here.
         // id is nonexistent if there's a server error
 
    $db->closeConnection();

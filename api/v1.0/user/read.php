@@ -1,9 +1,12 @@
 <?php
-    // Receive request w/ Authorization header -> token
-    // id inside token -> query db
+    header("Access-Control-Allow-Origin: *");
+    header("Access-Control-Allow-Methods: GET");
+    header("Content-Type: application/json; charset=UTF-8");
+
     require "../init.php";
     include_once '../config/core.php';
     require "../models/user.php";
+    /** @var $db */
 
     if(!$token = APIUtils::getTokenFromHeaders()) {
         return;
@@ -18,9 +21,11 @@
                 Constants::$email=>$user->getEmail(), 
                 Constants::$username=>$user->getName(), 
                 Constants::$description=>$user->getDescription(),
-                Constants::$photoUrl=> $user->getHasImage() ? 
+                Constants::$chatroomId=>$user->getChatroomId(),
+                Constants::$photoUrl=>$user->getHasImage() ?
                     'http://' . $_SERVER['SERVER_NAME'] . ':' . $_SERVER['SERVER_PORT'] .'/AuthIO-Service/uploads/' . $user->getId() . '.jpg'
-                        : null
+                        : null,
+                Constants::$tags=>$user->getTags()
                 )
             );
             $db->closeConnection();

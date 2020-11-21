@@ -8,12 +8,17 @@
         public static string $description = "description";
         public static string $tags = "tags";
         public static string $image = "image";
+        public static string $tagName = "tag_name";
         public static string $name = "name";
         public static string $colour = "colour";
         public static string $chatroomId = "chatroom_id";
         public static string $userChatroomId = "user_chatroom_id";
         public static string $photoUrl = "photo_url";
         public static string $hasImage = "has_image";
+        public static string $ownerId = "owner_id";
+        public static string $lastEventId = "last_event_id";
+
+        public static string $page = "page";
 
         public static string $response = "response";
         public static string $jwt = "jwt";
@@ -51,6 +56,7 @@
         public static string $userNotDeleted = "User not deleted";
         
         // TODO: Other models CRUD error strings
+        public static string $userTagsTable = "user_tags";
 
     }
 
