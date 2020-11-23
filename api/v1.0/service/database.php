@@ -305,43 +305,6 @@
             return $sql;
         }
 
-
-        /* private function getTagsByUserId(int $userId) {
-            require "../models/tag.php";
-
-            $tags_result = $this->executeSingleUserIdParamStatement($userId, "SELECT tag_name, colour FROM user_tags us_tags
-            INNER JOIN tags ts ON us_tags.tag_name LIKE ts.name
-            WHERE user_id = ?")->get_result();
-
-            if(mysqli_num_rows($tags_result) > 0) {
-                $rows = mysqli_fetch_assoc($tags_result);
-
-                return array_map(function(array $row) {
-                    return new Tag($row['name'], $row['colour']);
-                }, $rows);
-            }
-
-            return null;
-        }
-
-        private function getTagsByChatroomId(int $chatroomId) {
-            require "../models/tag.php";
-
-            $tags_result = $this->executeSingleUserIdParamStatement($chatroomId, "SELECT tag_name, colour FROM chatroom_tags ch_tags
-            INNER JOIN tags ts ON ch_tags.tag_name LIKE ts.name
-            WHERE ch_tags.chatroom_id = ?")->get_result();
-
-            if(mysqli_num_rows($tags_result) > 0) {
-                $rows = mysqli_fetch_assoc($tags_result);
-
-                return array_map(function(array $row) {
-                    return new Tag($row['name'], $row['colour']);
-                }, $rows);
-            }
-
-            return null;
-        } */
-
         private function extractTagsFromJoinQuery(array $rows) {
             require "../models/tag.php";
 
