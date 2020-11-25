@@ -51,7 +51,7 @@
             }
 
             if($insertSuccess) { // if at least one row inserted => success
-                return $id == null ? $userId : $id;
+                return $id ?: $userId;
             }
             return null;
         }
@@ -119,7 +119,6 @@
             return null;
         }
 
-        // only place void of prepared stmtns
         public function updateUser(User $user, ?string $password) {
             mysqli_query($this->connection, $user->getUpdateQuery($password));
 
@@ -175,7 +174,38 @@
 
         // TODO: Assert these requests have authority to be performed in db
         public function createChatroom(int $ownerId, Chatroom $chatroom) {
-        
+            $stmt = $this->connection->prepare("INSERT INTO chatrooms(id, name, description, has_image, owner_id, last_event_id) 
+                VALUES(?, ?, ?, ?, ?, ?)");
+
+            // still need to destruct this class and allocate more variables for this goddamn bind_param() method...
+            $id = $chatroom->getId();
+            $name = $chatroom->getName();
+            $description = $chatroom->getDescription();
+            $hasImage = $chatroom->getHasImage();
+            $ownerId = $chatroom->getOwnerId();
+            $lastEventId = $chatroom->getLastEventId();
+
+            $stmt->bind_param("issiii",
+                $id,
+                $name,
+                $description,
+                $hasImage,
+                $ownerId,
+                $lastEventId
+            );
+
+            $insertSuccess = $stmt->execute();
+
+            $chatroomId = mysqli_insert_id($this->connection);
+
+            if($chatroom->getTags()) { // insert user tags here
+                $this->connection->query($this->getTagArrayInsertQuery($chatroom->getTags()));
+            }
+
+            if($insertSuccess) { // if at least one row inserted => success
+                return $id ?: $chatroomId;
+            }
+            return null;
         }
 
         public function updateChatroom(int $ownerId, int $chatroomId, Chatroom $chatroom) {
@@ -224,37 +254,38 @@
             // handle user not in chatroom error
         }
 
-        public function createChatroomMessage(int $userId, Message $message) {
+        public function createChatroomMessage(int $ownerId, Message $message) {
             // handle user not in chatroom error
             // FCM
         }
 
-        public function deleteChatroomMessage(int $messageId) {
+        public function deleteChatroomMessage(int $ownerId, int $messageId) {
             // assert message owner OR chatroom owner
 
             // FCM
         }
 
-        public function updateChatroomMessage(int $userId, int $messageId, Message $message) {
+        public function updateChatroomMessage(int $ownerId, int $messageId, Message $message) {
             // assert message owner & correct chatroom
             // FCM
         }
 
-        public function createChatroomEvent(int $ownerId, Event $event) {
+        // chatroom id is sent through query param
+        public function createChatroomEvent(int $ownerId, int $chatroomId, Event $event) {
             // assert chatroom owner and update
             // FCM
         }
 
-        public function deleteChatroomEvent(int $ownerId, int $eventId) {
+        public function deleteChatroomEvent(int $ownerId, int $chatroomId, int $eventId) {
             // assert chatroom owner & delete
             // FCM
         }
 
-        public function updateChatroomEvent(int $ownerId, int $eventId, Event $event) {
+        public function updateChatroomEvent(int $ownerId, int $chatroomId, int $eventId, Event $event) {
             // assert chatroom owner & update
             // FCM
         }
-
+        
         public function updateUserTags(int $userId, ?array $tags) {
             // INSERT tag if not in tags table => skip otherwise
             // REPLACE query - all user tags
@@ -262,10 +293,25 @@
                 return false;
             }
 
-            $result = $this->connection->query($this->getTagArrayReplaceQuery(Constants::$userTagsTable, $userId, $tags));
+            $result = $this->connection->query($this->getTagArrayReplaceQuery(Constants::$userTagsTable, Constants::$userId, $userId, $tags));
 
             return mysqli_affected_rows($this->connection) > 0 || mysqli_num_rows($result) > 0;
         }
+
+        public function updateChatroomTags(int $ownerId, int $chatroomId, ?array $tags) {
+            // INSERT tag if not in tags table => skip otherwise
+            // REPLACE query - all user tags
+            if(!$tags || !($this->isUserChatroomOwner($ownerId, $chatroomId))) {
+                return false;
+            }
+
+            // TODO: Assert that ownerId is chatroom owner
+
+            $result = $this->connection->query($this->getTagArrayReplaceQuery(Constants::$userTagsTable, Constants::$chatroomId, $chatroomId, $tags));
+
+            return mysqli_affected_rows($this->connection) > 0 || mysqli_num_rows($result) > 0;
+        }
+
 
         // TODO: Model CRUD operations here
 
@@ -292,14 +338,14 @@
             return $sql;
         }
 
-        private function getTagArrayReplaceQuery(string $table, int $userId, array $tags) {
-            $dataArray = array_map(function($tag) use($userId) {
+        private function getTagArrayReplaceQuery(string $table, string $modelColumn, int $modelId, array $tags) {
+            $dataArray = array_map(function($tag) use($modelId) {
                 $name = $this->connection->real_escape_string($tag->getName());
         
-                return "('$userId', '$name')";
+                return "('$modelId', '$name')";
             }, $tags);
         
-            $sql = "REPLACE INTO $table (user_id, tag_name) VALUES ";
+            $sql = "REPLACE INTO $table ($modelColumn, tag_name) VALUES ";
             $sql .= implode(',', $dataArray);
         
             return $sql;
@@ -315,6 +361,28 @@
                 }
             } // might bug out with the mapping here FIXME
             return $userTags;
+        }
+
+        private function isUserPartOfChatroom(int $userId, int $chatroomId) {
+            $result = $this->executeSingleUserIdParamStatement($userId, "SELECT user_chatroom_id FROM users WHERE id = ?")
+                ->get_result();
+            if($result) {
+                $result->fetch_row();
+            }
+
+            return false;
+        }
+
+        private function isUserChatroomOwner(int $userId, int $chatroomId) {
+            $stmt = $this->connection->prepare("SELECT COUNT(*) FROM users usrs
+                INNER JOIN chatrooms chrms ON usrs.user_chatroom_id = ?
+                WHERE chrms.owner_id = ?");
+
+            $stmt->bind_param("ii",
+                $chatroomId, $userId);
+            $stmt->execute();
+
+            return $stmt->get_result()->fetch_row()[0] > 0 ?: false; // first row is count at first column - the value of said count
         }
     }
 ?>

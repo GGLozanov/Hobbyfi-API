@@ -12,8 +12,8 @@
         use \ImageModel;
         use \TagModel;
 
-        private int $ownerId;
-        private int $lastEventId;
+        private ?int $ownerId;
+        private ?int $lastEventId;
 
         function __construct(
                 int $id = null, 
@@ -34,6 +34,22 @@
 
         function getUpdateQuery(string $userPassword = null) {
             
+        }
+
+        function getOwnerId() {
+            return $this->ownerId;
+        }
+
+        function setOwnerId(int $ownerId) {
+            $this->ownerId = $ownerId;
+        }
+
+        function getLastEventId() {
+            return $this->lastEventId;
+        }
+
+        function setLastEventId(int $lastEventId) {
+            $this->lastEventId = $lastEventId;
         }
     }
 
