@@ -11,6 +11,7 @@
         public static string $tagName = "tag_name";
         public static string $name = "name";
         public static string $colour = "colour";
+        public static string $isFromFacebook = "is_from_facebook";
         public static string $userId = "user_id";
         public static string $chatroomId = "chatroom_id";
         public static string $userChatroomId = "user_chatroom_id";

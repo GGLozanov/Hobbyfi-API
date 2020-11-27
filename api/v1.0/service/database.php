@@ -22,6 +22,7 @@
         }
 
         public function createUser(User $user, ?string $password) {
+            // TODO: Transaction
             $stmt = $this->connection->prepare("INSERT INTO users(id, email, username, password, description, has_image, user_chatroom_id) 
             VALUES(?, ?, ?, ?, ?, ?, ?)");
 
@@ -98,10 +99,10 @@
             require "../models/tag.php";
 
             $user_result = $this->executeSingleUserIdParamStatement($id, "SELECT 
-                us.description, us.username, us.email, us.has_image, us.user_chatroom_id, us_tags.tag_name, tgs.colour
+                us.description, us.username, us.email, us.has_image, us.user_chatroom_id, us_tags.tag_name, tgs.colour, tgs.is_from_facebook
                 FROM users us
-                INNER JOIN user_tags us_tags ON us.id = us_tags.user_id
-                INNER JOIN tags tgs ON tgs.name LIKE us_tags.tag_name
+                LEFT JOIN user_tags us_tags ON us.id = us_tags.user_id
+                LEFT JOIN tags tgs ON tgs.name LIKE us_tags.tag_name
                 WHERE id = ?"
             )->get_result();
             
@@ -111,9 +112,11 @@
                 return new User($id,
                     $rows[0][Constants::$email], $rows[0][Constants::$username],
                     $rows[0][Constants::$description], $rows[0][Constants::$hasImage],
-                    $rows[0][Constants::$userChatroomId], array_map(function(array $row) {
-                        return new Tag($row[Constants::$tagName], $row[Constants::$colour]);
-                    }, $rows));
+                    $rows[0][Constants::$userChatroomId],
+                    ($rows[0][Constants::$tagName] != null && $rows[0][Constants::$colour] 
+                    != null && $rows[0][Constants::$isFromFacebook] != null) ? array_map(function(array $row) {
+                        return new Tag($row[Constants::$tagName], $row[Constants::$colour], $row[Constants::$isFromFacebook]);
+                    }, $rows) : null);
             }
 
             return null;
@@ -141,10 +144,10 @@
         // gets all users with any id BUT this one;
         public function getChatroomUsers(int $userId, int $multiplier = 1) { // multiplier starts from 1
             $stmt = $this->connection->prepare(
-                "SELECT us.id, us.description, us.username, us.email, us.has_image, us_tags.tag_name, tgs.colour FROM 
+                "SELECT us.id, us.description, us.username, us.email, us.has_image, us_tags.tag_name, tgs.colour, tgs.is_from_facebook FROM 
                 users us
-                INNER JOIN user_tags us_tags ON us_tags.user_id = us.id
-                INNER JOIN tags tgs ON tgs.name LIKE us_tags.tag_name
+                LEFT JOIN user_tags us_tags ON us_tags.user_id = us.id
+                LEFT JOIN tags tgs ON tgs.name LIKE us_tags.tag_name
                 WHERE id != ? AND us.user_chatroom_id = (SELECT user_chatroom_id WHERE id = ?) LIMIT 5 OFFSET 5*(? - 1)");
             $stmt->bind_param("iii", $userId, $userId, $multiplier);
             $stmt->execute();
@@ -174,6 +177,7 @@
 
         // TODO: Assert these requests have authority to be performed in db
         public function createChatroom(int $ownerId, Chatroom $chatroom) {
+            // TODO: Transaction
             $stmt = $this->connection->prepare("INSERT INTO chatrooms(id, name, description, has_image, owner_id, last_event_id) 
                 VALUES(?, ?, ?, ?, ?, ?)");
 
@@ -220,9 +224,9 @@
 
         public function getChatrooms(int $userId, int $multiplier) {
             $stmt = $this->prepare(
-                "SELECT ch.id, ch.name, ch,description, ch.has_image, ch.owner_id, ch.last_event_id, ch_tags.tag_name, tgs.colour FROM chatrooms ch
-                    INNER JOIN chatroom_tags ch_tags ON ch.id = ch_tags.chatroom_id 
-                    INNER JOIN tags tgs ON ch_tags.tag_name LIKE tgs.name
+                "SELECT ch.id, ch.name, ch,description, ch.has_image, ch.owner_id, ch.last_event_id, ch_tags.tag_name, tgs.colour, tgs.is_from_facebook FROM chatrooms ch
+                    LEFT JOIN chatroom_tags ch_tags ON ch.id = ch_tags.chatroom_id 
+                    LEFT JOIN tags tgs ON ch_tags.tag_name LIKE tgs.name
                     WHERE (SELECT user_chatroom_id FROM users WHERE ? = id) = ? LIMIT 5 OFFSET 5*(? - 1)"
             );
             $stmt->bind_param("ii", $userId, $multiplier);
@@ -328,13 +332,14 @@
             $dataArray = array_map(function($tag) {
                 $name = $this->connection->real_escape_string($tag->getName());
                 $colour = $this->connection->real_escape_string($tag->getColour());
-        
-                return "('$name', '$colour')";
+                $isFromFacebook = $tag->isFromFacebook() ?: 0;
+
+                return "('$name', '$colour', $isFromFacebook)";
             }, $tags);
-        
-            $sql = "INSERT IGNORE INTO tags (name, colour) VALUES "; // IGNORE ignores duplicate key errors and doesn't insert tags w/ same name
+
+            $sql = "INSERT IGNORE INTO tags(" . Constants::$name . ", " . Constants::$colour . ", " . Constants::$isFromFacebook . ") VALUES "; // IGNORE ignores duplicate key errors and doesn't insert tags w/ same name
             $sql .= implode(',', $dataArray);
-        
+
             return $sql;
         }
 
@@ -357,9 +362,9 @@
             $userTags = array();
             foreach($rows as $row) {
                 if(!isset($userTags[$row[Constants::$id]])) {
-                    $userTags[$row[Constants::$id]][] = new Tag($row[Constants::$tagName], $row[Constants::$colour]);
+                    $userTags[$row[Constants::$id]][] = new Tag($row[Constants::$tagName], $row[Constants::$colour], $row[Constants::$isFromFacebook]);
                 }
-            } // might bug out with the mapping here FIXME
+            }
             return $userTags;
         }
 
