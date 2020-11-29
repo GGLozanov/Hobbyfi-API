@@ -1,14 +1,12 @@
 <?php
     abstract class Model {
-        protected function addUpdateFieldToQuery(bool $fieldNull, string &$sql, int &$commaCount, string $field, $value, bool $isFirstField) {
+
+        protected function addUpdateFieldToQuery(bool $fieldNull, string $field, $value) {
             $isValueString = is_string($value);
             if($fieldNull) {
-                if($commaCount > 0 && !$isFirstField) {
-                    $sql .= $isValueString ?  ", $field = '$value'" : ", $field = $value";
-                    $commaCount--;
-                } else
-                    $sql .= $isValueString ? " $field = '$value'" : " $field = $value";
+                return $isValueString ? " $field = '$value'" : " $field = $value";
             }
+            return null;
         }
 
         // only User model does something with the argument, the rest can ignore it

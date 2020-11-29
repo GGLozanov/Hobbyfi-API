@@ -80,7 +80,7 @@
             $refresh_jwt = JWTUtils::encodeJWT(JWTUtils::getPayload($id, time() + (24 * 60 * 60))); // encode refresh token w/ long expiry
 
             if($hasImage) {
-                ImageUtils::uploadImageToPath($id, Constants::$userProfileImagesDir, $image);
+                ImageUtils::uploadImageToPath($id, Constants::$userProfileImagesDir, $image, Constants::$users);
                 // TODO: Handle image upload fail
             }
 

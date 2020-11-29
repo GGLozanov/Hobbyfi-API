@@ -5,10 +5,10 @@
     class Message extends Model {
         use \IdModel;
 
-        private string $message;
-        private string $createTime; // ISO string translated to sql timestamp
-        private int $chatroomSentId;
-        private int $userSentId;        
+        private ?string $message;
+        private ?string $createTime; // ISO string translated to sql timestamp
+        private ?int $chatroomSentId;
+        private ?int $userSentId;
 
         function __construct(
                 int $id = null, 

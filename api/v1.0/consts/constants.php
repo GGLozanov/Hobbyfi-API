@@ -60,6 +60,10 @@
         // TODO: Other models CRUD error strings
         public static string $userTagsTable = "user_tags";
 
+
+        public static string $users = "users";
+        public static string $chatrooms = "chatrooms";
+        public static string $events = "events";
     }
 
 ?>

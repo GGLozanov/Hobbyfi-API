@@ -1,6 +1,6 @@
 <?php
     class ImageUtils {
-        public static function uploadImageToPath(string $title, string $path, string $base64Image) {
+        public static function uploadImageToPath(string $title, string $path, string $base64Image, string $modelType) {
             require "../init.php";
             /* @var $db */
 
@@ -13,8 +13,13 @@
             $upload_path = $dir . "$title.jpg";
 
             file_put_contents($upload_path, base64_decode($base64Image)); // write decoded image to the filesystem (1.jpg, 2.jpg, etc.)
-    
-            return $db->setUserHasImage($title, true);
+
+            if($modelType != Constants::$chatrooms && $modelType != Constants::$users
+                && $modelType != Constants::$events) {
+                return $db->setModelHasImage($title, true, $modelType);
+            }
+
+            return false;
         }
     }
 

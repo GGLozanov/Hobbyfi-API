@@ -24,7 +24,7 @@
         $shouldNotUpdateUser = !$hasEmail && !$hasPassword && !$hasUsername && !$hasDescription && !$hasChatroomId && !$hasTags;
 
         if($hasImage) {
-            ImageUtils::uploadImageToPath($userId, Constants::$userProfileImagesDir, $_POST[Constants::$image]);
+            ImageUtils::uploadImageToPath($userId, Constants::$userProfileImagesDir, $_POST[Constants::$image], Constants::$users);
             if($shouldNotUpdateUser) { // FIXME: better logic flow here for only image handling
                 APIUtils::displayAPIResult(array(Constants::$response=>Constants::$ok), 200);
                 return;

@@ -33,7 +33,19 @@
         }
 
         function getUpdateQuery(string $userPassword = null) {
-            
+            $sql = "UPDATE chatrooms SET";
+
+            $updateColumns = array();
+            $updateColumns[] = $this->addUpdateFieldToQuery($this->name != null, Constants::$name, $this->name);
+            $updateColumns[] = $this->addUpdateFieldToQuery($this->description != null, Constants::$description, $this->description);
+            $updateColumns[] = $this->addUpdateFieldToQuery($this->ownerId != null, Constants::$ownerId, $this->ownerId);
+            $updateColumns[] = $this->addUpdateFieldToQuery($this->lastEventId != null, Constants::$lastEventId, $this->lastEventId);
+
+            $updateColumns = array_filter($updateColumns);
+
+            $sql .= implode(',', $updateColumns) . " WHERE id = $this->id";
+
+            return $sql;
         }
 
         function getOwnerId() {

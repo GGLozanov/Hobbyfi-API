@@ -57,15 +57,6 @@
             return null;
         }
 
-        public function setUserHasImage(int $id, bool $hasImage) {
-            $stmt = $this->connection->prepare("UPDATE users SET has_image = ? WHERE id = ?");
-            
-            $stmt->bind_param("ii", $hasImage, $id);
-            $stmt->execute();
-
-            return $stmt->affected_rows >= 0; // TODO: Check if this still works properly
-        }
-
         public function userExistsOrPasswordTaken(string $username, $password) { // user exists if username or password are taken
             $stmt = $this->connection->prepare("SELECT username FROM users WHERE username = ? OR password = ?");
             $stmt->bind_param("ss", $username, $password);
@@ -98,7 +89,7 @@
         public function getUser(int $id) { // user already auth'd at this point due to token => get user by id
             require "../models/tag.php";
 
-            $user_result = $this->executeSingleUserIdParamStatement($id, "SELECT 
+            $user_result = $this->executeSingleIdParamStatement($id, "SELECT 
                 us.description, us.username, us.email, us.has_image, us.user_chatroom_id, us_tags.tag_name, tgs.colour, tgs.is_from_facebook
                 FROM users us
                 LEFT JOIN user_tags us_tags ON us.id = us_tags.user_id
@@ -123,18 +114,19 @@
         }
 
         public function updateUser(User $user, ?string $password) {
-            mysqli_query($this->connection, $user->getUpdateQuery($password));
+            $result = mysqli_query($this->connection, $user->getUpdateQuery($password));
 
+            $updatedRows = mysqli_affected_rows($this->connection);
             $wereTagsUpdated = true;
             if($tags = $user->getTags()) { // somewhat unnecessary check given the method..
                 $wereTagsUpdated = $this->updateUserTags($user->getId(), $tags);
             }
 
-            return mysqli_affected_rows($this->connection) >= 0 && $wereTagsUpdated;
+            return $updatedRows > 0 && $wereTagsUpdated;
         }
 
         public function deleteUser(int $id) {
-            $stmt = $this->executeSingleUserIdParamStatement($id, "DELETE FROM users WHERE id = ?");
+            $stmt = $this->executeSingleIdParamStatement($id, "DELETE FROM users WHERE id = ?");
 
             // FCM if user in chatroom => send notification
 
@@ -212,14 +204,34 @@
             return null;
         }
 
-        public function updateChatroom(int $ownerId, int $chatroomId, Chatroom $chatroom) {
+        public function updateChatroom(int $ownerId, Chatroom $chatroom) {
             // handle user not owner error
             // FCM
+            if(!$this->isUserChatroomOwner($ownerId, $chatroom->getId())) {
+                return false;
+            }
+            mysqli_query($this->connection, $chatroom->getUpdateQuery());
+
+            $updatedRows = mysqli_affected_rows($this->connection);
+            $wereTagsUpdated = true;
+            if($tags = $chatroom->getTags()) { // somewhat unnecessary check given the method..
+                $wereTagsUpdated = $this->updateUserTags($chatroom->getId(), $tags);
+            }
+
+            return $updatedRows > 0 && $wereTagsUpdated;
         }
+
 
         public function deleteChatroom(int $ownerId, int $chatroomId) {
             // handle user not owner error
-            // FCM
+            if(!$this->isUserChatroomOwner($ownerId, $chatroomId)) {
+                return false;
+            }
+
+            // FCM - delete chatroom
+            $stmt = $this->executeSingleIdParamStatement($chatroomId, "DELETE FROM chatrooms WHERE id = ?");
+
+            return $stmt->affected_rows > 0;
         }
 
         public function getChatrooms(int $userId, int $multiplier) {
@@ -319,9 +331,9 @@
 
         // TODO: Model CRUD operations here
 
-        private function executeSingleUserIdParamStatement(int $userId, string $sql) {
+        private function executeSingleIdParamStatement(int $id, string $sql) {
             $stmt = $this->connection->prepare($sql);
-            $stmt->bind_param("i", $userId);
+            $stmt->bind_param("i", $id);
             $stmt->execute();
         
             return $stmt;
@@ -369,7 +381,7 @@
         }
 
         private function isUserPartOfChatroom(int $userId, int $chatroomId) {
-            $result = $this->executeSingleUserIdParamStatement($userId, "SELECT user_chatroom_id FROM users WHERE id = ?")
+            $result = $this->executeSingleIdParamStatement($userId, "SELECT user_chatroom_id FROM users WHERE id = ?")
                 ->get_result();
             if($result) {
                 $result->fetch_row();
@@ -388,6 +400,15 @@
             $stmt->execute();
 
             return $stmt->get_result()->fetch_row()[0] > 0 ?: false; // first row is count at first column - the value of said count
+        }
+
+        public function setModelHasImage(int $id, bool $hasImage, string $table) {
+            $stmt = $this->connection->prepare("UPDATE $table SET has_image = ? WHERE id = ?");
+
+            $stmt->bind_param("ii", $hasImage, $id);
+            $stmt->execute();
+
+            return $stmt->affected_rows >= 0; // TODO: Check if this still works properly
         }
     }
 ?>
