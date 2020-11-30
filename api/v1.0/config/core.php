@@ -14,4 +14,5 @@
     $nbf = 1357000000;
 
     $fbAppId = file_get_contents('../keys/fb_app_id.txt');
+    $fbAppSecret = file_get_contents('../keys/fb_app_secret.txt');
 ?>

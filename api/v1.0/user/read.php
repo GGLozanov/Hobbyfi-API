@@ -5,12 +5,9 @@
 
     require "../init.php";
     include_once '../config/core.php';
-    require "../models/user.php";
     /** @var $db */
 
-    if(!$token = APIUtils::getTokenFromHeaders()) {
-        return;
-    }
+    $token = APIUtils::getTokenFromHeadersOrDie();
 
     if($userId = APIUtils::validateAuthorisedRequest($token)) {
         if($user = $db->getUser($userId)) {
@@ -23,13 +20,12 @@
                 Constants::$description=>$user->getDescription(),
                 Constants::$chatroomId=>$user->getChatroomId(),
                 Constants::$photoUrl=>$user->getHasImage() ?
-                    'http://' . $_SERVER['SERVER_NAME'] . ':' . $_SERVER['SERVER_PORT'] .'/AuthIO-Service/uploads/' . $user->getId() . '.jpg'
+                    (array_key_exists('HTTPS', $_SERVER) ? 'https://' : 'http://') . $_SERVER['SERVER_NAME'] . ':'
+                        . $_SERVER['SERVER_PORT'] .'/Hobbyfi-API/uploads/' . Constants::$userProfileImagesDir . '/' . $user->getId() . '.jpg'
                         : null,
                 Constants::$tags=>$user->getTags()
                 )
             );
-            $db->closeConnection();
-            return;
         } else {
             APIUtils::displayAPIResult(array(Constants::$response=>Constants::$userNotFound), 404);
         }

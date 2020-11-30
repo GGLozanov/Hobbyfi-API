@@ -45,6 +45,7 @@
         public static string $missingDataError = "Missing data";
         public static string $noCredentialsForUpdateError = "No credentials for update";
         public static string $authenticationErrorInvalidCredentials = "Invalid credentials";
+        public static $imageUploadFailed = "Image upload failed";
 
         public static string $userIdJwtKey = "userId";
 
@@ -54,8 +55,11 @@
 
         public static string $userNotCreated = "User not created";
         public static string $userNotFound = "User not found";
-        public static string $userNotUpdated = "User not updated";
+        public static string $userNotUpdated = "User not updated. Username may be taken";
         public static string $userNotDeleted = "User not deleted";
+
+        public static string $chatroomNotCreated = "Chatroom not created";
+        public static string $userAlreadyInChatroom = "User already is an owner or part of a chatroom";
         
         // TODO: Other models CRUD error strings
         public static string $userTagsTable = "user_tags";

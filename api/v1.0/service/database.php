@@ -65,6 +65,14 @@
             return mysqli_num_rows($stmt->get_result()) > 0; // if more than one row found => user exists
         }
 
+        public function userExists(string $username) { // user exists if username or password are taken
+            $stmt = $this->connection->prepare("SELECT username FROM users WHERE username = ?");
+            $stmt->bind_param("s", $username);
+            $stmt->execute();
+
+            return mysqli_num_rows($stmt->get_result()) > 0 ? "true" : "false"; // if more than one row found => user exists
+        }
+
         public function validateUser(string $email, string $password) {
             $stmt = $this->connection->prepare("SELECT id, password FROM users WHERE email = ?"); // get associated user by email
             $stmt->bind_param("s", $email);
@@ -87,7 +95,6 @@
 
         // TODO: Use transaction in multiple SELECT queries like these?
         public function getUser(int $id) { // user already auth'd at this point due to token => get user by id
-            require "../models/tag.php";
 
             $user_result = $this->executeSingleIdParamStatement($id, "SELECT 
                 us.description, us.username, us.email, us.has_image, us.user_chatroom_id, us_tags.tag_name, tgs.colour, tgs.is_from_facebook
@@ -169,6 +176,10 @@
 
         // TODO: Assert these requests have authority to be performed in db
         public function createChatroom(int $ownerId, Chatroom $chatroom) {
+            if($this->isUserPartOfChatroom($ownerId)) {
+                return false;
+            }
+
             // TODO: Transaction
             $stmt = $this->connection->prepare("INSERT INTO chatrooms(id, name, description, has_image, owner_id, last_event_id) 
                 VALUES(?, ?, ?, ?, ?, ?)");
@@ -369,8 +380,6 @@
         }
 
         private function extractTagsFromJoinQuery(array $rows) {
-            require "../models/tag.php";
-
             $userTags = array();
             foreach($rows as $row) {
                 if(!isset($userTags[$row[Constants::$id]])) {
@@ -380,7 +389,7 @@
             return $userTags;
         }
 
-        private function isUserPartOfChatroom(int $userId, int $chatroomId) {
+        private function isUserPartOfChatroom(int $userId) {
             $result = $this->executeSingleIdParamStatement($userId, "SELECT user_chatroom_id FROM users WHERE id = ?")
                 ->get_result();
             if($result) {

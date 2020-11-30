@@ -4,6 +4,12 @@
             require "../init.php";
             /* @var $db */
 
+            $decoded = base64_decode($base64Image);
+            if($decoded == false || ($modelType != Constants::$chatrooms && $modelType != Constants::$users
+                    && $modelType != Constants::$events)) {
+                return false;
+            }
+
             $dir = __DIR__ . "/../../../uploads/$path/";
             if(!is_dir($dir)){
                 // dir doesn't exist; create it
@@ -12,14 +18,9 @@
 
             $upload_path = $dir . "$title.jpg";
 
-            file_put_contents($upload_path, base64_decode($base64Image)); // write decoded image to the filesystem (1.jpg, 2.jpg, etc.)
+            file_put_contents($upload_path, $decoded); // write decoded image to the filesystem (1.jpg, 2.jpg, etc.)
 
-            if($modelType != Constants::$chatrooms && $modelType != Constants::$users
-                && $modelType != Constants::$events) {
-                return $db->setModelHasImage($title, true, $modelType);
-            }
-
-            return false;
+            return $db->setModelHasImage($title, true, $modelType);
         }
     }
 

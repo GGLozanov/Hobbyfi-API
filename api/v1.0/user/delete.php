@@ -5,12 +5,9 @@
     header("Accept: application/json");
 
     require "../init.php";
-    require "../models/user.php";
     /** @var $db */
 
-    if(!$token = APIUtils::getTokenFromHeaders()) {
-        return;
-    }
+    $token = APIUtils::getTokenFromHeadersOrDie();
 
     if($userId = APIUtils::validateAuthorisedRequest($token)) {
         if($db->deleteUser(
@@ -25,4 +22,6 @@
 
         APIUtils::displayAPIResult(array(Constants::$response=>$status), $code);
     }
+
+    $db->closeConnection();
 ?>

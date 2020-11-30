@@ -10,4 +10,28 @@
     require "../utils/image_utils.php";
     /** @var $db */
 
+    $token = APIUtils::getTokenFromHeadersOrDie();
+
+    if($ownerId = APIUtils::validateAuthorisedRequest($token)) {
+        $chatroom = ConverterUtils::getChatroomCreate($ownerId);
+
+        if($id = $db->createChatroom($ownerId, $chatroom)) {
+            APIUtils::displayAPIResult(array(
+                    Constants::$response=>Constants::$ok
+                )
+            ); // no need to return chatroom if client already has it; can be read & fetched in read endpoint
+        } else {
+            if($id == null) {
+                $status = Constants::$chatroomNotCreated;
+                $code = 406; // bad input
+            } else {
+                // false -> user already in a chatroom
+                $status = Constants::$userAlreadyInChatroom;
+                $code = 403; // forbidden
+            }
+            APIUtils::displayAPIResult(array(Constants::$response=>$status), $code);
+        }
+    }
+
+    $db->closeConnection();
 ?>

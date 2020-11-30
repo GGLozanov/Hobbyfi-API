@@ -3,6 +3,7 @@
     require "../config/core.php";
 
     /* @var $db */
+    /* @var $fbAppSecret */
 
     header('Content-Type: application/json');
 
@@ -12,7 +13,7 @@
 
     // Start data deletion
 
-    $status_url = 'https://' . $_SERVER['SERVER_NAME'] . 'Hobbyfi-API/api/v1.0/fb/fb_view_callback'; // URL to track the deletion
+    $status_url = 'https://' . $_SERVER['SERVER_NAME'] . ':' . $_SERVER['SERVER_PORT'] . '/Hobbyfi-API/api/v1.0/fb/fb_view_callback'; // URL to track the deletion
     $confirmation_code = '420'; // unique code for the deletion request
 
     $db->deleteUser($user_id);
@@ -25,15 +26,13 @@
 
     function parse_signed_request($signed_request) {
         list($encoded_sig, $payload) = explode('.', $signed_request, 2);
-
-        $secret = "appsecret"; // Use your app secret here
-
+        
         // decode the data
         $sig = base64_url_decode($encoded_sig);
         $data = json_decode(base64_url_decode($payload), true);
 
         // confirm the signature
-        $expected_sig = hash_hmac('sha256', $payload, $secret, $raw = true);
+        $expected_sig = hash_hmac('sha256', $payload, $fbAppSecret, $raw = true);
         if ($sig !== $expected_sig) {
             error_log('Bad Signed JSON signature!');
             return null;

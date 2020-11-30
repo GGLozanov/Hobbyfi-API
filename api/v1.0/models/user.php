@@ -3,8 +3,7 @@
     require_once("id_model.php");
     require_once("expanded_model.php");
     require_once("image_model.php");
-    require_once ("tag_model.php");
-    require_once("../init.php");
+    require_once("tag_model.php");
 
     class User extends Model {
         use \IdModel;
@@ -65,6 +64,11 @@
 
         public function setChatroomId(int $chatroomId = null) {
             $this->chatroomId = $chatroomId;
+        }
+
+        public function isUpdateFormEmpty() {
+            return $this->email == null && $this->name == null
+                && $this->description == null && $this->chatroomId == null && $this->tags == null;
         }
     }
 ?>

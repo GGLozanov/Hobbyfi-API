@@ -5,73 +5,40 @@
 
     require "../init.php"; // set up dependency for this script to init php script
     require "../config/core.php";
-    require "../models/user.php";
-    require "../models/tag.php";
     require "../utils/image_utils.php";
     /** @var $db */
 
     // allow facebook access token to be sent in authorization header and handled here to see whether
     // the user should be allowed to register without password, email, etc.
 
-    if(!array_key_exists(Constants::$username, $_POST)) { // username is mandatory no matter if FB user or normal user
-        APIUtils::displayAPIResult(array(Constants::$response=>Constants::$missingDataError), 400);
-        return;
+    $user = ConverterUtils::getUserCreate();
+    if($password = ConverterUtils::getFieldFromRequestBody(Constants::$password) != null) {
+        $password = password_hash($password, PASSWORD_DEFAULT);
     }
 
-    $hasPassword = array_key_exists(Constants::$password, $_POST);
-    $hasEmail = array_key_exists(Constants::$email, $_POST);
-    $isFacebookUser = (!$hasPassword || !$hasEmail); // at least one of the main auth credentials is missing with a facebook user
+    $isFacebookUser = (!$password || !$user->getEmail()); // at least one of the main auth credentials is missing with a facebook user
 
     $userId = null;
-    $token = null;
-    if($isFacebookUser && 
-            !($token = APIUtils::getTokenFromHeaders())) {
-        return;
-    }
 
-    if($token != null) {
+    if($isFacebookUser) {
+        $token = APIUtils::getTokenFromHeadersOrDie();
         if(($userId = FacebookTokenUtils::validateAccessToken($token)) == null || $userId == false) {
-            APIUtils::displayAPIResult(array(Constants::$response=>Constants::$facebookAuthUserCreateError));
-            return;
+            APIUtils::displayAPIResultAndDie(array(Constants::$response=>Constants::$facebookAuthUserCreateError));
         }
     }
-
-    $email = null;
-    if($hasEmail) {
-        $email = $_POST[Constants::$email];
-    }
-    
-    $username = $_POST[Constants::$username];
-
-    $password = null;
-    if(!$isFacebookUser) {
-        $password = password_hash($_POST[Constants::$password], PASSWORD_DEFAULT);
-    }
  
-    if($db->userExistsOrPasswordTaken($username, $password)) {
+    if($db->userExistsOrPasswordTaken($user->getName(), $password)) {
         $status = Constants::$userExists; // user w/ same username or password exists
         $code = 409; // 409 - conflict; resource already exists
     } else {
-        $description = null;
-        if(array_key_exists(Constants::$description, $_POST)) {
-            $description = $_POST[Constants::$description];
-        }
-    
-        $tags = array();
-        if(array_key_exists(Constants::$tags, $_POST)) {
-            $tags = TagUtils::extractTagsFromPostArray($_POST[Constants::$tags]);
-        }
-    
-        $hasImage = array_key_exists(Constants::$image, $_POST) && ($image = $_POST[Constants::$image]) != null;
 
-        if($id = $db->createUser(new User($userId, $email, $username, $description, $hasImage, null, $tags), $password)) { // hopefully short-circuit eval works here and doesn't perform a wrong sql query on an empty tag array
+        if($id = $db->createUser($user, $password)) { // hopefully short-circuit eval works here and doesn't perform a wrong sql query on an empty tag array
             
             // FIXME: Code repetition here
-            if($tags) {
-                if(!$db->updateUserTags($id, $tags)) {
-                    APIUtils::displayAPIResult(array(Constants::$response=>Constants::$tagsUploadFailed), 406);
+            if($user->getTags()) {
+                if(!$db->updateUserTags($id, $user->getTags())) {
                     $db->closeConnection();
-                    return;
+                    APIUtils::displayAPIResultAndDie(array(Constants::$response=>Constants::$tagsUploadFailed), 406);
                 }
             }
 
@@ -79,17 +46,19 @@
             $jwt = JWTUtils::encodeJWT(JWTUtils::getPayload($id, time() + (8 * 60 * 60))); // encodes specific jwt w/ expiry time for access token
             $refresh_jwt = JWTUtils::encodeJWT(JWTUtils::getPayload($id, time() + (24 * 60 * 60))); // encode refresh token w/ long expiry
 
-            if($hasImage) {
-                ImageUtils::uploadImageToPath($id, Constants::$userProfileImagesDir, $image, Constants::$users);
-                // TODO: Handle image upload fail
+            $status = Constants::$ok;
+            if($user->getHasImage()) {
+                if(!ImageUtils::uploadImageToPath($id, Constants::$userProfileImagesDir, $_POST[Constants::$image], Constants::$users)) {
+                    $status = Constants::$imageUploadFailed;
+                }
             }
 
-            APIUtils::displayAPIResult(array(
-                Constants::$response=>Constants::$ok, 
+            $db->closeConnection(); // make sure to close the connection after that (don't allow too many auths in one instance of the web service)
+
+            APIUtils::displayAPIResultAndDie(array(
+                Constants::$response=>$status,
                 Constants::$jwt=>$isFacebookUser ? Constants::$facebookUserCreated : $jwt,
                 Constants::$refreshJwt=>$isFacebookUser ? Constants::$facebookAccessGranted : $refresh_jwt), 201); // 201 - created; not the best API design... lol
-            $db->closeConnection(); // make sure to close the connection after that (don't allow too many auths in one instance of the web service)
-            return;
         } else {
             $status = Constants::$userNotCreated;
             $code = 406; // 406 - bad input
