@@ -47,7 +47,7 @@
             $hasImage = ConverterUtils::getFieldFromRequestBody(Constants::$image) != null;
             $tags = TagUtils::extractTagsFromJson(ConverterUtils::getFieldFromRequestBody(Constants::$tags));
 
-            return new User($userId, $email, $username, $description, $hasImage, null, $tags);
+            return new User($userId, $email, $username, $description, $hasImage, $chatroomId, $tags);
         }
 
         public static function getChatroomCreate(int $ownerId) {
@@ -57,6 +57,17 @@
             $tags = TagUtils::extractTagsFromJson(ConverterUtils::getFieldFromRequestBody(Constants::$tags));
 
             return new Chatroom(null, $name, $description, $hasImage, $ownerId, null, $tags);
+        }
+
+        public static function getChatroomUpdate(int $ownerId) {
+            $name = ConverterUtils::getFieldFromRequestBody(Constants::$name);
+            $description = ConverterUtils::getFieldFromRequestBody(Constants::$description);
+            $hasImage = ConverterUtils::getFieldFromRequestBody(Constants::$image) != null;
+            $tags = TagUtils::extractTagsFromJson(ConverterUtils::getFieldFromRequestBody(Constants::$tags));
+            $lastEventId = ConverterUtils::getFieldFromRequestBody(Constants::$lastEventId);
+
+            // ID is added later on in update query
+            return new Chatroom(null, $name, $description, $hasImage, $ownerId, $lastEventId, $tags);
         }
 
         private static function array_equal($a, $b) {

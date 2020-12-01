@@ -45,12 +45,26 @@
         public static string $missingDataError = "Missing data";
         public static string $noCredentialsForUpdateError = "No credentials for update";
         public static string $authenticationErrorInvalidCredentials = "Invalid credentials";
-        public static $imageUploadFailed = "Image upload failed";
+        public static string $imageUploadFailed = "Image upload failed";
 
         public static string $userIdJwtKey = "userId";
 
-        // TODO: Add other models' dirs
         public static string $userProfileImagesDir = "user_pfps";
+        public static string $data = "data";
+        public static string $data_list = "data_list";
+
+        public static function userProfileImagesDir(int $userId) {
+          return Constants::$userProfileImagesDir . "/" . $userId . ".jpg";
+        }
+        public static function chatroomImagesDir(int $chatroomId) {
+            return "chatroom_imgs_" . $chatroomId;
+        }
+
+        // TODO: Have different dir schema for messages
+        public static function chatroomMessageImagesPath(int $chatroomId, int $messageId) {
+            return Constants::chatroomImagesDir($chatroomId) . '/' . $messageId . '.jpg';
+
+        }
         // would've extracted these into a generator function if PHP hadn't been so goddamn fucking stupid
 
         public static string $userNotCreated = "User not created";
@@ -58,11 +72,16 @@
         public static string $userNotUpdated = "User not updated. Username may be taken";
         public static string $userNotDeleted = "User not deleted";
 
-        public static string $chatroomNotCreated = "Chatroom not created";
+        public static string $chatroomNotCreated = "Chatroom not created. User with this id might already own a chatroom or the chatroom's name might be taken";
+        public static string $chatroomNotFound = "Chatroom/Chatrooms not found or user with this id is already in a chatroom and shouldn't be receiving rooms";
+        public static string $chatroomNotUpdated = "Chatroom not updated. New name may already be taken";
+        public static string $chatroomNotDeleted = "Chatroom not deleted";
+
         public static string $userAlreadyInChatroom = "User already is an owner or part of a chatroom";
         
         // TODO: Other models CRUD error strings
         public static string $userTagsTable = "user_tags";
+        public static string $chatroomTagsTable = "chatroom_tags";
 
 
         public static string $users = "users";

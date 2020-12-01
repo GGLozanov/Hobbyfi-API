@@ -12,7 +12,7 @@
     // the user should be allowed to register without password, email, etc.
 
     $user = ConverterUtils::getUserCreate();
-    if($password = ConverterUtils::getFieldFromRequestBody(Constants::$password) != null) {
+    if(($password = ConverterUtils::getFieldFromRequestBody(Constants::$password)) != null) {
         $password = password_hash($password, PASSWORD_DEFAULT);
     }
 
@@ -34,9 +34,8 @@
 
         if($id = $db->createUser($user, $password)) { // hopefully short-circuit eval works here and doesn't perform a wrong sql query on an empty tag array
             
-            // FIXME: Code repetition here
-            if($user->getTags()) {
-                if(!$db->updateUserTags($id, $user->getTags())) {
+            if($tags = $user->getTags()) {
+                if(!$db->updateModelTags(Constants::$userTagsTable, Constants::$userId, $id, $tags)) {
                     $db->closeConnection();
                     APIUtils::displayAPIResultAndDie(array(Constants::$response=>Constants::$tagsUploadFailed), 406);
                 }

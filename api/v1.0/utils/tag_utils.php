@@ -7,11 +7,16 @@
             // example JSON structure for tags:
                 // tags: [ {"name": "tag_name", "colour": "#FFFFFF", "isFromFacebook": true }, {"name": "tag_name2", "colour": "#FFFFFF" } ]
 
-            if($tags == null) return null;
-
             $newTags = array();
+            if($tags == null) return $newTags;
+
             foreach($tags as $tag) {
                 $jsonTag = json_decode($tag, true);
+                if(!array_key_exists(Constants::$name, $jsonTag)
+                    || !array_key_exists(Constants::$colour, $jsonTag) || !array_key_exists(Constants::$isFromFacebook, $jsonTag)) {
+                    continue;
+                }
+
                 $newTags[] = new Tag($jsonTag[Constants::$name], $jsonTag[Constants::$colour], $jsonTag[Constants::$isFromFacebook]);
             }
 

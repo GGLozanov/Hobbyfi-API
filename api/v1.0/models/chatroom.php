@@ -5,8 +5,7 @@
     require_once ("tag_model.php");
     require_once("image_model.php");
 
-    // TODO: Decide if mixin approach or class hierarchy is better
-    class Chatroom extends Model {
+    class Chatroom extends Model implements JsonSerializable {
         use \ExpandedModel;
         use \IdModel;
         use \ImageModel;
@@ -62,6 +61,21 @@
 
         function setLastEventId(int $lastEventId) {
             $this->lastEventId = $lastEventId;
+        }
+
+        public function jsonSerialize() {
+            return [
+                Constants::$id=>$this->id,
+                Constants::$name=>$this->name,
+                Constants::$description=>$this->description,
+                Constants::$photoUrl=>$this->hasImage ?
+                    (array_key_exists('HTTPS', $_SERVER) ? 'https://' : 'http://') . $_SERVER['SERVER_NAME'] . ':'
+                    . $_SERVER['SERVER_PORT'] .'/Hobbyfi-API/uploads/' . Constants::userProfileImagesDir($this->id)
+                    : null,
+                Constants::$ownerId=>$this->ownerId,
+                Constants::$lastEventId=>$this->lastEventId,
+                Constants::$tags=>$this->tags
+            ];
         }
     }
 

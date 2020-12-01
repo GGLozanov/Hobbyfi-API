@@ -2,7 +2,7 @@
     require_once("model.php");
     require_once("id_model.php");
     
-    class Message extends Model {
+    class Message extends Model implements JsonSerializable {
         use \IdModel;
 
         private ?string $message;
@@ -56,6 +56,11 @@
 
         function getUpdateQuery(string $userPassword = null) {
             
+        }
+
+
+        public function jsonSerialize() {
+            // TODO: Implement jsonSerialize() method.
         }
     }
 

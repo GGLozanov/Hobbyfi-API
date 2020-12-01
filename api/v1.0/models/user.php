@@ -5,7 +5,7 @@
     require_once("image_model.php");
     require_once("tag_model.php");
 
-    class User extends Model {
+    class User extends Model implements JsonSerializable {
         use \IdModel;
         use \ImageModel;
         use \ExpandedModel;
@@ -69,6 +69,21 @@
         public function isUpdateFormEmpty() {
             return $this->email == null && $this->name == null
                 && $this->description == null && $this->chatroomId == null && $this->tags == null;
+        }
+
+        public function jsonSerialize() {
+            return [
+                Constants::$id=>$this->id,
+                Constants::$email=>$this->email,
+                Constants::$username=>$this->name,
+                Constants::$description=>$this->description,
+                Constants::$chatroomId=>$this->chatroomId,
+                Constants::$photoUrl=>$this->hasImage ?
+                    (array_key_exists('HTTPS', $_SERVER) ? 'https://' : 'http://') . $_SERVER['SERVER_NAME'] . ':'
+                    . $_SERVER['SERVER_PORT'] .'/Hobbyfi-API/uploads/' . Constants::userProfileImagesDir($this->id)
+                    : null,
+                Constants::$tags=>$this->getTags()
+            ];
         }
     }
 ?>

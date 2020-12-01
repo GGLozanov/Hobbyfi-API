@@ -1,5 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
+  <component name="AutoImportSettings">
+    <option name="autoReloadType" value="SELECTIVE" />
+  </component>
   <component name="BranchesTreeState">
     <expand>
       <path>
@@ -20,26 +23,21 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="1ba16d1b-5e7e-476a-9cc1-ac6a9edbf432" name="Default Changelist" comment="">
-      <change afterPath="$PROJECT_DIR$/api/v1.0/user/exists.php" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/api/v1.0/utils/converter_utils.php" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/api/v1.0/chatroom/create.php" beforeDir="false" afterPath="$PROJECT_DIR$/api/v1.0/chatroom/create.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/api/v1.0/config/core.php" beforeDir="false" afterPath="$PROJECT_DIR$/api/v1.0/config/core.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/api/v1.0/chatroom/delete.php" beforeDir="false" afterPath="$PROJECT_DIR$/api/v1.0/chatroom/delete.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/api/v1.0/chatroom/edit.php" beforeDir="false" afterPath="$PROJECT_DIR$/api/v1.0/chatroom/edit.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/api/v1.0/chatrooms/read.php" beforeDir="false" afterPath="$PROJECT_DIR$/api/v1.0/chatrooms/read.php" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/api/v1.0/consts/constants.php" beforeDir="false" afterPath="$PROJECT_DIR$/api/v1.0/consts/constants.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/api/v1.0/fb/fb_deletion_callback.php" beforeDir="false" afterPath="$PROJECT_DIR$/api/v1.0/fb/fb_deletion_callback.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/api/v1.0/init.php" beforeDir="false" afterPath="$PROJECT_DIR$/api/v1.0/init.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/api/v1.0/models/chatroom.php" beforeDir="false" afterPath="$PROJECT_DIR$/api/v1.0/models/chatroom.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/api/v1.0/models/event.php" beforeDir="false" afterPath="$PROJECT_DIR$/api/v1.0/models/event.php" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/api/v1.0/models/message.php" beforeDir="false" afterPath="$PROJECT_DIR$/api/v1.0/models/message.php" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/api/v1.0/models/user.php" beforeDir="false" afterPath="$PROJECT_DIR$/api/v1.0/models/user.php" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/api/v1.0/service/database.php" beforeDir="false" afterPath="$PROJECT_DIR$/api/v1.0/service/database.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/api/v1.0/user/authenticate.php" beforeDir="false" afterPath="$PROJECT_DIR$/api/v1.0/user/authenticate.php" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/api/v1.0/user/create.php" beforeDir="false" afterPath="$PROJECT_DIR$/api/v1.0/user/create.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/api/v1.0/user/delete.php" beforeDir="false" afterPath="$PROJECT_DIR$/api/v1.0/user/delete.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/api/v1.0/user/edit.php" beforeDir="false" afterPath="$PROJECT_DIR$/api/v1.0/user/edit.php" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/api/v1.0/user/read.php" beforeDir="false" afterPath="$PROJECT_DIR$/api/v1.0/user/read.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/api/v1.0/user/refresh_token.php" beforeDir="false" afterPath="$PROJECT_DIR$/api/v1.0/user/refresh_token.php" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/api/v1.0/users/read.php" beforeDir="false" afterPath="$PROJECT_DIR$/api/v1.0/users/read.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/api/v1.0/utils/api_utils.php" beforeDir="false" afterPath="$PROJECT_DIR$/api/v1.0/utils/api_utils.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/api/v1.0/utils/facebook_token_utils.php" beforeDir="false" afterPath="$PROJECT_DIR$/api/v1.0/utils/facebook_token_utils.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/api/v1.0/utils/converter_utils.php" beforeDir="false" afterPath="$PROJECT_DIR$/api/v1.0/utils/converter_utils.php" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/api/v1.0/utils/image_utils.php" beforeDir="false" afterPath="$PROJECT_DIR$/api/v1.0/utils/image_utils.php" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/api/v1.0/utils/tag_utils.php" beforeDir="false" afterPath="$PROJECT_DIR$/api/v1.0/utils/tag_utils.php" afterDir="false" />
     </list>
@@ -91,7 +89,7 @@
     <property name="WebServerToolWindowFactoryState" value="false" />
     <property name="last_opened_file_path" value="$PROJECT_DIR$" />
     <property name="php.override.implement.member.chooser.php.doc" value="NONE" />
-    <property name="settings.editor.selected.configurable" value="reference.settingsdialog.IDE.editor.colors.Color Scheme Font" />
+    <property name="settings.editor.selected.configurable" value="preferences.pluginManager" />
     <property name="vue.rearranger.settings.migration" value="true" />
   </component>
   <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
@@ -112,7 +110,8 @@
       <workItem from="1606650111234" duration="5757000" />
       <workItem from="1606739383642" duration="3832000" />
       <workItem from="1606749124846" duration="118000" />
-      <workItem from="1606750481046" duration="14083000" />
+      <workItem from="1606750481046" duration="14780000" />
+      <workItem from="1606816995720" duration="36398000" />
     </task>
     <servers />
   </component>
@@ -140,10 +139,10 @@
       <screen x="0" y="0" width="1920" height="1040" />
     </state>
     <state x="552" y="178" key="#com.intellij.execution.impl.EditConfigurationsDialog/0.0.1920.1040@0.0.1920.1040" timestamp="1605864887543" />
-    <state x="765" y="202" key="#com.intellij.ide.util.MemberChooser" timestamp="1605879529738">
+    <state x="765" y="202" key="#com.intellij.ide.util.MemberChooser" timestamp="1606840039841">
       <screen x="0" y="0" width="1920" height="1040" />
     </state>
-    <state x="765" y="202" key="#com.intellij.ide.util.MemberChooser/0.0.1920.1040@0.0.1920.1040" timestamp="1605879529738" />
+    <state x="765" y="202" key="#com.intellij.ide.util.MemberChooser/0.0.1920.1040@0.0.1920.1040" timestamp="1606840039841" />
     <state x="751" y="243" key="NewPhpClassDialog" timestamp="1606754265190">
       <screen x="0" y="0" width="1920" height="1040" />
     </state>
@@ -152,17 +151,21 @@
       <screen x="0" y="0" width="1920" height="1040" />
     </state>
     <state x="794" y="443" key="NewPhpFileDialog/0.0.1920.1040@0.0.1920.1040" timestamp="1606769440817" />
-    <state x="461" y="165" key="SettingsEditor" timestamp="1606652603017">
+    <state x="461" y="165" key="SettingsEditor" timestamp="1606842872148">
       <screen x="0" y="0" width="1920" height="1040" />
     </state>
-    <state x="461" y="165" key="SettingsEditor/0.0.1920.1040@0.0.1920.1040" timestamp="1606652603017" />
-    <state x="667" y="119" width="585" height="801" key="find.popup" timestamp="1606778196685">
+    <state x="461" y="165" key="SettingsEditor/0.0.1920.1040@0.0.1920.1040" timestamp="1606842872148" />
+    <state x="667" y="119" width="585" height="801" key="find.popup" timestamp="1606849369016">
       <screen x="0" y="0" width="1920" height="1040" />
     </state>
-    <state x="667" y="119" width="585" height="801" key="find.popup/0.0.1920.1040@0.0.1920.1040" timestamp="1606778196685" />
-    <state x="616" y="240" key="run.anything.popup" timestamp="1606757329014">
+    <state x="667" y="119" width="585" height="801" key="find.popup/0.0.1920.1040@0.0.1920.1040" timestamp="1606849369016" />
+    <state x="616" y="240" key="run.anything.popup" timestamp="1606856735490">
       <screen x="0" y="0" width="1920" height="1040" />
     </state>
-    <state x="616" y="240" key="run.anything.popup/0.0.1920.1040@0.0.1920.1040" timestamp="1606757329014" />
+    <state x="616" y="240" key="run.anything.popup/0.0.1920.1040@0.0.1920.1040" timestamp="1606856735490" />
+    <state x="623" y="225" width="672" height="678" key="search.everywhere.popup" timestamp="1606844487181">
+      <screen x="0" y="0" width="1920" height="1040" />
+    </state>
+    <state x="623" y="225" width="672" height="678" key="search.everywhere.popup/0.0.1920.1040@0.0.1920.1040" timestamp="1606844487181" />
   </component>
 </project>

@@ -4,7 +4,7 @@
     require_once("expanded_model.php");
     require_once("image_model.php");
 
-    class Event extends Model {
+    class Event extends Model implements JsonSerializable {
         use \IdModel;
         use \ExpandedModel;
         use \ImageModel;
@@ -53,6 +53,10 @@
 
         public function setLong(float $long = null) {
             $this->long = $long;
+        }
+
+        public function jsonSerialize() {
+            // TODO: Implement jsonSerialize() method.
         }
     }
 
