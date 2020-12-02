@@ -11,12 +11,17 @@
     $token = APIUtils::getTokenFromHeadersOrDie();
 
     if($id = APIUtils::validateAuthorisedRequest($token)) {
-        if($db->updateChatroom($id, ConverterUtils::getChatroomUpdate($id))) {
+        if($result = $db->updateChatroom(ConverterUtils::getChatroomUpdate($id))) {
             $status = Constants::$ok;
             $code = 200;
         } else {
-            $status = Constants::$chatroomNotUpdated;
-            $code = 500;
+            if($result == null) {
+                $status = Constants::$chatroomNoPermissions;
+                $code = 406;
+            } else {
+                $status = Constants::$chatroomNotUpdated;
+                $code = 500;
+            }
         }
 
         APIUtils::displayAPIResult(array(Constants::$response=>$status), $code);

@@ -75,7 +75,8 @@
         public static string $chatroomNotCreated = "Chatroom not created. User with this id might already own a chatroom or the chatroom's name might be taken";
         public static string $chatroomNotFound = "Chatroom/Chatrooms not found or user with this id is already in a chatroom and shouldn't be receiving rooms";
         public static string $chatroomNotUpdated = "Chatroom not updated. New name may already be taken";
-        public static string $chatroomNotDeleted = "Chatroom not deleted";
+        public static string $chatroomNoPermissions = "No permissions to update this chatroom";
+        public static string $chatroomNotDeleted = "Chatroom not deleted. User with this id may not be the owner of their chatroom";
 
         public static string $userAlreadyInChatroom = "User already is an owner or part of a chatroom";
         

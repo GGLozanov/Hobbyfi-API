@@ -220,13 +220,13 @@
             return null;
         }
 
-        public function updateChatroom(int $ownerId, Chatroom $chatroom) {
+        public function updateChatroom(Chatroom $chatroom) {
             // handle user not owner error
             // FCM
             $this->connection->begin_transaction();
-            if(!($chatroomId = $this->getOwnerChatroomId($ownerId))) {
+            if(!($chatroomId = $this->getOwnerChatroomId($chatroom->getOwnerId()))) {
                 $this->connection->rollback();
-                return false;
+                return null;
             }
 
             $chatroom->setId($chatroomId);
@@ -239,7 +239,8 @@
             if($tags = $chatroom->getTags()) { // somewhat unnecessary check given the method..
                 $tagsUpdateSuccess = $this->updateModelTags(
                     Constants::$chatroomTagsTable, Constants::$chatroomId,
-                    $chatroom->getId(), $tags);
+                    $chatroom->getId(), $tags
+                );
             }
 
             // fixme: small code dup
@@ -259,7 +260,11 @@
             // FCM - delete chatroom
             $stmt = $this->executeSingleIdParamStatement($chatroomId, "DELETE FROM chatrooms WHERE id = ?");
 
-            return $stmt->affected_rows > 0;
+            ImageUtils::deleteImageFromPath($chatroomId, Constants::chatroomImagesDir($chatroomId), Constants::$chatrooms);
+
+            $deleteSuccess = $stmt->affected_rows > 0;
+            $this->finishTransactionOnCond($deleteSuccess);
+            return $deleteSuccess;
         }
 
         public function getChatroom(int $userId) {
@@ -270,7 +275,7 @@
             // FIXME: Code dup with getChatrooms!
             $result = $this->executeSingleIdParamStatement($chatroomId,
                 "SELECT `ch`.`id`, `ch`.`name`, `ch`.`description`, 
-                        `ch`.`has_image`, `ch`.`owner_id`, `ch`.`last_event_id`
+                        `ch`.`has_image`, `ch`.`owner_id`, `ch`.`last_event_id`,
                         `ch_tags`.`tag_name`, `tgs`.`colour`, `tgs`.`is_from_facebook`
                     FROM chatrooms `ch`
                     LEFT JOIN chatroom_tags `ch_tags` ON `ch`.`id` = `ch_tags`.`chatroom_id` 
@@ -279,7 +284,7 @@
             )->get_result();
 
             if($result && mysqli_num_rows($result) > 0) {
-                $rows = mysqli_fetch_all($result);
+                $rows = mysqli_fetch_all($result, MYSQLI_ASSOC);
                 $tags = $this->extractTagsFromJoinQuery($rows);
 
                 return new Chatroom(
