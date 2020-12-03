@@ -13,11 +13,18 @@
     $page = ConverterUtils::getFieldFromRequestBody(Constants::$page, $_GET);
 
     if($id = APIUtils::validateAuthorisedRequest($token)) {
-        if($chatroom = ($page == null ?
-                $db->getChatroom($id) : $db->getChatrooms($id, $page))) {
+        $data = ($page == null ?
+            $db->getChatroom($id) : $db->getChatrooms($id, $page));
+
+        $dataEmpty = is_array($data) && empty($data);
+        if($data || $dataEmpty) {
+            if($dataEmpty) {
+                $data = array(); // FIXME: Banal and dumb
+            }
+
             APIUtils::displayAPIResult(array(
                 Constants::$response=>Constants::$ok,
-                ($page == null ? Constants::$data : Constants::$data_list)=>$chatroom
+                ($page == null ? Constants::$data : Constants::$data_list)=>$data
             ));
         } else {
             // TODO: Handle not joined chatroom user going to this endpoint with just token error

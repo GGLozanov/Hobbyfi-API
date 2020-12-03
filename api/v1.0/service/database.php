@@ -132,6 +132,8 @@
         }
 
         public function deleteUser(int $id) {
+            include_once "../utils/image_utils.php";
+
             $stmt = $this->executeSingleIdParamStatement($id, "DELETE FROM users WHERE id = ?");
 
             ImageUtils::deleteImageFromPath($id, Constants::$userProfileImagesDir, Constants::$users);
@@ -251,7 +253,8 @@
         }
 
         public function deleteChatroom(int $ownerId) {
-            // handle user not owner error
+            include_once "../utils/image_utils.php";
+
             $this->connection->begin_transaction();
             if(!($chatroomId = $this->getOwnerChatroomId($ownerId))) {
                 return false;
@@ -350,7 +353,7 @@
             }
 
             $this->connection->rollback();
-            return null;
+            return (empty($stmt->error)) ? array() : null; // want to show empty array for pagination end limit purposes
         }
 
         public function getChatroomMessages(int $userId, int $multiplier) {
@@ -364,7 +367,6 @@
 
         public function deleteChatroomMessage(int $ownerId, int $messageId) {
             // assert message owner OR chatroom owner
-
             // FCM
         }
 
@@ -497,7 +499,7 @@
             $stmt->bind_param("ii", $chatroomId, $id);
             $stmt->execute();
 
-            return $stmt->affected_rows >= 0; // TODO: Check if this still works properly
+            return $stmt->affected_rows >= 0;
         }
 
         public function setModelHasImage(int $id, bool $hasImage, string $table) {
@@ -506,7 +508,7 @@
             $stmt->bind_param("ii", $hasImage, $id);
             $stmt->execute();
 
-            return $stmt->affected_rows >= 0; // TODO: Check if this still works properly
+            return $stmt->affected_rows >= 0;
         }
     }
 ?>
