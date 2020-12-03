@@ -290,25 +290,21 @@
                 $rows = mysqli_fetch_all($result, MYSQLI_ASSOC);
                 $tags = $this->extractTagsFromJoinQuery($rows);
 
-                return new Chatroom(
+                return [new Chatroom(
                     $rows[0][Constants::$id],
                     $rows[0][Constants::$name],
                     $rows[0][Constants::$description],
                     $rows[0][Constants::$hasImage],
                     $rows[0][Constants::$ownerId],
                     $rows[0][Constants::$lastEventId],
-                    $tags
-                );
+                    $tags[$rows[0][Constants::$id]]
+                )];
             }
 
             return null;
         }
 
         public function getChatrooms(int $userId, int $multiplier) {
-            if($chatroomId = $this->getUserChatroomId($userId)) {
-                return false;
-            }
-
             $multiplier = 5*($multiplier - 1);
             $stmt = $this->connection->prepare(
                 "SELECT `s`.`id`, `s`.`name`, `s`.`description`, 

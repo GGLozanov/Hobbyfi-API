@@ -24,7 +24,7 @@
 
             APIUtils::displayAPIResult(array(
                 Constants::$response=>Constants::$ok,
-                ($page == null ? Constants::$data : Constants::$data_list)=>$data
+                Constants::$data_list=>$data
             ));
         } else {
             // TODO: Handle not joined chatroom user going to this endpoint with just token error
