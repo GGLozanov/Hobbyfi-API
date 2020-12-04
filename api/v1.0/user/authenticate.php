@@ -8,14 +8,10 @@
     require "../config/core.php";
     /** @var $db */
 
-    if(!array_key_exists(Constants::$email, $_GET) || 
-    !array_key_exists(Constants::$password, $_GET)) {
-        APIUtils::displayAPIResult(array(Constants::$response=>Constants::$missingDataError), 400);
-        return;
-    }
-
-    $email = $_GET[Constants::$email];
-    $password = $_GET[Constants::$password]; // password is transmitted as plain-text over client; use TLS/HTTPS in future for securing client-server communication and avoiding MiTM
+    $email = ConverterUtils::getFieldFromRequestBodyOrDie(Constants::$email, $_GET);
+    $password = ConverterUtils::getFieldFromRequestBodyOrDie(Constants::$password, $_GET);
+    // password is transmitted as plain-text over client; usage of TLS/HTTPS in future (HTTPS already set up)
+        // for securing client-server communication and avoiding MiTM
 
     if($id = $db->validateUser($email, $password)) {
         // Create token and send it here (without id and other information; just unique username)

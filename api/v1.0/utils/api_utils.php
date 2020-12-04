@@ -13,6 +13,11 @@
             echo json_encode($response, JSON_UNESCAPED_SLASHES);
         }
 
+        public static function displayAPIResultAndDie(array $response, $responseCode = 200, string $error = null) {
+            self::displayAPIResult($response, $responseCode, $error);
+            die;
+        }
+
         // returns a user id from decoded jwt if valid jwt;
         // return facebook user id if valid facebook access token;
         // else displays API result (error) and returns false (invalid request)
@@ -35,19 +40,15 @@
                     $code = 406;
                 }
             } else {
-                if($decoded == false) // means the token isn't JWT and try Facebook decoding
-                    $status = $expiredTokenError;
-                else {
-                    if($userId = FacebookTokenUtils::validateAccessToken($token)) {
-                        // TODO: Fetch other information that's received from Facebook 
-                        // (like email, username, description?) and compare/update it
-                        return $userId;
-                    } else {
-                        if($userId == false) 
-                            $status = $expiredTokenError;
-                        else
-                            $status = $invalidTokenError;        
-                    }
+                if($userId = FacebookTokenUtils::validateAccessToken($token)) {
+                    // TODO: Fetch other information that's received from Facebook
+                    // (like email, username, description?) and compare/update it
+                    return $userId;
+                } else {
+                    if($userId == false)
+                        $status = $expiredTokenError;
+                    else
+                        $status = $invalidTokenError;
                 }
 
                 $code = 401;
@@ -57,12 +58,11 @@
             return false;
         }
 
-        public static function getTokenFromHeaders() {
+        public static function getTokenFromHeadersOrDie() {
             $headers = apache_request_headers();
 
             if(!array_key_exists('Authorization', $headers)) {
-                APIUtils::displayAPIResult(array(Constants::$response=>Constants::$noAuthorizationHeaderError), 400);
-                return null;
+                APIUtils::displayAPIResultAndDie(array(Constants::$response=>Constants::$noAuthorizationHeaderError), 400);
             }
 
             return str_replace('Bearer: ', '', $headers['Authorization']);

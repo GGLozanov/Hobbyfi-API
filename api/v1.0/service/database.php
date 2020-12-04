@@ -22,6 +22,7 @@
         }
 
         public function createUser(User $user, ?string $password) {
+            $this->connection->begin_transaction();
             $stmt = $this->connection->prepare("INSERT INTO users(id, email, username, password, description, has_image, user_chatroom_id) 
             VALUES(?, ?, ?, ?, ?, ?, ?)");
 
@@ -43,26 +44,12 @@
                 $chatroomId);
 
             $insertSuccess = $stmt->execute();
-            
             $userId = mysqli_insert_id($this->connection);
 
-            if($user->getTags()) { // insert user tags here
-                $this->connection->query($this->getTagArrayInsertQuery($user->getTags()));
-            }
+            $tagsInsertSuccess = $this->insertTagModel($user);
+            $this->finishTransactionOnCond($userId);
 
-            if($insertSuccess) { // if at least one row inserted => success
-                return $id == null ? $userId : $id;
-            }
-            return null;
-        }
-
-        public function setUserHasImage(int $id, bool $hasImage) {
-            $stmt = $this->connection->prepare("UPDATE users SET has_image = ? WHERE id = ?");
-            
-            $stmt->bind_param("ii", $hasImage, $id);
-            $stmt->execute();
-
-            return $stmt->affected_rows >= 0; // TODO: Check if this still works properly
+            return $insertSuccess && $tagsInsertSuccess ? $userId : null;
         }
 
         public function userExistsOrPasswordTaken(string $username, $password) { // user exists if username or password are taken
@@ -71,6 +58,14 @@
             $stmt->execute();
 
             return mysqli_num_rows($stmt->get_result()) > 0; // if more than one row found => user exists
+        }
+
+        public function userExists(string $username) { // user exists if username or password are taken
+            $stmt = $this->connection->prepare("SELECT username FROM users WHERE username = ?");
+            $stmt->bind_param("s", $username);
+            $stmt->execute();
+
+            return mysqli_num_rows($stmt->get_result()) > 0 ? "true" : "false"; // if more than one row found => user exists
         }
 
         public function validateUser(string $email, string $password) {
@@ -95,13 +90,11 @@
 
         // TODO: Use transaction in multiple SELECT queries like these?
         public function getUser(int $id) { // user already auth'd at this point due to token => get user by id
-            require "../models/tag.php";
-
-            $user_result = $this->executeSingleUserIdParamStatement($id, "SELECT 
-                us.description, us.username, us.email, us.has_image, us.user_chatroom_id, us_tags.tag_name, tgs.colour
+            $user_result = $this->executeSingleIdParamStatement($id, "SELECT 
+                us.description, us.username, us.email, us.has_image, us.user_chatroom_id, us_tags.tag_name, tgs.colour, tgs.is_from_facebook
                 FROM users us
-                INNER JOIN user_tags us_tags ON us.id = us_tags.user_id
-                INNER JOIN tags tgs ON tgs.name LIKE us_tags.tag_name
+                LEFT JOIN user_tags us_tags ON us.id = us_tags.user_id
+                LEFT JOIN tags tgs ON tgs.name LIKE us_tags.tag_name
                 WHERE id = ?"
             )->get_result();
             
@@ -111,29 +104,39 @@
                 return new User($id,
                     $rows[0][Constants::$email], $rows[0][Constants::$username],
                     $rows[0][Constants::$description], $rows[0][Constants::$hasImage],
-                    $rows[0][Constants::$userChatroomId], array_map(function(array $row) {
-                        return new Tag($row[Constants::$tagName], $row[Constants::$colour]);
-                    }, $rows));
+                    $rows[0][Constants::$userChatroomId],
+                    ($rows[0][Constants::$tagName] != null && $rows[0][Constants::$colour] 
+                    != null && $rows[0][Constants::$isFromFacebook] != null) ? array_map(function(array $row) {
+                        return new Tag($row[Constants::$tagName], $row[Constants::$colour], $row[Constants::$isFromFacebook]);
+                    }, $rows) : null);
             }
 
             return null;
         }
 
-        // only place void of prepared stmtns
         public function updateUser(User $user, ?string $password) {
-            mysqli_query($this->connection, $user->getUpdateQuery($password));
+            $this->connection->begin_transaction();
+            $result = mysqli_query($this->connection, $user->getUpdateQuery($password));
 
-            $wereTagsUpdated = true;
+            // FIXME: Code dup
+            $userUpdateSuccess = mysqli_affected_rows($this->connection);
+            $tagsUpdateSuccess = true;
             if($tags = $user->getTags()) { // somewhat unnecessary check given the method..
-                $wereTagsUpdated = $this->updateUserTags($user->getId(), $tags);
+                $tagsUpdateSuccess = $this->updateModelTags(Constants::$userTagsTable, Constants::$userId, $user->getId(), $tags);
             }
 
-            return mysqli_affected_rows($this->connection) >= 0 && $wereTagsUpdated;
+            $updateSuccess = $userUpdateSuccess > 0 && $tagsUpdateSuccess;
+            $this->finishTransactionOnCond($updateSuccess);
+
+            return $updateSuccess;
         }
 
         public function deleteUser(int $id) {
-            $stmt = $this->executeSingleUserIdParamStatement($id, "DELETE FROM users WHERE id = ?");
+            include_once "../utils/image_utils.php";
 
+            $stmt = $this->executeSingleIdParamStatement($id, "DELETE FROM users WHERE id = ?");
+
+            ImageUtils::deleteImageFromPath($id, Constants::$userProfileImagesDir, Constants::$users);
             // FCM if user in chatroom => send notification
 
             return $stmt->affected_rows > 0;
@@ -141,11 +144,12 @@
         
         // gets all users with any id BUT this one;
         public function getChatroomUsers(int $userId, int $multiplier = 1) { // multiplier starts from 1
+            // FIXME: SQL Query limit param
             $stmt = $this->connection->prepare(
-                "SELECT us.id, us.description, us.username, us.email, us.has_image, us_tags.tag_name, tgs.colour FROM 
+                "SELECT us.id, us.description, us.username, us.email, us.has_image, us_tags.tag_name, tgs.colour, tgs.is_from_facebook FROM 
                 users us
-                INNER JOIN user_tags us_tags ON us_tags.user_id = us.id
-                INNER JOIN tags tgs ON tgs.name LIKE us_tags.tag_name
+                LEFT JOIN user_tags us_tags ON us_tags.user_id = us.id
+                LEFT JOIN tags tgs ON tgs.name LIKE us_tags.tag_name
                 WHERE id != ? AND us.user_chatroom_id = (SELECT user_chatroom_id WHERE id = ?) LIMIT 5 OFFSET 5*(? - 1)");
             $stmt->bind_param("iii", $userId, $userId, $multiplier);
             $stmt->execute();
@@ -157,121 +161,250 @@
 
                 $tags = $this->extractTagsFromJoinQuery($rows);
 
-                return array_map(function(array $row) use ($tags) {
-                    return new User(
-                        $row[Constants::$id],
-                        $row[Constants::$email],
-                        $row[Constants::$username],
-                        $row[Constants::$description],
-                        $row[Constants::$hasImage],
-                        $row[Constants::$userChatroomId],
-                        $tags[$row[Constants::$id]]
-                    );
-                }, $rows);
+                return array_reduce($rows, function($result, array $row) use ($tags) {
+                    if(!in_array($row[Constants::$id], $result)) {
+                        $result[] = new User(
+                            $row[Constants::$id],
+                            $row[Constants::$email],
+                            $row[Constants::$username],
+                            $row[Constants::$description],
+                            $row[Constants::$hasImage],
+                            $row[Constants::$userChatroomId],
+                            $tags[$row[Constants::$id]]
+                        );
+                    }
+                    return $result;
+                }, array());
             }
 
             return null;
         }
 
-        // TODO: Assert these requests have authority to be performed in db
-        public function createChatroom(int $ownerId, Chatroom $chatroom) {
-        
+        public function createChatroom(Chatroom $chatroom) {
+            $this->connection->begin_transaction();
+
+            if($this->getUserChatroomId($chatroom->getOwnerId())) {
+                $this->connection->rollback();
+                return false;
+            }
+
+            $stmt = $this->connection->prepare("INSERT INTO chatrooms(id, name, description, has_image, owner_id, last_event_id) 
+                VALUES(?, ?, ?, ?, ?, ?)");
+
+            // still need to destruct this class and allocate more variables for this goddamn bind_param() method...
+            $id = $chatroom->getId();
+            $name = $chatroom->getName();
+            $description = $chatroom->getDescription();
+            $hasImage = $chatroom->getHasImage();
+            $ownerId = $chatroom->getOwnerId();
+            $lastEventId = $chatroom->getLastEventId();
+
+            $stmt->bind_param("issiii",
+                $id,
+                $name,
+                $description,
+                $hasImage,
+                $ownerId,
+                $lastEventId
+            );
+
+            $insertSuccess = $stmt->execute();
+            $chatroomId = mysqli_insert_id($this->connection);
+            $tagsInsertSuccess = $this->insertTagModel($chatroom);
+            $chatroomCreateSuccess = $insertSuccess && $tagsInsertSuccess;
+
+            if($chatroomCreateSuccess) {
+                $userUpdateSuccess = $this->setUserChatroomId($ownerId, $chatroomId);
+                $this->finishTransactionOnCond($userUpdateSuccess);
+                return $userUpdateSuccess ? $chatroomId : null; // FIXME: Expand upon errors and have them be more concise.
+            }
+            $this->connection->rollback();
+            return null;
         }
 
-        public function updateChatroom(int $ownerId, int $chatroomId, Chatroom $chatroom) {
+        public function updateChatroom(Chatroom $chatroom) {
             // handle user not owner error
             // FCM
+            $this->connection->begin_transaction();
+            if(!($chatroomId = $this->getOwnerChatroomId($chatroom->getOwnerId()))) {
+                $this->connection->rollback();
+                return null;
+            }
+
+            $chatroom->setId($chatroomId);
+
+            mysqli_query($this->connection, $chatroom->getUpdateQuery());
+
+            // FIXME: Code dup with updateUser
+            $chatroomUpdateSuccess = mysqli_affected_rows($this->connection);
+            $tagsUpdateSuccess = true;
+            if($tags = $chatroom->getTags()) { // somewhat unnecessary check given the method..
+                $tagsUpdateSuccess = $this->updateModelTags(
+                    Constants::$chatroomTagsTable, Constants::$chatroomId,
+                    $chatroom->getId(), $tags
+                );
+            }
+
+            // fixme: small code dup
+            $updateSuccess = $chatroomUpdateSuccess > 0 && $tagsUpdateSuccess;
+            $this->finishTransactionOnCond($updateSuccess);
+
+            return $updateSuccess;
         }
 
-        public function deleteChatroom(int $ownerId, int $chatroomId) {
-            // handle user not owner error
-            // FCM
+        public function deleteChatroom(int $ownerId) {
+            include_once "../utils/image_utils.php";
+
+            $this->connection->begin_transaction();
+            if(!($chatroomId = $this->getOwnerChatroomId($ownerId))) {
+                return false;
+            }
+
+            // FCM - delete chatroom
+            $stmt = $this->executeSingleIdParamStatement($chatroomId, "DELETE FROM chatrooms WHERE id = ?");
+
+            ImageUtils::deleteImageFromPath($chatroomId, Constants::chatroomImagesDir($chatroomId), Constants::$chatrooms);
+
+            $deleteSuccess = $stmt->affected_rows > 0;
+            $this->finishTransactionOnCond($deleteSuccess);
+            return $deleteSuccess;
+        }
+
+        public function getChatroom(int $userId) {
+            if(!($chatroomId = $this->getUserChatroomId($userId))) {
+                return false; // users should only get a single chatroom from here (theirs) and nothing else
+            }
+
+            // FIXME: Code dup with getChatrooms!
+            $result = $this->executeSingleIdParamStatement($chatroomId,
+                "SELECT `ch`.`id`, `ch`.`name`, `ch`.`description`, 
+                        `ch`.`has_image`, `ch`.`owner_id`, `ch`.`last_event_id`,
+                        `ch_tags`.`tag_name`, `tgs`.`colour`, `tgs`.`is_from_facebook`
+                    FROM chatrooms `ch`
+                    LEFT JOIN chatroom_tags `ch_tags` ON `ch`.`id` = `ch_tags`.`chatroom_id` 
+                    LEFT JOIN tags `tgs` ON `ch_tags`.`tag_name` LIKE `tgs`.`name`
+                    WHERE `ch`.`id` = ?"
+            )->get_result();
+
+            if($result && mysqli_num_rows($result) > 0) {
+                $rows = mysqli_fetch_all($result, MYSQLI_ASSOC);
+                $tags = $this->extractTagsFromJoinQuery($rows);
+
+                return [new Chatroom(
+                    $rows[0][Constants::$id],
+                    $rows[0][Constants::$name],
+                    $rows[0][Constants::$description],
+                    $rows[0][Constants::$hasImage],
+                    $rows[0][Constants::$ownerId],
+                    $rows[0][Constants::$lastEventId],
+                    $tags[$rows[0][Constants::$id]]
+                )];
+            }
+
+            return null;
         }
 
         public function getChatrooms(int $userId, int $multiplier) {
-            $stmt = $this->prepare(
-                "SELECT ch.id, ch.name, ch,description, ch.has_image, ch.owner_id, ch.last_event_id, ch_tags.tag_name, tgs.colour FROM chatrooms ch
-                    INNER JOIN chatroom_tags ch_tags ON ch.id = ch_tags.chatroom_id 
-                    INNER JOIN tags tgs ON ch_tags.tag_name LIKE tgs.name
-                    WHERE (SELECT user_chatroom_id FROM users WHERE ? = id) = ? LIMIT 5 OFFSET 5*(? - 1)"
+            $multiplier = 5*($multiplier - 1);
+            $stmt = $this->connection->prepare(
+                "SELECT `s`.`id`, `s`.`name`, `s`.`description`, 
+                    `s`.`has_image`, `s`.`owner_id`, `s`.`last_event_id`, 
+                    `ch_tags`.`tag_name`, `tgs`.`is_from_facebook`, 
+                    `tgs`.`colour` FROM 
+                        (SELECT `ch`.`id`, `ch`.`name`, 
+                        `ch`.`description`, `ch`.`has_image`, 
+                        `ch`.`owner_id`, `ch`.`last_event_id`
+                         FROM chatrooms `ch` LIMIT 5 OFFSET ?) as `s` 
+                    LEFT JOIN chatroom_tags `ch_tags` ON `s`.`id` = `ch_tags`.`chatroom_id` 
+                    LEFT JOIN tags `tgs` ON `ch_tags`.`tag_name` LIKE `tgs`.`name`"
             );
-            $stmt->bind_param("ii", $userId, $multiplier);
+
+            $stmt->bind_param("i", $multiplier);
             $stmt->execute();
 
             $result = $stmt->get_result();
 
             if(mysqli_num_rows($result) > 0) {
                 $rows = mysqli_fetch_all($result, MYSQLI_ASSOC);
-
                 $tags = $this->extractTagsFromJoinQuery($rows);
-                
-                array(function(array $row) use($tags) {
-                    return new Chatroom(
+
+                $chatrooms = array_reduce($rows, function($result, array $row) use($tags) {
+                    if(array_key_exists($row[Constants::$id], $result)) {
+                        return $result;
+                    }
+
+                    $result[$row[Constants::$id]] = new Chatroom(
                         $row[Constants::$id],
                         $row[Constants::$name],
                         $row[Constants::$description],
                         $row[Constants::$hasImage],
                         $row[Constants::$ownerId],
                         $row[Constants::$lastEventId],
-                        $tags
+                        $tags[$row[Constants::$id]]
                     );
-                }, $rows);
+                    return $result;
+                }, array());
+
+                return array_values($chatrooms);
             }
-            return null;
+
+            $this->connection->rollback();
+            return (empty($stmt->error)) ? array() : null; // want to show empty array for pagination end limit purposes
         }
 
         public function getChatroomMessages(int $userId, int $multiplier) {
             // handle user not in chatroom error
         }
 
-        public function createChatroomMessage(int $userId, Message $message) {
+        public function createChatroomMessage(int $ownerId, Message $message) {
             // handle user not in chatroom error
             // FCM
         }
 
-        public function deleteChatroomMessage(int $messageId) {
+        public function deleteChatroomMessage(int $ownerId, int $messageId) {
             // assert message owner OR chatroom owner
-
             // FCM
         }
 
-        public function updateChatroomMessage(int $userId, int $messageId, Message $message) {
+        public function updateChatroomMessage(int $ownerId, int $messageId, Message $message) {
             // assert message owner & correct chatroom
             // FCM
         }
 
+        // chatroom id is sent through query param
         public function createChatroomEvent(int $ownerId, Event $event) {
             // assert chatroom owner and update
+            // update chatroom lastEventId
             // FCM
         }
 
-        public function deleteChatroomEvent(int $ownerId, int $eventId) {
+        public function deleteChatroomEvent(int $ownerId) {
             // assert chatroom owner & delete
             // FCM
         }
 
-        public function updateChatroomEvent(int $ownerId, int $eventId, Event $event) {
+        public function updateChatroomEvent(int $ownerId, Event $event) {
             // assert chatroom owner & update
             // FCM
         }
-
-        public function updateUserTags(int $userId, ?array $tags) {
+        
+        public function updateModelTags(string $table, string $modelColumn, int $modelId, ?array $tags) {
             // INSERT tag if not in tags table => skip otherwise
             // REPLACE query - all user tags
             if(!$tags) {
                 return false;
             }
 
-            $result = $this->connection->query($this->getTagArrayReplaceQuery(Constants::$userTagsTable, $userId, $tags));
+            $result = $this->connection->query($this->getTagArrayReplaceQuery($table, $modelColumn, $modelId, $tags));
 
             return mysqli_affected_rows($this->connection) > 0 || mysqli_num_rows($result) > 0;
         }
 
         // TODO: Model CRUD operations here
 
-        private function executeSingleUserIdParamStatement(int $userId, string $sql) {
+        private function executeSingleIdParamStatement(int $id, string $sql) {
             $stmt = $this->connection->prepare($sql);
-            $stmt->bind_param("i", $userId);
+            $stmt->bind_param("i", $id);
             $stmt->execute();
         
             return $stmt;
@@ -282,39 +415,96 @@
             $dataArray = array_map(function($tag) {
                 $name = $this->connection->real_escape_string($tag->getName());
                 $colour = $this->connection->real_escape_string($tag->getColour());
-        
-                return "('$name', '$colour')";
+                $isFromFacebook = $tag->isFromFacebook() ?: 0;
+
+                return "('$name', '$colour', $isFromFacebook)";
             }, $tags);
-        
-            $sql = "INSERT IGNORE INTO tags (name, colour) VALUES "; // IGNORE ignores duplicate key errors and doesn't insert tags w/ same name
+
+            $sql = "INSERT IGNORE INTO tags(" . Constants::$name . ", " . Constants::$colour . ", " . Constants::$isFromFacebook . ") VALUES "; // IGNORE ignores duplicate key errors and doesn't insert tags w/ same name
             $sql .= implode(',', $dataArray);
-        
+
             return $sql;
         }
 
-        private function getTagArrayReplaceQuery(string $table, int $userId, array $tags) {
-            $dataArray = array_map(function($tag) use($userId) {
+        private function getTagArrayReplaceQuery(string $table, string $modelColumn, int $modelId, array $tags) {
+            $dataArray = array_map(function($tag) use($modelId) {
                 $name = $this->connection->real_escape_string($tag->getName());
         
-                return "('$userId', '$name')";
+                return "('$modelId', '$name')";
             }, $tags);
         
-            $sql = "REPLACE INTO $table (user_id, tag_name) VALUES ";
+            $sql = "REPLACE INTO $table ($modelColumn, tag_name) VALUES ";
             $sql .= implode(',', $dataArray);
         
             return $sql;
         }
 
         private function extractTagsFromJoinQuery(array $rows) {
-            require "../models/tag.php";
-
-            $userTags = array();
+            $tags = array();
             foreach($rows as $row) {
-                if(!isset($userTags[$row[Constants::$id]])) {
-                    $userTags[$row[Constants::$id]][] = new Tag($row[Constants::$tagName], $row[Constants::$colour]);
-                }
-            } // might bug out with the mapping here FIXME
-            return $userTags;
+                $tags[$row[Constants::$id]][] =
+                    new Tag($row[Constants::$tagName], $row[Constants::$colour], $row[Constants::$isFromFacebook]);
+            }
+            return $tags;
+        }
+
+        // should be always called in transaction context for CRUD methods
+        private function getUserChatroomId(int $userId) {
+            $result = $this->executeSingleIdParamStatement($userId, "SELECT user_chatroom_id FROM users WHERE id = ?")
+                ->get_result();
+            if($result && ($row = $result->fetch_assoc()) != null) {
+                return array_key_exists(Constants::$userChatroomId, $row) ?
+                    $row[Constants::$userChatroomId] : false;
+            }
+
+            return false;
+        }
+
+        // should be always called in transaction context for CRUD methods
+        private function getOwnerChatroomId(int $userId) {
+            $result = $this->executeSingleIdParamStatement($userId, "SELECT chrms.id FROM chatrooms chrms
+                INNER JOIN users usrs ON usrs.user_chatroom_id = chrms.id
+                WHERE chrms.owner_id = ?")->get_result();
+
+            if($result && ($row = $result->fetch_assoc()) != null) {
+                return array_key_exists(Constants::$id, $row) ?
+                    $row[Constants::$id] : false; // first row is count at first column - the value of said count
+            }
+
+            return false;
+        }
+
+        private function insertTagModel(Model $model) {
+            $tagsInsertSuccess = true;
+            if($model->getTags()) { // insert user tags here
+                $tagsInsertSuccess = $this->connection->query($this->getTagArrayInsertQuery($model->getTags()));
+            }
+
+            return $tagsInsertSuccess;
+        }
+
+        private function finishTransactionOnCond(bool $condition) {
+            if($condition) {
+                $this->connection->commit();
+            } else $this->connection->rollback();
+        }
+
+        private function setUserChatroomId(int $id, int $chatroomId) {
+            $stmt = $this->connection->prepare("UPDATE users SET user_chatroom_id = ? WHERE id = ?");
+
+            $stmt->bind_param("ii", $chatroomId, $id);
+            $stmt->execute();
+
+            return $stmt->affected_rows >= 0;
+        }
+
+        public function setModelHasImage(int $id, bool $hasImage, string $table) {
+            $stmt = $this->connection->prepare("UPDATE $table SET has_image = ? WHERE id = ?");
+
+            $stmt->bind_param("ii", $hasImage, $id);
+            $stmt->execute();
+
+            return $stmt->affected_rows >= 0;
         }
     }
 ?>

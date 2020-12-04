@@ -1,14 +1,14 @@
 <?php
-    require_once("./model.php");
-    require_once("./id_model.php");
+    require_once("model.php");
+    require_once("id_model.php");
     
-    class Message extends Model {
+    class Message extends Model implements JsonSerializable {
         use \IdModel;
 
-        private string $message;
-        private string $createTime; // ISO string translated to sql timestamp
-        private int $chatroomSentId;
-        private int $userSentId;        
+        private ?string $message;
+        private ?string $createTime; // ISO string translated to sql timestamp
+        private ?int $chatroomSentId;
+        private ?int $userSentId;
 
         function __construct(
                 int $id = null, 
@@ -56,6 +56,11 @@
 
         function getUpdateQuery(string $userPassword = null) {
             
+        }
+
+
+        public function jsonSerialize() {
+            // TODO: Implement jsonSerialize() method.
         }
     }
 

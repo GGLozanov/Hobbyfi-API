@@ -5,15 +5,14 @@
     require_once ("tag_model.php");
     require_once("image_model.php");
 
-    // TODO: Decide if mixin approach or class hierarchy is better
-    class Chatroom extends Model {
+    class Chatroom extends Model implements JsonSerializable {
         use \ExpandedModel;
         use \IdModel;
         use \ImageModel;
         use \TagModel;
 
-        private int $ownerId;
-        private int $lastEventId;
+        private ?int $ownerId;
+        private ?int $lastEventId;
 
         function __construct(
                 int $id = null, 
@@ -33,7 +32,50 @@
         }
 
         function getUpdateQuery(string $userPassword = null) {
-            
+            $sql = "UPDATE chatrooms SET";
+
+            $updateColumns = array();
+            $updateColumns[] = $this->addUpdateFieldToQuery($this->name != null, Constants::$name, $this->name);
+            $updateColumns[] = $this->addUpdateFieldToQuery($this->description != null, Constants::$description, $this->description);
+            $updateColumns[] = $this->addUpdateFieldToQuery($this->ownerId != null, Constants::$ownerId, $this->ownerId);
+            $updateColumns[] = $this->addUpdateFieldToQuery($this->lastEventId != null, Constants::$lastEventId, $this->lastEventId);
+
+            $updateColumns = array_filter($updateColumns);
+
+            $sql .= implode(',', $updateColumns) . " WHERE id = $this->id";
+
+            return $sql;
+        }
+
+        function getOwnerId() {
+            return $this->ownerId;
+        }
+
+        function setOwnerId(int $ownerId) {
+            $this->ownerId = $ownerId;
+        }
+
+        function getLastEventId() {
+            return $this->lastEventId;
+        }
+
+        function setLastEventId(int $lastEventId) {
+            $this->lastEventId = $lastEventId;
+        }
+
+        public function jsonSerialize() {
+            return [
+                Constants::$id=>$this->id,
+                Constants::$name=>$this->name,
+                Constants::$description=>$this->description,
+                Constants::$photoUrl=>$this->hasImage ?
+                    (array_key_exists('HTTPS', $_SERVER) ? 'https://' : 'http://') . $_SERVER['SERVER_NAME'] . ':'
+                    . $_SERVER['SERVER_PORT'] .'/Hobbyfi-API/uploads/' . Constants::userProfileImagesDir($this->id)
+                    : null,
+                Constants::$ownerId=>$this->ownerId,
+                Constants::$lastEventId=>$this->lastEventId,
+                Constants::$tags=>$this->tags
+            ];
         }
     }
 

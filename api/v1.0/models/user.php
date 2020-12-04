@@ -3,10 +3,9 @@
     require_once("id_model.php");
     require_once("expanded_model.php");
     require_once("image_model.php");
-    require_once ("tag_model.php");
-    require_once("../init.php");
+    require_once("tag_model.php");
 
-    class User extends Model {
+    class User extends Model implements JsonSerializable {
         use \IdModel;
         use \ImageModel;
         use \ExpandedModel;
@@ -33,35 +32,20 @@
             $this->tags = $tags;
         }
 
-        // TODO: Banal and dumb function; there has to be a better way to do this
         // this method is called for an update user to get the query for its existing/non-null fields
         public function getUpdateQuery(string $userPassword = null) {
             $sql = "UPDATE users SET";
 
-            $condStatus = 0b00000; // bitmask for all the possibilities of null vals
+            $updateColumns = array();
+            $updateColumns[] = $this->addUpdateFieldToQuery($this->email != null, Constants::$email, $this->email);
+            $updateColumns[] = $this->addUpdateFieldToQuery($userPassword != null, Constants::$password, $userPassword);
+            $updateColumns[] = $this->addUpdateFieldToQuery($this->name != null, Constants::$username, $this->name);
+            $updateColumns[] = $this->addUpdateFieldToQuery($this->description != null, Constants::$description, $this->description);
+            $updateColumns[] = $this->addUpdateFieldToQuery($this->chatroomId != null, Constants::$userChatroomId, $this->chatroomId);
 
-            $condStatus |= ($this->email != null) << 4; // 10000
-            $condStatus |= ($userPassword != null) << 3; // 01000
-            $condStatus |= ($this->name != null) << 2; // 00100
-            $condStatus |= ($this->description != null) << 1; // 00010
-            $condStatus |= $this->chatroomId != null;
+            $updateColumns = array_filter($updateColumns);
 
-            $firstField = (int) log($condStatus, 2) + 1; // base 2 log (with 1 added); finds position of MSB
-
-            $commaCount = substr_count(decbin($condStatus), 1);
-
-            $this->addUpdateFieldToQuery($condStatus & 0b10000, $sql, $commaCount, Constants::$email, $this->email, 
-                $firstField == 5);
-            $this->addUpdateFieldToQuery($condStatus & 0b01000, $sql, $commaCount, Constants::$password, $userPassword,
-                $firstField == 4);
-            $this->addUpdateFieldToQuery($condStatus & 0b00100, $sql, $commaCount, Constants::$username, $this->name,
-                $firstField == 3);
-            $this->addUpdateFieldToQuery($condStatus & 0b00010, $sql, $commaCount, Constants::$description, $this->description,
-                $firstField == 2);
-            $this->addUpdateFieldToQuery($condStatus & 0b00001, $sql, $commaCount, Constants::$userChatroomId, $this->chatroomId, 
-                $firstField == 1);
-
-            $sql .= " WHERE id = $this->id";
+            $sql .= implode(',', $updateColumns) . " WHERE id = $this->id";
 
             return $sql;
         }
@@ -80,6 +64,26 @@
 
         public function setChatroomId(int $chatroomId = null) {
             $this->chatroomId = $chatroomId;
+        }
+
+        public function isUpdateFormEmpty() {
+            return $this->email == null && $this->name == null
+                && $this->description == null && $this->chatroomId == null && $this->tags == null;
+        }
+
+        public function jsonSerialize() {
+            return [
+                Constants::$id=>$this->id,
+                Constants::$email=>$this->email,
+                Constants::$username=>$this->name,
+                Constants::$description=>$this->description,
+                Constants::$chatroomId=>$this->chatroomId,
+                Constants::$photoUrl=>$this->hasImage ?
+                    (array_key_exists('HTTPS', $_SERVER) ? 'https://' : 'http://') . $_SERVER['SERVER_NAME'] . ':'
+                    . $_SERVER['SERVER_PORT'] .'/Hobbyfi-API/uploads/' . Constants::userProfileImagesDir($this->id)
+                    : null,
+                Constants::$tags=>$this->getTags()
+            ];
         }
     }
 ?>

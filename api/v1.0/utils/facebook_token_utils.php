@@ -6,11 +6,12 @@
         public static function validateAccessToken(string $accessToken) {
             require "../config/core.php";
             /* @var $fbAppId */
+            /* @var $fbAppSecret */
 
             try {
                 $fb = new Facebook\Facebook([
                         'app_id' => $fbAppId,
-                        'app_secret' => file_get_contents('../keys/fb_app_secret.txt'),
+                        'app_secret' => $fbAppSecret,
                         'default_graph_version' => 'v8.0',
                     ]
                 );
