@@ -304,7 +304,7 @@
             return null;
         }
 
-        public function getChatrooms(int $userId, int $multiplier) {
+        public function getChatrooms(int $multiplier = 1) {
             $multiplier = 5*($multiplier - 1);
             $stmt = $this->connection->prepare(
                 "SELECT `s`.`id`, `s`.`name`, `s`.`description`, 
@@ -356,19 +356,66 @@
             // handle user not in chatroom error
         }
 
-        public function createChatroomMessage(int $ownerId, Message $message) {
+        public function createChatroomMessage(Message $message) {
+            $this->connection->begin_transaction();
+            if(!($chatroomId = $this->getUserChatroomId($message->getUserSentId()))) {
+                $this->connection->rollback();
+                return false; // users should only send messages in a single chatroom from here (theirs) and nothing else
+            }
+
+            $stmt = $this->connection->prepare("INSERT INTO messages(id, message, create_time, chatroom_sent_id, user_sent_id) 
+                VALUES(?, ?, NOW(), ?, ?)");
+
+            $id = $message->getId();
+            $msg = $message->getMessage();
+            $userSentId = $message->getUserSentId();
+
+            $stmt->bind_param("isii". $id, $msg, $chatroomId, $userSentId);
             // handle user not in chatroom error
-            // FCM
+            // FCM here
+
+            $insertSuccess = $stmt->execute();
+            $messageId = mysqli_insert_id($this->connection);
+
+            if($insertSuccess) {
+                $this->connection->commit();
+                return $messageId;
+            }
+
+            $this->connection->rollback();
+            return null;
         }
 
-        public function deleteChatroomMessage(int $ownerId, int $messageId) {
+        public function deleteChatroomMessage(int $userId, int $messageId) {
+            $this->connection->begin_transaction();
             // assert message owner OR chatroom owner
+            if(!($ownerId = $this->getMessageOwnerId($messageId))
+                || $userId != $ownerId || !($this->getOwnerChatroomId($userId))) {
+                $this->connection->rollback();
+                return false;
+            }
+
+            $stmt = $this->executeSingleIdParamStatement($messageId, "DELETE FROM messages WHERE id = ?");
             // FCM
+
+            $this->finishTransactionOnCond($stmt->affected_rows > 0);
+            return $stmt->affected_rows > 0;
         }
 
-        public function updateChatroomMessage(int $ownerId, int $messageId, Message $message) {
+        public function updateChatroomMessage(Message $message) {
             // assert message owner & correct chatroom
+            $this->connection->begin_transaction();
+            if((!($ownerId = $this->getMessageOwnerId($message->getId()))) || $ownerId != $message->getUserSentId()
+                || !($this->getUserChatroomId($ownerId))) {
+                $this->connection->rollback();
+                return false;
+            }
+            // message id sent through body
             // FCM
+            $updateSuccess = $this->connection->query($message->getUpdateQuery()); // TODO: Handle no update option in edit.php
+
+            $this->finishTransactionOnCond($updateSuccess);
+            return $updateSuccess;
         }
 
         // chatroom id is sent through query param
@@ -466,12 +513,14 @@
                 INNER JOIN users usrs ON usrs.user_chatroom_id = chrms.id
                 WHERE chrms.owner_id = ?")->get_result();
 
-            if($result && ($row = $result->fetch_assoc()) != null) {
-                return array_key_exists(Constants::$id, $row) ?
-                    $row[Constants::$id] : false; // first row is count at first column - the value of said count
-            }
+            return $this->getOneColumnValueFromSingleRow($result, Constants::$id);
+        }
 
-            return false;
+        private function getMessageOwnerId(int $messageId) {
+            $result = $this->executeSingleIdParamStatement($messageId, "SELECT msgs.user_sent_id FROM messages msgs
+                WHERE msgs.id = ?")->get_result();
+
+            return $this->getOneColumnValueFromSingleRow($result, Constants::$userSentId);
         }
 
         private function insertTagModel(Model $model) {
@@ -481,12 +530,6 @@
             }
 
             return $tagsInsertSuccess;
-        }
-
-        private function finishTransactionOnCond(bool $condition) {
-            if($condition) {
-                $this->connection->commit();
-            } else $this->connection->rollback();
         }
 
         private function setUserChatroomId(int $id, int $chatroomId) {
@@ -505,6 +548,21 @@
             $stmt->execute();
 
             return $stmt->affected_rows >= 0;
+        }
+
+        private function finishTransactionOnCond(bool $condition) {
+            if($condition) {
+                $this->connection->commit();
+            } else $this->connection->rollback();
+        }
+
+        private function getOneColumnValueFromSingleRow(?mysqli_result $result, string $column) {
+            if($result && ($row = $result->fetch_assoc()) != null) {
+                return array_key_exists($column, $row) ?
+                    $row[$column] : false; // first row is count at first column - the value of said count
+            }
+
+            return false;
         }
     }
 ?>

@@ -38,7 +38,7 @@
             $this->createTime = $createTime;
         }
 
-        public function getChatroomSendId() {
+        public function getChatroomSentId() {
             return $this->chatroomSentId;
         }
 
@@ -55,7 +55,16 @@
         }
 
         function getUpdateQuery(string $userPassword = null) {
-            
+            $sql = "UPDATE messages SET";
+
+            $updateColumns = array();
+            $updateColumns[] = $this->addUpdateFieldToQuery($this->message != null, Constants::$message, $this->message);
+
+            $updateColumns = array_filter($updateColumns);
+
+            $sql .= implode(',', $updateColumns) . " WHERE id = $this->id";
+
+            return $sql;
         }
 
 

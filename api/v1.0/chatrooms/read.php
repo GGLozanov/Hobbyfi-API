@@ -14,7 +14,7 @@
 
     if($id = APIUtils::validateAuthorisedRequest($token)) {
         $data = ($page == null ?
-            $db->getChatroom($id) : $db->getChatrooms($id, $page));
+            $db->getChatroom($id) : $db->getChatrooms($page));
 
         $dataEmpty = is_array($data) && empty($data);
         if($data || $dataEmpty) {
@@ -33,5 +33,4 @@
     }
 
     $db->closeConnection();
-
 ?>

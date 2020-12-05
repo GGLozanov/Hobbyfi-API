@@ -19,6 +19,7 @@
         public static string $hasImage = "has_image";
         public static string $ownerId = "owner_id";
         public static string $lastEventId = "last_event_id";
+        public static string $userSentId = "user_sent_id";
 
         public static string $page = "page";
 
