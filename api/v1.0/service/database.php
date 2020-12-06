@@ -170,7 +170,8 @@
                             $row[Constants::$description],
                             $row[Constants::$hasImage],
                             $row[Constants::$userChatroomId],
-                            $tags[$row[Constants::$id]]
+                            $tags != null ? (array_key_exists($row[Constants::$id], $tags) ?
+                                $tags[$row[Constants::$id]] : null) : null
                         );
                     }
                     return $result;
@@ -297,7 +298,8 @@
                     $rows[0][Constants::$hasImage],
                     $rows[0][Constants::$ownerId],
                     $rows[0][Constants::$lastEventId],
-                    $tags[$rows[0][Constants::$id]]
+                    $tags != null ? (array_key_exists($rows[0][Constants::$id], $tags) ?
+                        $tags[$rows[0][Constants::$id]] : null) : null
                 )];
             }
 
@@ -340,7 +342,8 @@
                         $row[Constants::$hasImage],
                         $row[Constants::$ownerId],
                         $row[Constants::$lastEventId],
-                        $tags[$row[Constants::$id]]
+                        $tags != null ? (array_key_exists($row[Constants::$id], $tags) ?
+                            $tags[$row[Constants::$id]] : null) : null
                     );
                     return $result;
                 }, array());
@@ -489,10 +492,15 @@
         private function extractTagsFromJoinQuery(array $rows) {
             $tags = array();
             foreach($rows as $row) {
+                if($row[Constants::$tagName] == null ||
+                    $row[Constants::$colour] == null) {
+                    continue;
+                }
+
                 $tags[$row[Constants::$id]][] =
                     new Tag($row[Constants::$tagName], $row[Constants::$colour], $row[Constants::$isFromFacebook]);
             }
-            return $tags;
+            return empty($tags) ? null : $tags;
         }
 
         // should be always called in transaction context for CRUD methods
