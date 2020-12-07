@@ -40,8 +40,8 @@
             $updateColumns[] = $this->addUpdateFieldToQuery($this->email != null, Constants::$email, $this->email);
             $updateColumns[] = $this->addUpdateFieldToQuery($userPassword != null, Constants::$password, $userPassword);
             $updateColumns[] = $this->addUpdateFieldToQuery($this->name != null, Constants::$username, $this->name);
-            $updateColumns[] = $this->addUpdateFieldToQuery($this->description != null, Constants::$description, $this->description);
-            $updateColumns[] = $this->addUpdateFieldToQuery($this->chatroomId != null, Constants::$userChatroomId, $this->chatroomId);
+            $updateColumns[] = $this->addUpdateFieldToQuery($this->description != null || empty($this->description), Constants::$description, $this->description);
+            $updateColumns[] = $this->addUpdateFieldToQuery($this->chatroomId != null || empty($this->chatroomId), Constants::$userChatroomId, $this->chatroomId);
 
             $updateColumns = array_filter($updateColumns);
 
@@ -68,7 +68,8 @@
 
         public function isUpdateFormEmpty() {
             return $this->email == null && $this->name == null
-                && $this->description == null && $this->chatroomId == null && $this->tags == null;
+                && $this->description == null && $this->description != "" && $this->chatroomId == null &&
+                $this->chatroomId != 0 && $this->tags == null;
         }
 
         public function jsonSerialize() {

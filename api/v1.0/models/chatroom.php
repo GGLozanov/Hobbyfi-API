@@ -36,15 +36,21 @@
 
             $updateColumns = array();
             $updateColumns[] = $this->addUpdateFieldToQuery($this->name != null, Constants::$name, $this->name);
-            $updateColumns[] = $this->addUpdateFieldToQuery($this->description != null, Constants::$description, $this->description);
+            $updateColumns[] = $this->addUpdateFieldToQuery($this->description != null || empty($this->description), Constants::$description, $this->description);
             $updateColumns[] = $this->addUpdateFieldToQuery($this->ownerId != null, Constants::$ownerId, $this->ownerId);
-            $updateColumns[] = $this->addUpdateFieldToQuery($this->lastEventId != null, Constants::$lastEventId, $this->lastEventId);
+            $updateColumns[] = $this->addUpdateFieldToQuery($this->lastEventId != null || empty($this->lastEventId), Constants::$lastEventId, $this->lastEventId);
 
             $updateColumns = array_filter($updateColumns);
 
             $sql .= implode(',', $updateColumns) . " WHERE id = $this->id";
 
             return $sql;
+        }
+
+        public function isUpdateFormEmpty() {
+            return $this->name == null
+                && $this->description == null && $this->description != "" && $this->ownerId == null &&
+                $this->lastEventId != 0 && $this->tags == null;
         }
 
         function getOwnerId() {

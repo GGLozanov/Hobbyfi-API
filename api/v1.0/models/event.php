@@ -23,6 +23,12 @@
             
         }
 
+        public function isUpdateFormEmpty() {
+            return $this->name == null && $this->description == null
+                && $this->hasImage == null && $this->date == null && $this->startDate == null
+                && $this->lat == null && $this->long == null;
+        }
+
         public function getStartDate() {
             return $this->startDate;
         }

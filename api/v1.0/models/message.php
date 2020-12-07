@@ -54,6 +54,11 @@
             $this->userSentId = $userSentId;
         }
 
+        public function isUpdateFormEmpty() {
+            return $this->message == null && $this->createTime == null
+                && $this->chatroomSentId == null && $this->userSentId == null;
+        }
+
         function getUpdateQuery(string $userPassword = null) {
             $sql = "UPDATE messages SET";
 
