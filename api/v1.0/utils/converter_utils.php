@@ -40,7 +40,7 @@
             $email = ConverterUtils::getFieldFromRequestBody(Constants::$email);
             $username = ConverterUtils::getFieldFromRequestBody(Constants::$username);
             $description = ConverterUtils::getFieldFromRequestBody(Constants::$description);
-            $chatroomId = intval(ConverterUtils::getFieldFromRequestBody(Constants::$chatroomId));
+            $chatroomId = ConverterUtils::getFieldIntValueOrNull(Constants::$chatroomId);
             $hasImage = ConverterUtils::getFieldFromRequestBody(Constants::$image) != null;
             $tags = TagUtils::extractTagsFromJson(ConverterUtils::getFieldFromRequestBody(Constants::$tags));
 
@@ -61,10 +61,15 @@
             $description = ConverterUtils::getFieldFromRequestBody(Constants::$description);
             $hasImage = ConverterUtils::getFieldFromRequestBody(Constants::$image) != null;
             $tags = TagUtils::extractTagsFromJson(ConverterUtils::getFieldFromRequestBody(Constants::$tags));
-            $lastEventId = intval(ConverterUtils::getFieldFromRequestBody(Constants::$lastEventId));
+            $lastEventId = ConverterUtils::getFieldIntValueOrNull(Constants::$lastEventId);
 
             // ID is added later on in update query
             return new Chatroom(null, $name, $description, $hasImage, $ownerId, $lastEventId, $tags);
+        }
+
+        private static function getFieldIntValueOrNull(string $field, array $body = null) {
+            $value = ConverterUtils::getFieldFromRequestBody($field, $body);
+            return $value == null ? null : intval($value);
         }
     }
 ?>
