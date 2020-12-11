@@ -40,13 +40,11 @@
             $updateColumns[] = $this->addUpdateFieldToQuery($this->email != null, Constants::$email, $this->email);
             $updateColumns[] = $this->addUpdateFieldToQuery($userPassword != null, Constants::$password, $userPassword);
             $updateColumns[] = $this->addUpdateFieldToQuery($this->name != null, Constants::$username, $this->name);
-            $updateColumns[] = $this->addUpdateFieldToQuery($this->description != null || $this->description == "", Constants::$description, $this->description);
-            $updateColumns[] = $this->addUpdateFieldToQuery($this->chatroomId != null || $this->chatroomId == 0, Constants::$userChatroomId, $this->chatroomId);
+            $updateColumns[] = $this->addUpdateFieldToQuery($this->description != null || ($this->description != null && $this->description == ""), Constants::$description, $this->description);
+            $updateColumns[] = $this->addUpdateFieldToQuery($this->chatroomId != null || ($this->chatroomId != null && $this->chatroomId == 0), Constants::$userChatroomId, $this->chatroomId);
 
             $updateColumns = array_filter($updateColumns);
-
             $sql .= implode(',', $updateColumns) . " WHERE id = $this->id";
-
             return $sql;
         }
 

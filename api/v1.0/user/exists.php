@@ -6,7 +6,7 @@
     require "../init.php";
     /* @var $db */
 
-    $username = ConverterUtils::getFieldFromRequestBodyOrDie(Constants::$username, $_GET);
+    $id = ConverterUtils::getFieldFromRequestBodyOrDie(Constants::$id, $_GET);
 
-    echo $db->userExists($username);
+    echo $db->userExists($id);
 ?>

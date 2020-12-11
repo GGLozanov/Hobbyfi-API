@@ -26,7 +26,8 @@
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/api/v1.0/models/chatroom.php" beforeDir="false" afterPath="$PROJECT_DIR$/api/v1.0/models/chatroom.php" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/api/v1.0/models/user.php" beforeDir="false" afterPath="$PROJECT_DIR$/api/v1.0/models/user.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/api/v1.0/utils/converter_utils.php" beforeDir="false" afterPath="$PROJECT_DIR$/api/v1.0/utils/converter_utils.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/api/v1.0/service/database.php" beforeDir="false" afterPath="$PROJECT_DIR$/api/v1.0/service/database.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/api/v1.0/user/exists.php" beforeDir="false" afterPath="$PROJECT_DIR$/api/v1.0/user/exists.php" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -107,6 +108,7 @@
       <workItem from="1607253291623" duration="3662000" />
       <workItem from="1607354077663" duration="8218000" />
       <workItem from="1607430827585" duration="3624000" />
+      <workItem from="1607604121013" duration="5484000" />
     </task>
     <servers />
   </component>

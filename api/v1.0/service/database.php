@@ -60,12 +60,11 @@
             return mysqli_num_rows($stmt->get_result()) > 0; // if more than one row found => user exists
         }
 
-        public function userExists(string $username) { // user exists if username or password are taken
-            $stmt = $this->connection->prepare("SELECT username FROM users WHERE username = ?");
-            $stmt->bind_param("s", $username);
-            $stmt->execute();
+        public function userExists(string $id) { // user exists if username or password are taken
+            $result = $this->executeSingleIdParamStatement($id, "SELECT id FROM users WHERE id = ?")
+                ->get_result();
 
-            return mysqli_num_rows($stmt->get_result()) > 0 ? "true" : "false"; // if more than one row found => user exists
+            return mysqli_num_rows($result) > 0 ? "true" : "false"; // if more than one row found => user exists
         }
 
         public function validateUser(string $email, string $password) {
