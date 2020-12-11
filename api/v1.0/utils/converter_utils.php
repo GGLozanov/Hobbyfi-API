@@ -31,7 +31,7 @@
             $email = ConverterUtils::getFieldFromRequestBody(Constants::$email);
             $description = ConverterUtils::getFieldFromRequestBody(Constants::$description);
             $hasImage = ConverterUtils::getFieldFromRequestBody(Constants::$image) != null;
-            $tags = TagUtils::extractTagsFromJson(ConverterUtils::getFieldFromRequestBody(Constants::$tags));
+            $tags = ConverterUtils::getMappedTags(Constants::$tagsCreate);
 
             return new User(null, $email, $username, $description, $hasImage, null, $tags);
         }
@@ -42,7 +42,7 @@
             $description = ConverterUtils::getFieldFromRequestBody(Constants::$description);
             $chatroomId = ConverterUtils::getFieldIntValueOrNull(Constants::$chatroomId);
             $hasImage = ConverterUtils::getFieldFromRequestBody(Constants::$image) != null;
-            $tags = TagUtils::extractTagsFromJson(ConverterUtils::getFieldFromRequestBody(Constants::$tags));
+            $tags = ConverterUtils::getMappedTags();
 
             return new User($userId, $email, $username, $description, $hasImage, $chatroomId, $tags);
         }
@@ -51,7 +51,7 @@
             $name = ConverterUtils::getFieldFromRequestBodyOrDie(Constants::$name);
             $description = ConverterUtils::getFieldFromRequestBody(Constants::$description);
             $hasImage = ConverterUtils::getFieldFromRequestBody(Constants::$image) != null;
-            $tags = TagUtils::extractTagsFromJson(ConverterUtils::getFieldFromRequestBody(Constants::$tags));
+            $tags = ConverterUtils::getMappedTags(Constants::$tagsCreate);
 
             return new Chatroom(null, $name, $description, $hasImage, $ownerId, null, $tags);
         }
@@ -60,8 +60,8 @@
             $name = ConverterUtils::getFieldFromRequestBody(Constants::$name);
             $description = ConverterUtils::getFieldFromRequestBody(Constants::$description);
             $hasImage = ConverterUtils::getFieldFromRequestBody(Constants::$image) != null;
-            $tags = TagUtils::extractTagsFromJson(ConverterUtils::getFieldFromRequestBody(Constants::$tags));
             $lastEventId = ConverterUtils::getFieldIntValueOrNull(Constants::$lastEventId);
+            $tags = ConverterUtils::getMappedTags();
 
             // ID is added later on in update query
             return new Chatroom(null, $name, $description, $hasImage, $ownerId, $lastEventId, $tags);
@@ -70,6 +70,19 @@
         private static function getFieldIntValueOrNull(string $field, array $body = null) {
             $value = ConverterUtils::getFieldFromRequestBody($field, $body);
             return $value == null ? null : intval($value);
+        }
+
+        private static function getMappedTags(?string $tagField = null) {
+            if($tagField == null)
+                $tagField = Constants::$tags;
+
+            $encodedTags = ConverterUtils::getFieldFromRequestBody($tagField);
+            // support both receiving tags in one json array line and in multiple
+            $tags = TagUtils::extractTagsFromJson($encodedTags);
+            if(empty($tags)) {
+                $tags = TagUtils::extractTagsFromSingleJson($encodedTags);
+            }
+            return $tags;
         }
     }
 ?>

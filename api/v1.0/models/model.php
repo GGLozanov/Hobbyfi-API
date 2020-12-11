@@ -4,7 +4,11 @@
         protected function addUpdateFieldToQuery(bool $fieldNull, string $field, $value) {
             $isValueString = is_string($value);
             if($fieldNull) {
-                $value = empty($value) ? 'NULL' : $value;
+                if(empty($value)) {
+                    $value = 'NULL';
+                    $isValueString = false;
+                }
+
                 return $isValueString ? " $field = '$value'" : " $field = $value";
             }
             return null;

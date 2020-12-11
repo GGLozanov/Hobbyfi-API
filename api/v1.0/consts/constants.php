@@ -7,6 +7,7 @@
         public static string $email = "email"; 
         public static string $description = "description";
         public static string $tags = "tags";
+        public static string $tagsCreate = "tags[]";
         public static string $image = "image";
         public static string $tagName = "tag_name";
         public static string $name = "name";
@@ -58,7 +59,7 @@
           return Constants::$userProfileImagesDir . "/" . $userId . ".jpg";
         }
         public static function chatroomImagesDir(int $chatroomId) {
-            return "chatroom_imgs_" . $chatroomId;
+            return "chatroom_imgs_" . $chatroomId . "/" . $chatroomId . ".jpg";
         }
 
         // TODO: Have different dir schema for messages

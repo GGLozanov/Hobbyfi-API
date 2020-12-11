@@ -24,7 +24,7 @@
 
             $status = Constants::$ok;
             if($chatroom->getHasImage()) {
-                if(!ImageUtils::uploadImageToPath($id, Constants::$userProfileImagesDir, $_POST[Constants::$image], Constants::$users)) {
+                if(!ImageUtils::uploadImageToPath($id, Constants::chatroomImagesDir($id), $_POST[Constants::$image], Constants::$chatrooms)) {
                     $status = Constants::$imageUploadFailed;
                 }
             }
@@ -32,7 +32,8 @@
             $db->closeConnection(); // make sure to close the connection after that (don't allow too many auths in one instance of the web service)
 
             APIUtils::displayAPIResultAndDie(array(
-                Constants::$response=>$status
+                Constants::$response=>$status,
+                Constants::$id=>$id
             )); // no need to return chatroom if client already has it; can be read & fetched in read endpoint
         } else {
             if($id == null) {

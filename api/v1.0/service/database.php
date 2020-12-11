@@ -115,13 +115,22 @@
 
         public function updateUser(User $user, ?string $password) {
             $this->connection->begin_transaction();
-            $result = mysqli_query($this->connection, $user->getUpdateQuery($password));
+            $userUpdateSuccess = true;
+            // FIXME: Pass in this as argument from edit.php
+            $shouldUpdateUser = !$user->isUpdateFormEmpty() || $password != null;
+            if($shouldUpdateUser) {
+                mysqli_query($this->connection, $user->getUpdateQuery($password));
 
-            // FIXME: Code dup
-            $userUpdateSuccess = mysqli_affected_rows($this->connection);
+                // FIXME: Code dup
+                $userUpdateSuccess = mysqli_affected_rows($this->connection);
+            }
+
             $tagsUpdateSuccess = true;
             if($tags = $user->getTags()) { // somewhat unnecessary check given the method..
                 $tagsUpdateSuccess = $this->updateModelTags(Constants::$userTagsTable, Constants::$userId, $user->getId(), $tags);
+            } else if(!$shouldUpdateUser) {
+                $userUpdateSuccess = false;
+                $tagsUpdateSuccess = false;
             }
 
             $updateSuccess = $userUpdateSuccess > 0 && $tagsUpdateSuccess;
@@ -233,6 +242,8 @@
 
             $chatroom->setId($chatroomId);
 
+            $chatroomUpdateSuccess = true;
+            if(!$chatroom->isUpdateFormEmpty())
             mysqli_query($this->connection, $chatroom->getUpdateQuery());
 
             // FIXME: Code dup with updateUser
@@ -484,7 +495,7 @@
         
             $sql = "REPLACE INTO $table ($modelColumn, tag_name) VALUES ";
             $sql .= implode(',', $dataArray);
-        
+
             return $sql;
         }
 

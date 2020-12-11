@@ -21,11 +21,12 @@
             if($shouldNotUpdateUser) {
                 APIUtils::displayAPIResultAndDie(array(Constants::$response=>Constants::$ok), 200);
             }
-        } else if($shouldNotUpdateUser) {
+        } else if($shouldNotUpdateUser && !($user->getTags())) {
             APIUtils::displayAPIResultAndDie(array(Constants::$response=>Constants::$noCredentialsForUpdateError), 400);
         }
 
-        if($db->updateUser($user, $password != null ? password_hash($password, PASSWORD_DEFAULT) : null)) {
+        if($db->updateUser($user,
+            $password != null ? password_hash($password, PASSWORD_DEFAULT) : null)) {
             $status = Constants::$ok;
             $code = 200;
         } else {
