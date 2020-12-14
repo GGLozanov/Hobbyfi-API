@@ -67,6 +67,19 @@
             return new Chatroom(null, $name, $description, $hasImage, $ownerId, $lastEventId, $tags);
         }
 
+        public static function getMessageCreate(int $ownerId) {
+            $message = ConverterUtils::getFieldFromRequestBodyOrDie(Constants::$message);
+
+            // chatroom sent id garnered from db method
+            return new Message(null, $message, null, null, $ownerId);
+        }
+
+        public static function getMessageUpdate(int $ownerId) {
+            $message = ConverterUtils::getFieldFromRequestBody(Constants::$message);
+
+            return $message; // don't even bundle in object because that's the only thing this can be edited
+        }
+
         private static function getFieldIntValueOrNull(string $field, array $body = null) {
             $value = ConverterUtils::getFieldFromRequestBody($field, $body);
             return $value == null ? null : intval($value);

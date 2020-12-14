@@ -77,8 +77,7 @@
                 Constants::$description=>$this->description,
                 Constants::$chatroomId=>$this->chatroomId,
                 Constants::$photoUrl=>$this->hasImage ?
-                    (array_key_exists('HTTPS', $_SERVER) ? 'https://' : 'http://') . $_SERVER['SERVER_NAME'] . ':'
-                    . $_SERVER['SERVER_PORT'] .'/Hobbyfi-API/uploads/' . Constants::userProfileImagesDir($this->id)
+                    Constants::getPhotoUrlForDir(Constants::userProfileImagesDir($this->id))
                     : null,
                 Constants::$tags=>$this->getTags()
             ];

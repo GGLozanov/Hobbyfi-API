@@ -369,9 +369,9 @@
             // handle user not in chatroom error
         }
 
-        public function createChatroomMessage(Message $message) {
+        public function createChatroomMessage(Message $message, ?int $chatroomId = null, bool $shouldFinishTransaction = true) {
             $this->connection->begin_transaction();
-            if(!($chatroomId = $this->getUserChatroomId($message->getUserSentId()))) {
+            if($chatroomId == null && !($chatroomId = $this->getUserChatroomId($message->getUserSentId()))) {
                 $this->connection->rollback();
                 return false; // users should only send messages in a single chatroom from here (theirs) and nothing else
             }
@@ -390,13 +390,34 @@
             $insertSuccess = $stmt->execute();
             $messageId = mysqli_insert_id($this->connection);
 
-            if($insertSuccess) {
+            if($shouldFinishTransaction)
+                $this->finishTransactionOnCond($insertSuccess);
+
+            return $insertSuccess ? $messageId : null;
+        }
+
+        // very bruh method
+        public function createChatroomImageMessage(Message $message) {
+            require_once("../utils/image_utils.php");
+
+            if(!($chatroomId = $this->getUserChatroomId($message->getUserSentId()))) {
+                return false; // users should only send messages in a single chatroom from here (theirs) and nothing else
+            }
+            $message->setChatroomSentId($chatroomId);
+
+            $messagePhotoUrl = $message->withPhotoUrlAsMessage(); // clone message to pass for create chatroom method (photourl as message)
+            if(!($messageId = $this->createChatroomMessage($messagePhotoUrl, $chatroomId,false))) {
+                $this->connection->rollback();
+                return $messageId;
+            }
+
+            if(ImageUtils::uploadImageToPath($messageId, Constants::chatroomMessageImagesDir($chatroomId), $message->getMessage(), Constants::$message)) {
                 $this->connection->commit();
                 return $messageId;
             }
 
             $this->connection->rollback();
-            return null;
+            return false;
         }
 
         public function deleteChatroomMessage(int $userId, int $messageId) {

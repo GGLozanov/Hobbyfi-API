@@ -73,6 +73,17 @@
         }
 
 
+        public function withPhotoUrlAsMessage() {
+            return new Message(
+                $this->id,
+                Constants::getPhotoUrlForDir(Constants::chatroomMessageImagesDir($this->chatroomSentId)
+                    . "/" . $this->id . "jpg"),
+                $this->createTime,
+                $this->userSentId,
+                $this->chatroomSentId
+            );
+        }
+
         public function jsonSerialize() {
             // TODO: Implement jsonSerialize() method.
         }

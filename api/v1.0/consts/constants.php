@@ -20,6 +20,7 @@
         public static string $hasImage = "has_image";
         public static string $ownerId = "owner_id";
         public static string $lastEventId = "last_event_id";
+        public static string $message = "message";
         public static string $userSentId = "user_sent_id";
 
         public static string $page = "page";
@@ -52,20 +53,26 @@
         public static string $userIdJwtKey = "userId";
 
         public static string $userProfileImagesDir = "user_pfps";
+        public static string $chatroomImagesDir = "chatroom_imgs_";
         public static string $data = "data";
         public static string $data_list = "data_list";
 
         public static function userProfileImagesDir(int $userId) {
           return Constants::$userProfileImagesDir . "/" . $userId . ".jpg";
         }
+
         public static function chatroomImagesDir(int $chatroomId) {
-            return "chatroom_imgs_" . $chatroomId . "/" . $chatroomId . ".jpg";
+            return Constants::$chatroomImagesDir . $chatroomId;
         }
 
         // TODO: Have different dir schema for messages
-        public static function chatroomMessageImagesPath(int $chatroomId, int $messageId) {
-            return Constants::chatroomImagesDir($chatroomId) . '/' . $messageId . '.jpg';
+        public static function chatroomMessageImagesDir(int $chatroomId) {
+            return Constants::chatroomImagesDir($chatroomId) . '/messages';
+        }
 
+        public static function getPhotoUrlForDir(string $dir) {
+            return (array_key_exists('HTTPS', $_SERVER) ? 'https://' : 'http://') . $_SERVER['SERVER_NAME'] . ':'
+                . $_SERVER['SERVER_PORT'] .'/Hobbyfi-API/uploads/' . $dir;
         }
         // would've extracted these into a generator function if PHP hadn't been so goddamn fucking stupid
 
@@ -81,11 +88,14 @@
         public static string $chatroomNotDeleted = "Chatroom not deleted. User with this id may not be the owner of their chatroom";
 
         public static string $userAlreadyInChatroom = "User already is an owner or part of a chatroom";
-        
+        public static string $messageNotCreated = "Message not created. Bad input";
+        public static string $messageNoChatroom = "Message not created. User with this id is not in any chatroom";
+        public static string $messageNotUpdated = "Message not updated. User with this id may not have the right to update the message";
+        public static string $messageNotDeleted = "Message not deleted";
+
         // TODO: Other models CRUD error strings
         public static string $userTagsTable = "user_tags";
         public static string $chatroomTagsTable = "chatroom_tags";
-
 
         public static string $users = "users";
         public static string $chatrooms = "chatrooms";

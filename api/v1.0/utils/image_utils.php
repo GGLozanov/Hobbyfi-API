@@ -47,6 +47,9 @@
 
             return $deletionSuccess;
         }
-    }
 
+        public static function validateBase64(string $data) {
+            return base64_encode(base64_decode($data, true)) === $data;
+        }
+    }
 ?>
