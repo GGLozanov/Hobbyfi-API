@@ -13,19 +13,19 @@
     if($ownerId = APIUtils::validateAuthorisedRequest($token)) {
         $message = ConverterUtils::getMessageCreate($ownerId);
 
-        if($id = (!@ImageUtils::validateBase64($message) ?
+        if($id = (!@ImageUtils::validateBase64($message->getMessage()) ?
                 $db->createChatroomMessage($message)
                     : $db->createChatroomImageMessage($message))) {
             APIUtils::displayAPIResult(array(Constants::$response=>Constants::$ok, Constants::$id=>$id));
         } else {
             // TODO: Maybe extract into util function ? ?
-            if($id == null) {
-                $status = Constants::$messageNotCreated;
-                $code = 406; // bad input
-            } else {
+            if($id == false) {
                 // false -> user not in a chatroom
                 $status = Constants::$messageNoChatroom;
                 $code = 403; // forbidden
+            } else {
+                $status = Constants::$messageNotCreated;
+                $code = 406; // bad input
             }
             APIUtils::displayAPIResult(array(Constants::$response=>$status), $code);
         }

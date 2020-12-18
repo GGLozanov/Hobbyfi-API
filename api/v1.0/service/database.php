@@ -1,5 +1,6 @@
 <?php
     include_once "../consts/constants.php";
+    require_once("../fcm/fcm.php");
 
     class Database { 
         public $host = "localhost"; // to be changed if hosted on server
@@ -7,14 +8,20 @@
         public $user_password = "";
         public $db_name = "hobbyfi_db";
         public $connection;
+        public $fcm;
 
         function __construct() {
+            require_once("../config/core.php");
+            
+            /* @var $fcmServerKey */
+            
             $this->connection = mysqli_connect(
                 $this->host,
                  $this->user_name, 
                  $this->user_password,
                   $this->db_name, "3308"
             );
+            $this->fcm = new FCM($fcmServerKey);
         }
 
         public function closeConnection() {
@@ -74,7 +81,6 @@
             $result = $stmt->get_result();
 
             if(mysqli_num_rows($result) > 0 && ($rows = mysqli_fetch_all($result, MYSQLI_ASSOC))) {
-                    
                 $filteredRows = array_filter($rows, function (array $row) use ($password) {
                     return password_verify($password, $row[Constants::$password]);
                 });
@@ -144,7 +150,7 @@
 
             $stmt = $this->executeSingleIdParamStatement($id, "DELETE FROM users WHERE id = ?");
 
-            ImageUtils::deleteImageFromPath($id, Constants::$userProfileImagesDir, Constants::$users);
+            ImageUtils::deleteImageFromPath($id, Constants::$userProfileImagesDir, Constants::$users, true);
             // FCM if user in chatroom => send notification
 
             return $stmt->affected_rows > 0;
@@ -152,14 +158,21 @@
         
         // gets all users with any id BUT this one;
         public function getChatroomUsers(int $userId, int $multiplier = 1) { // multiplier starts from 1
-            // FIXME: SQL Query limit param
+            $this->connection->begin_transaction();
+
+            if($chatroomId = $this->getUserChatroomId($userId)) {
+                $this->connection->rollback();
+                return false;
+            }
+
+            $multiplier = 5*($multiplier - 1);
             $stmt = $this->connection->prepare(
                 "SELECT us.id, us.description, us.username, us.email, us.has_image, us_tags.tag_name, tgs.colour, tgs.is_from_facebook FROM 
                 users us
                 LEFT JOIN user_tags us_tags ON us_tags.user_id = us.id
                 LEFT JOIN tags tgs ON tgs.name LIKE us_tags.tag_name
-                WHERE id != ? AND us.user_chatroom_id = (SELECT user_chatroom_id WHERE id = ?) LIMIT 5 OFFSET 5*(? - 1)");
-            $stmt->bind_param("iii", $userId, $userId, $multiplier);
+                WHERE id != ? AND us.user_chatroom_id = ? LIMIT 5 OFFSET ?");
+            $stmt->bind_param("iii", $userId, $chatroomId, $multiplier);
             $stmt->execute();
 
             $result = $stmt->get_result();
@@ -186,7 +199,8 @@
                 }, array());
             }
 
-            return null;
+            $this->connection->rollback();
+            return (empty($stmt->error)) ? array() : null;
         }
 
         public function createChatroom(Chatroom $chatroom) {
@@ -365,8 +379,37 @@
             return (empty($stmt->error)) ? array() : null; // want to show empty array for pagination end limit purposes
         }
 
-        public function getChatroomMessages(int $userId, int $multiplier) {
-            // handle user not in chatroom error
+        public function getChatroomMessages(int $userId, int $multiplier = 1) {
+            $this->connection->begin_transaction();
+            if(!($chatroomId = $this->getUserChatroomId($userId))) {
+                $this->connection->rollback();
+                return false;
+            }
+            $multiplier = 20*($multiplier - 1);
+            $stmt = $this->connection->prepare(
+                "SELECT * FROM messages WHERE chatroom_sent_id = ? LIMIT 20 OFFSET ?"
+            );
+
+            $stmt->bind_param("ii", $chatroomId, $multiplier);
+            $stmt->execute();
+
+            $result = $stmt->get_result();
+
+            if(mysqli_num_rows($result) > 0) {
+                $rows = mysqli_fetch_all($result, MYSQLI_ASSOC);
+                return array_map(function($row) {
+                    return new Message(
+                        $row[Constants::$id],
+                        $row[Constants::$message],
+                        $row[Constants::$createTime],
+                        $row[Constants::$chatroomSentId],
+                        $row[Constants::$userSentId]
+                    );
+                }, $rows);
+            }
+
+            $this->connection->rollback();
+            return (empty($stmt->error)) ? array() : null;
         }
 
         public function createChatroomMessage(Message $message, ?int $chatroomId = null, bool $shouldFinishTransaction = true) {
@@ -383,7 +426,7 @@
             $msg = $message->getMessage();
             $userSentId = $message->getUserSentId();
 
-            $stmt->bind_param("isii". $id, $msg, $chatroomId, $userSentId);
+            $stmt->bind_param("isii", $id, $msg, $chatroomId, $userSentId);
             // handle user not in chatroom error
             // FCM here
 
@@ -426,14 +469,15 @@
             if(!($ownerId = $this->getMessageOwnerId($messageId))
                 || $userId != $ownerId || !($this->getOwnerChatroomId($userId))) {
                 $this->connection->rollback();
-                return false;
+                return null;
             }
 
             $stmt = $this->executeSingleIdParamStatement($messageId, "DELETE FROM messages WHERE id = ?");
             // FCM
 
-            $this->finishTransactionOnCond($stmt->affected_rows > 0);
-            return $stmt->affected_rows > 0;
+            $affectedRows = $stmt->affected_rows > 0;
+            $this->finishTransactionOnCond($affectedRows);
+            return $affectedRows;
         }
 
         public function updateChatroomMessage(Message $message) {

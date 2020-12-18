@@ -22,6 +22,8 @@
         public static string $lastEventId = "last_event_id";
         public static string $message = "message";
         public static string $userSentId = "user_sent_id";
+        public static string $createTime = "create_time";
+        public static string $chatroomSentId = "chatroom_sent_id";
 
         public static string $page = "page";
 
@@ -92,6 +94,9 @@
         public static string $messageNoChatroom = "Message not created. User with this id is not in any chatroom";
         public static string $messageNotUpdated = "Message not updated. User with this id may not have the right to update the message";
         public static string $messageNotDeleted = "Message not deleted";
+        public static string $messageNotDeletedPermission = "Message not deleted because user with this id does not have the right to delete it";
+        public static string $messagesNoPermission = "Couldn't find messages because user with this id does not belong to a chatroom";
+        public static string $messagesNotFound = "Couldn't fetch messages. Something's gone wrong";
 
         // TODO: Other models CRUD error strings
         public static string $userTagsTable = "user_tags";

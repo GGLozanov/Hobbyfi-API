@@ -16,12 +16,7 @@
         $data = ($page == null ?
             $db->getChatroom($id) : $db->getChatrooms($page));
 
-        $dataEmpty = is_array($data) && empty($data);
-        if($data || $dataEmpty) {
-            if($dataEmpty) {
-                $data = array(); // FIXME: Banal and dumb
-            }
-
+        if(isset($data)) {
             APIUtils::displayAPIResult(array(
                 Constants::$response=>Constants::$ok,
                 Constants::$data_list=>$data

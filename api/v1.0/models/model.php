@@ -1,5 +1,5 @@
 <?php
-    abstract class Model {
+    abstract class Model implements JsonSerializable { // force subclasses to implement. . .
 
         protected function addUpdateFieldToQuery(bool $fieldNull, string $field, $value) {
             $isValueString = is_string($value);

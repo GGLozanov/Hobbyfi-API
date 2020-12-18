@@ -85,7 +85,13 @@
         }
 
         public function jsonSerialize() {
-            // TODO: Implement jsonSerialize() method.
+            return [
+                Constants::$id=>$this->id,
+                Constants::$message=>$this->message,
+                Constants::$createTime=>$this->createTime,
+                Constants::$userSentId=>$this->userSentId,
+                Constants::$chatroomSentId=>$this->chatroomSentId
+            ];
         }
     }
 

@@ -74,10 +74,13 @@
             return new Message(null, $message, null, null, $ownerId);
         }
 
+        // this and getMessageCreate are the same method for now (semantic difference) but will be left
+        // if the need arises for it to be changed in the future
         public static function getMessageUpdate(int $ownerId) {
+            $id = ConverterUtils::getFieldFromRequestBodyOrDie(Constants::$id);
             $message = ConverterUtils::getFieldFromRequestBody(Constants::$message);
 
-            return $message; // don't even bundle in object because that's the only thing this can be edited
+            return new Message($id, $message, null, null, $ownerId);
         }
 
         private static function getFieldIntValueOrNull(string $field, array $body = null) {

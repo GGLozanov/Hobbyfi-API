@@ -11,15 +11,20 @@
     $token = APIUtils::getTokenFromHeadersOrDie();
 
     if($ownerId = APIUtils::validateAuthorisedRequest($token)) {
-        $messageId = ConverterUtils::getFieldFromRequestBodyOrDie(Constants::$message);
+        $messageId = ConverterUtils::getFieldFromRequestBodyOrDie(Constants::$id, $_GET);
 
         // TODO: Extract into util method and fix code dup with other delete endpoints... zzzz
-        if($db->deleteChatroomMessage($ownerId, $messageId)) {
+        if($success = $db->deleteChatroomMessage($ownerId, $messageId)) {
             $status = Constants::$ok;
             $code = 200;
         } else {
-            $status = Constants::$messageNotDeleted;
-            $code = 500;
+            if($success == false) {
+                $status = Constants::$messageNotDeletedPermission;
+                $code = 406;
+            } else {
+                $status = Constants::$messageNotDeleted;
+                $code = 500;
+            }
         }
 
         APIUtils::displayAPIResult(array(Constants::$response=>$status), $code);
