@@ -36,15 +36,21 @@
 
             $updateColumns = array();
             $updateColumns[] = $this->addUpdateFieldToQuery($this->name != null, Constants::$name, $this->name);
-            $updateColumns[] = $this->addUpdateFieldToQuery($this->description != null, Constants::$description, $this->description);
+            $updateColumns[] = $this->addUpdateFieldToQuery(isset($this->description), Constants::$description, $this->description);
             $updateColumns[] = $this->addUpdateFieldToQuery($this->ownerId != null, Constants::$ownerId, $this->ownerId);
-            $updateColumns[] = $this->addUpdateFieldToQuery($this->lastEventId != null, Constants::$lastEventId, $this->lastEventId);
+            $updateColumns[] = $this->addUpdateFieldToQuery(isset($this->lastEventId), Constants::$lastEventId, $this->lastEventId);
 
             $updateColumns = array_filter($updateColumns);
 
             $sql .= implode(',', $updateColumns) . " WHERE id = $this->id";
 
             return $sql;
+        }
+
+        public function isUpdateFormEmpty() {
+            return $this->name == null
+                && !isset($this->description) &&
+                !isset($this->lastEventId);
         }
 
         function getOwnerId() {
@@ -70,7 +76,8 @@
                 Constants::$description=>$this->description,
                 Constants::$photoUrl=>$this->hasImage ?
                     (array_key_exists('HTTPS', $_SERVER) ? 'https://' : 'http://') . $_SERVER['SERVER_NAME'] . ':'
-                    . $_SERVER['SERVER_PORT'] .'/Hobbyfi-API/uploads/' . Constants::userProfileImagesDir($this->id)
+                    . $_SERVER['SERVER_PORT'] .'/Hobbyfi-API/uploads/' . Constants::chatroomImagesDir($this->id)
+                        . "/" . $this->id . ".jpg"
                     : null,
                 Constants::$ownerId=>$this->ownerId,
                 Constants::$lastEventId=>$this->lastEventId,

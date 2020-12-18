@@ -38,7 +38,7 @@
             $this->createTime = $createTime;
         }
 
-        public function getChatroomSendId() {
+        public function getChatroomSentId() {
             return $this->chatroomSentId;
         }
 
@@ -54,13 +54,44 @@
             $this->userSentId = $userSentId;
         }
 
+        public function isUpdateFormEmpty() {
+            return $this->message == null && $this->createTime == null
+                && $this->chatroomSentId == null && $this->userSentId == null;
+        }
+
         function getUpdateQuery(string $userPassword = null) {
-            
+            $sql = "UPDATE messages SET";
+
+            $updateColumns = array();
+            $updateColumns[] = $this->addUpdateFieldToQuery($this->message != null, Constants::$message, $this->message);
+
+            $updateColumns = array_filter($updateColumns);
+
+            $sql .= implode(',', $updateColumns) . " WHERE id = $this->id";
+
+            return $sql;
         }
 
 
+        public function withPhotoUrlAsMessage() {
+            return new Message(
+                $this->id,
+                Constants::getPhotoUrlForDir(Constants::chatroomMessageImagesDir($this->chatroomSentId)
+                    . "/" . $this->id . "jpg"),
+                $this->createTime,
+                $this->userSentId,
+                $this->chatroomSentId
+            );
+        }
+
         public function jsonSerialize() {
-            // TODO: Implement jsonSerialize() method.
+            return [
+                Constants::$id=>$this->id,
+                Constants::$message=>$this->message,
+                Constants::$createTime=>$this->createTime,
+                Constants::$userSentId=>$this->userSentId,
+                Constants::$chatroomSentId=>$this->chatroomSentId
+            ];
         }
     }
 

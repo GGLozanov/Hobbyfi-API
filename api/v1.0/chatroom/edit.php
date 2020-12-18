@@ -11,17 +11,29 @@
     $token = APIUtils::getTokenFromHeadersOrDie();
 
     if($id = APIUtils::validateAuthorisedRequest($token)) {
-        if($result = $db->updateChatroom(ConverterUtils::getChatroomUpdate($id))) {
+        $chatroom = ConverterUtils::getChatroomUpdate($id);
+
+        // leaking db knowledge for something that should be in updateChatroom() method but w/e for now
+        if(!($chatroomId = $db->getOwnerChatroomId($id))) {
+            APIUtils::displayAPIResultAndDie(array(Constants::$response=>cONSTANTS::$chatroomNoPermissions), 406);
+        }
+
+        $chatroom->setId($chatroomId);
+
+        APIUtils::evaluateModelEditImageUpload(
+            $chatroom,
+            $chatroomId,
+            Constants::chatroomImagesDir($chatroomId),
+            Constants::$chatrooms,
+            $chatroom->isUpdateFormEmpty()
+        );
+
+        if($result = $db->updateChatroom($chatroom)) {
             $status = Constants::$ok;
             $code = 200;
         } else {
-            if($result == null) {
-                $status = Constants::$chatroomNoPermissions;
-                $code = 406;
-            } else {
-                $status = Constants::$chatroomNotUpdated;
-                $code = 500;
-            }
+            $status = Constants::$chatroomNotUpdated;
+            $code = 500;
         }
 
         APIUtils::displayAPIResult(array(Constants::$response=>$status), $code);

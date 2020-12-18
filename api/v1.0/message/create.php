@@ -1,3 +1,35 @@
 <?php
-// TODO: Check if text content is base64 string => yes, upload to server https://stackoverflow.com/questions/4278106/how-to-check-if-a-string-is-base64-valid-in-php
+    require "../init.php";
+    require "../utils/image_utils.php";
+
+    header("Access-Control-Allow-Origin: *");
+    header("Access-Control-Allow-Methods: POST");
+    header("Content-Type: application/json; charset=UTF-8");
+
+    /* @var $db */
+
+    $token = APIUtils::getTokenFromHeadersOrDie();
+
+    if($ownerId = APIUtils::validateAuthorisedRequest($token)) {
+        $message = ConverterUtils::getMessageCreate($ownerId);
+
+        if($id = (!@ImageUtils::validateBase64($message->getMessage()) ?
+                $db->createChatroomMessage($message)
+                    : $db->createChatroomImageMessage($message))) {
+            APIUtils::displayAPIResult(array(Constants::$response=>Constants::$ok, Constants::$id=>$id));
+        } else {
+            // TODO: Maybe extract into util function ? ?
+            if($id == false) {
+                // false -> user not in a chatroom
+                $status = Constants::$messageNoChatroom;
+                $code = 403; // forbidden
+            } else {
+                $status = Constants::$messageNotCreated;
+                $code = 406; // bad input
+            }
+            APIUtils::displayAPIResult(array(Constants::$response=>$status), $code);
+        }
+    }
+
+    $db->closeConnection();
 ?>

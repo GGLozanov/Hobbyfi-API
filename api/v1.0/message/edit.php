@@ -1,2 +1,23 @@
 <?php
+    header("Access-Control-Allow-Origin: *");
+    header("Access-Control-Allow-Methods: POST");
+    header("Content-Type: application/json; charset=UTF-8");
+    
+    require "../init.php";
+
+    /* @var $db */
+
+    $token = APIUtils::getTokenFromHeadersOrDie();
+
+    if($ownerId = APIUtils::validateAuthorisedRequest($token)) {
+        $message = ConverterUtils::getMessageUpdate($ownerId);
+        
+        if($db->updateChatroomMessage($message)) {
+            APIUtils::displayAPIResult(array(Constants::$response=>Constants::$ok));
+        } else {
+            APIUtils::displayAPIResult(array(Constants::$response=>Constants::$messageNotUpdated));
+        }
+    }
+
+    $db->closeConnection();
 ?>

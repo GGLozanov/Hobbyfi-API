@@ -6,22 +6,28 @@
             // TODO: Error handling for incorrect info here
             // example JSON structure for tags:
                 // tags: [ {"name": "tag_name", "colour": "#FFFFFF", "isFromFacebook": true }, {"name": "tag_name2", "colour": "#FFFFFF" } ]
+            if($tags == null) return array();
 
-            $newTags = array();
-            if($tags == null) return $newTags;
+            return array_filter(array_map(function($tag) {
+                return TagUtils::mapTag(json_decode($tag, true));
+            }, $tags));
+        }
 
-            foreach($tags as $tag) {
-                $jsonTag = json_decode($tag, true);
-                if(!array_key_exists(Constants::$name, $jsonTag)
-                    || !array_key_exists(Constants::$colour, $jsonTag) || !array_key_exists(Constants::$isFromFacebook, $jsonTag)) {
-                    continue;
-                }
+        public static function extractTagsFromSingleJson(?array $tags) {
+            if($tags == null) return array();
 
-                $newTags[] = new Tag($jsonTag[Constants::$name], $jsonTag[Constants::$colour], $jsonTag[Constants::$isFromFacebook]);
+            return array_filter(array_map(function($tag) {
+                return TagUtils::mapTag($tag);
+            }, json_decode($tags[0], true)));
+        }
+
+        public static function mapTag(array $tagArray) {
+            if(!array_key_exists(Constants::$name, $tagArray)
+                || !array_key_exists(Constants::$colour, $tagArray) || !array_key_exists(Constants::$isFromFacebook, $tagArray)) {
+                return null;
             }
 
-            return $newTags;
+            return new Tag($tagArray[Constants::$name], $tagArray[Constants::$colour], $tagArray[Constants::$isFromFacebook]);
         }
     }
-
 ?>

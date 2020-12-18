@@ -1,6 +1,4 @@
 <?php
-
-    // TODO: Unnecessary?
     require_once("model.php");
    
     class Tag extends Model implements JsonSerializable {
@@ -16,6 +14,10 @@
 
         public function getUpdateQuery(string $password = null) {
             
+        }
+
+        public function isUpdateFormEmpty() {
+            return $this->name == null && $this->colour == null && $this->isFromFacebook == null;
         }
 
         public function getName() {

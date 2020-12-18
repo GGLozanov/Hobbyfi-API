@@ -13,7 +13,8 @@
 
     // Start data deletion
 
-    $status_url = 'https://' . $_SERVER['SERVER_NAME'] . ':' . $_SERVER['SERVER_PORT'] . '/Hobbyfi-API/api/v1.0/fb/fb_view_callback'; // URL to track the deletion
+    $status_url = 'https://' . $_SERVER['SERVER_NAME'] . ':' . $_SERVER['SERVER_PORT']
+        . '/Hobbyfi-API/api/v1.0/fb/fb_view_callback'; // URL to track the deletion
     $confirmation_code = '420'; // unique code for the deletion request
 
     $db->deleteUser($user_id);

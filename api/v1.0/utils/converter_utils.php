@@ -6,12 +6,10 @@
     require_once("tag_utils.php");
 
     class ConverterUtils {
-
         public static function getFieldFromRequestBody(string $field, array $body = null) {
             if($body == null) {
                 $body = $_POST;
             }
-            // TODO: Input validation
 
             $fieldValue = null;
             if(array_key_exists($field, $body)) {
@@ -33,19 +31,18 @@
             $email = ConverterUtils::getFieldFromRequestBody(Constants::$email);
             $description = ConverterUtils::getFieldFromRequestBody(Constants::$description);
             $hasImage = ConverterUtils::getFieldFromRequestBody(Constants::$image) != null;
-            $tags = TagUtils::extractTagsFromJson(ConverterUtils::getFieldFromRequestBody(Constants::$tags));
+            $tags = ConverterUtils::getMappedTags(Constants::$tagsCreate);
 
             return new User(null, $email, $username, $description, $hasImage, null, $tags);
         }
-
 
         public static function getUserUpdate(int $userId) {
             $email = ConverterUtils::getFieldFromRequestBody(Constants::$email);
             $username = ConverterUtils::getFieldFromRequestBody(Constants::$username);
             $description = ConverterUtils::getFieldFromRequestBody(Constants::$description);
-            $chatroomId = ConverterUtils::getFieldFromRequestBody(Constants::$chatroomId);
+            $chatroomId = ConverterUtils::getFieldIntValueOrNull(Constants::$chatroomId);
             $hasImage = ConverterUtils::getFieldFromRequestBody(Constants::$image) != null;
-            $tags = TagUtils::extractTagsFromJson(ConverterUtils::getFieldFromRequestBody(Constants::$tags));
+            $tags = ConverterUtils::getMappedTags();
 
             return new User($userId, $email, $username, $description, $hasImage, $chatroomId, $tags);
         }
@@ -54,7 +51,7 @@
             $name = ConverterUtils::getFieldFromRequestBodyOrDie(Constants::$name);
             $description = ConverterUtils::getFieldFromRequestBody(Constants::$description);
             $hasImage = ConverterUtils::getFieldFromRequestBody(Constants::$image) != null;
-            $tags = TagUtils::extractTagsFromJson(ConverterUtils::getFieldFromRequestBody(Constants::$tags));
+            $tags = ConverterUtils::getMappedTags(Constants::$tagsCreate);
 
             return new Chatroom(null, $name, $description, $hasImage, $ownerId, null, $tags);
         }
@@ -63,20 +60,45 @@
             $name = ConverterUtils::getFieldFromRequestBody(Constants::$name);
             $description = ConverterUtils::getFieldFromRequestBody(Constants::$description);
             $hasImage = ConverterUtils::getFieldFromRequestBody(Constants::$image) != null;
-            $tags = TagUtils::extractTagsFromJson(ConverterUtils::getFieldFromRequestBody(Constants::$tags));
-            $lastEventId = ConverterUtils::getFieldFromRequestBody(Constants::$lastEventId);
+            $lastEventId = ConverterUtils::getFieldIntValueOrNull(Constants::$lastEventId);
+            $tags = ConverterUtils::getMappedTags();
 
             // ID is added later on in update query
             return new Chatroom(null, $name, $description, $hasImage, $ownerId, $lastEventId, $tags);
         }
 
-        private static function array_equal($a, $b) {
-            return (
-                is_array($a)
-                && is_array($b)
-                && count($a) == count($b)
-                && array_diff($a, $b) === array_diff($b, $a)
-            );
+        public static function getMessageCreate(int $ownerId) {
+            $message = ConverterUtils::getFieldFromRequestBodyOrDie(Constants::$message);
+
+            // chatroom sent id garnered from db method
+            return new Message(null, $message, null, null, $ownerId);
+        }
+
+        // this and getMessageCreate are the same method for now (semantic difference) but will be left
+        // if the need arises for it to be changed in the future
+        public static function getMessageUpdate(int $ownerId) {
+            $id = ConverterUtils::getFieldFromRequestBodyOrDie(Constants::$id);
+            $message = ConverterUtils::getFieldFromRequestBody(Constants::$message);
+
+            return new Message($id, $message, null, null, $ownerId);
+        }
+
+        private static function getFieldIntValueOrNull(string $field, array $body = null) {
+            $value = ConverterUtils::getFieldFromRequestBody($field, $body);
+            return $value == null ? null : intval($value);
+        }
+
+        private static function getMappedTags(?string $tagField = null) {
+            if($tagField == null)
+                $tagField = Constants::$tags;
+
+            $encodedTags = ConverterUtils::getFieldFromRequestBody($tagField);
+            // support both receiving tags in one json array line and in multiple
+            $tags = TagUtils::extractTagsFromJson($encodedTags);
+            if(empty($tags)) {
+                $tags = TagUtils::extractTagsFromSingleJson($encodedTags);
+            }
+            return $tags;
         }
     }
 ?>

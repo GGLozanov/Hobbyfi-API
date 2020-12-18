@@ -5,8 +5,7 @@
     
     require "../init.php";
     include_once '../config/core.php';
-    require "../models/user.php";
-    /** @var $db */
+    /* @var $db */
 
     $refresh_jwt = APIUtils::getTokenFromHeadersOrDie();
     // TODO: Check if access token is refresh token or just normal token (will happen when refresh token gets its own payload. . .)
