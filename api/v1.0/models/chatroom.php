@@ -49,7 +49,7 @@
 
         public function isUpdateFormEmpty() {
             return $this->name == null
-                && !isset($this->description) && $this->ownerId == null &&
+                && !isset($this->description) &&
                 !isset($this->lastEventId);
         }
 
@@ -76,7 +76,8 @@
                 Constants::$description=>$this->description,
                 Constants::$photoUrl=>$this->hasImage ?
                     (array_key_exists('HTTPS', $_SERVER) ? 'https://' : 'http://') . $_SERVER['SERVER_NAME'] . ':'
-                    . $_SERVER['SERVER_PORT'] .'/Hobbyfi-API/uploads/' . Constants::userProfileImagesDir($this->id)
+                    . $_SERVER['SERVER_PORT'] .'/Hobbyfi-API/uploads/' . Constants::chatroomImagesDir($this->id)
+                        . "/" . $this->id . ".jpg"
                     : null,
                 Constants::$ownerId=>$this->ownerId,
                 Constants::$lastEventId=>$this->lastEventId,

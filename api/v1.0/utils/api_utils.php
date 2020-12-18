@@ -67,4 +67,18 @@
 
             return str_replace('Bearer: ', '', $headers['Authorization']);
         }
+
+        // Function should ONLY be called for models that use the `TagModel` and `ImageModel` trait
+        public static function evaluateModelEditImageUpload($model, int $id, string $dir, string $modelType, bool $shouldNotUpdateModel) {
+            if($model->getHasImage()) {
+                ImageUtils::uploadImageToPath($id, $dir, $_POST[Constants::$image], $modelType);
+
+                // FIXME: Logic flow
+                if($shouldNotUpdateModel) {
+                    APIUtils::displayAPIResultAndDie(array(Constants::$response=>Constants::$ok), 200);
+                }
+            } else if($shouldNotUpdateModel && !($model->getTags())) {
+                APIUtils::displayAPIResultAndDie(array(Constants::$response=>Constants::$noCredentialsForUpdateError), 400);
+            }
+        }
     }

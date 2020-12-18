@@ -234,13 +234,13 @@
         public function updateChatroom(Chatroom $chatroom) {
             // handle user not owner error
             // FCM
-            $this->connection->begin_transaction();
-            if(!($chatroomId = $this->getOwnerChatroomId($chatroom->getOwnerId()))) {
-                $this->connection->rollback();
-                return null;
-            }
-
-            $chatroom->setId($chatroomId);
+            // Owner evaluation not needed for now due to being exposed in chatroom edit.php
+            // but might need to fix later (which is why it's commented out)
+//            $this->connection->begin_transaction();
+//            if(!($chatroomId = $this->getOwnerChatroomId($chatroom->getOwnerId()))) {
+//                $this->connection->rollback();
+//                return null;
+//            }
 
             $chatroomUpdateSuccess = true;
             if(!$chatroom->isUpdateFormEmpty())
@@ -546,8 +546,8 @@
             return false;
         }
 
-        // should be always called in transaction context for CRUD methods
-        private function getOwnerChatroomId(int $userId) {
+        // should be always called in transaction context for CRUD methods, otherwise not
+        function getOwnerChatroomId(int $userId) {
             $result = $this->executeSingleIdParamStatement($userId, "SELECT chrms.id FROM chatrooms chrms
                 INNER JOIN users usrs ON usrs.user_chatroom_id = chrms.id
                 WHERE chrms.owner_id = ?")->get_result();

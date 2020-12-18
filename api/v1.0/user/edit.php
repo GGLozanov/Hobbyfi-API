@@ -11,19 +11,14 @@
 
     if($userId = APIUtils::validateAuthorisedRequest($token)) {
         $user = ConverterUtils::getUserUpdate($userId);
-        $shouldNotUpdateUser = ($password = ConverterUtils::getFieldFromRequestBody(Constants::$password)) == null &&
-            $user->isUpdateFormEmpty();
-
-        if($user->getHasImage()) {
-            ImageUtils::uploadImageToPath($userId, Constants::$userProfileImagesDir, $_POST[Constants::$image], Constants::$users);
-
-            // FIXME: Logic flow
-            if($shouldNotUpdateUser) {
-                APIUtils::displayAPIResultAndDie(array(Constants::$response=>Constants::$ok), 200);
-            }
-        } else if($shouldNotUpdateUser && !($user->getTags())) {
-            APIUtils::displayAPIResultAndDie(array(Constants::$response=>Constants::$noCredentialsForUpdateError), 400);
-        }
+        APIUtils::evaluateModelEditImageUpload(
+            $user,
+            $userId,
+            Constants::$userProfileImagesDir,
+            Constants::$users,
+            ($password = ConverterUtils::getFieldFromRequestBody(Constants::$password)) == null &&
+                $user->isUpdateFormEmpty()
+        );
 
         if($db->updateUser($user,
             $password != null ? password_hash($password, PASSWORD_DEFAULT) : null)) {
