@@ -6,8 +6,6 @@
 
     class FCM {
         private \Kreait\Firebase\Messaging $messaging;
-        public static string $firebaseUrl =
-            "https://fcm.googleapis.com/v1/projects/hobbyfi/messages:send"; // hobbyfi = firebase project id
 
         public function __construct() {
             $factory = (new Factory)->withServiceAccount(
