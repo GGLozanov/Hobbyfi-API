@@ -38,25 +38,12 @@
             }
 
             // not using str constants here because external API
-            $fields = json_encode($message);
+            $fields = array_filter($message->jsonSerialize());
+            if(isset($fields[Constants::$tags])) {
+                $fields[Constants::$tags] = "updated";
+            }
 
-            // account for null values with slightly iffy regex (send only updated/valid information from JsonSerializable)
-            $fields = preg_replace(
-                '/,\s*"[^"]+":null|"[^"]+":null,?|,\s*"tags":\[]|"tags":\[]/',
-                '',
-                $fields
-            );
 
-            // replace tag array with "true" to mark needing to fetch them through back-end again
-            $fields = preg_replace(
-                '/,\s*"tags":\[[^\]]+]/',
-                ',"tags": "updated"',
-                $fields
-            );
-
-            // FIXME: very, very, very, very bad encode/decode for null/empty fields
-            // this is actually worse than that one bitmask method I wrote for update query generation
-            $fields = json_decode($fields, true);
             $fields[Constants::$type] = $notificationType;
 
             $message = CloudMessage::withTarget('topic', $topicName)
