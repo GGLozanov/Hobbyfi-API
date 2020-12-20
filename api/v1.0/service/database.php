@@ -2,7 +2,7 @@
     include_once "../consts/constants.php";
     require_once("../fcm/fcm.php");
 
-    class Database { 
+    class Database {
         public $host = "localhost"; // to be changed if hosted on server
         public $user_name = "root";
         public $user_password = "";
@@ -11,17 +11,13 @@
         public $fcm;
 
         function __construct() {
-            require_once("../config/core.php");
-            
-            /* @var $fcmServerKey */
-            
             $this->connection = mysqli_connect(
                 $this->host,
                  $this->user_name, 
                  $this->user_password,
                   $this->db_name, "3308"
             );
-            $this->fcm = new FCM($fcmServerKey);
+            $this->fcm = new FCM();
         }
 
         public function closeConnection() {
@@ -246,15 +242,9 @@
         }
 
         public function updateChatroom(Chatroom $chatroom) {
-            // handle user not owner error
-            // FCM
             // Owner evaluation not needed for now due to being exposed in chatroom edit.php
-            // but might need to fix later (which is why it's commented out)
-//            $this->connection->begin_transaction();
-//            if(!($chatroomId = $this->getOwnerChatroomId($chatroom->getOwnerId()))) {
-//                $this->connection->rollback();
-//                return null;
-//            }
+            // which is why chatroomId is passed in
+            $this->connection->begin_transaction();
 
             $chatroomUpdateSuccess = true;
             if(!$chatroom->isUpdateFormEmpty())
@@ -273,6 +263,13 @@
             // fixme: small code dup
             $updateSuccess = $chatroomUpdateSuccess > 0 && $tagsUpdateSuccess;
             $this->finishTransactionOnCond($updateSuccess);
+
+            if($updateSuccess) {
+                $updateSuccess = $this->fcm->sendMessageToChatroom(
+                    $chatroom->getId(),
+                    Constants::$EDIT_CHATROOM_TYPE,
+                    $chatroom);
+            }
 
             return $updateSuccess;
         }

@@ -15,7 +15,9 @@
 
         // leaking db knowledge for something that should be in updateChatroom() method but w/e for now
         if(!($chatroomId = $db->getOwnerChatroomId($id))) {
-            APIUtils::displayAPIResultAndDie(array(Constants::$response=>cONSTANTS::$chatroomNoPermissions), 406);
+            APIUtils::displayAPIResultAndDie(array(
+                Constants::$response=>Constants::$chatroomNoPermissions
+            ), 406);
         }
 
         $chatroom->setId($chatroomId);

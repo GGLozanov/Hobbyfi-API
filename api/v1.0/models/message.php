@@ -72,7 +72,6 @@
             return $sql;
         }
 
-
         public function withPhotoUrlAsMessage() {
             return new Message(
                 $this->id,

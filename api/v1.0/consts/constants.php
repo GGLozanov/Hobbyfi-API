@@ -78,6 +78,9 @@
         }
         // would've extracted these into a generator function if PHP hadn't been so goddamn fucking stupid
 
+        public static string $chatroomTopicPrefix = "chatroom_";
+        public static string $type = "type";
+
         public static string $userNotCreated = "User not created";
         public static string $userNotFound = "User not found";
         public static string $userNotUpdated = "User not updated. Username may be taken";
@@ -105,6 +108,32 @@
         public static string $users = "users";
         public static string $chatrooms = "chatrooms";
         public static string $events = "events";
+
+        // notification types
+        public static string $CREATE_MESSAGE_TYPE = "CREATE_MESSAGE";
+        public static string $EDIT_MESSAGE_TYPE = "EDIT_MESSAGE";
+        public static string $DELETE_MESSAGE_TYPE = "DELETE_MESSAGE";
+        public static string $JOIN_USER_TYPE = "JOIN_USER";
+        public static string $LEAVE_USER_TYPE = "LEAVE_USER";
+        public static string $DELETE_CHATROOM_TYPE = "DELETE_CHATROOM";
+        public static string $EDIT_CHATROOM_TYPE = "EDIT_CHATROOM";
+        public static string $CREATE_EVENT_TYPE = "CREATE_EVENT";
+        public static string $EDIT_EVENT_TYPE = "EDIT_EVENT";
+        public static string $DELETE_EVENT_TYPE = "DELETE_EVENT";
+
+        // very bruh func; would've done it with an array had PHP, again, allowed initialisation with static properties
+        public static function isValidNotificationType(string $notificationType) {
+            return $notificationType == Constants::$CREATE_MESSAGE_TYPE ||
+                $notificationType == Constants::$EDIT_MESSAGE_TYPE ||
+                $notificationType == Constants::$DELETE_MESSAGE_TYPE ||
+                $notificationType == Constants::$JOIN_USER_TYPE ||
+                $notificationType == Constants::$LEAVE_USER_TYPE ||
+                $notificationType == Constants::$DELETE_CHATROOM_TYPE ||
+                $notificationType == Constants::$EDIT_CHATROOM_TYPE ||
+                $notificationType == Constants::$CREATE_EVENT_TYPE ||
+                $notificationType == Constants::$EDIT_EVENT_TYPE ||
+                $notificationType == Constants::$DELETE_EVENT_TYPE;
+        }
     }
 
 ?>

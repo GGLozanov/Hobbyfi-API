@@ -15,5 +15,5 @@
 
     $fbAppId = file_get_contents('../keys/fb_app_id.txt');
     $fbAppSecret = file_get_contents('../keys/fb_app_secret.txt');
-    $fcmServerKey = file_get_contents('../keys/fcm_server_key.txt');
-?>
+
+    ?>
