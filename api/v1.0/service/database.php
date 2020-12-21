@@ -136,6 +136,7 @@
             }
 
             $updateSuccess = $userUpdateSuccess > 0 && $tagsUpdateSuccess;
+            // TODO: get chatroom id and send notification if it's different from null
             $this->finishTransactionOnCond($updateSuccess);
 
             return $updateSuccess;
@@ -247,7 +248,6 @@
             $this->connection->begin_transaction();
 
             $chatroomUpdateSuccess = true;
-            if(!$chatroom->isUpdateFormEmpty())
             mysqli_query($this->connection, $chatroom->getUpdateQuery());
 
             // FIXME: Code dup with updateUser
@@ -262,14 +262,13 @@
 
             // fixme: small code dup
             $updateSuccess = $chatroomUpdateSuccess > 0 && $tagsUpdateSuccess;
-            $this->finishTransactionOnCond($updateSuccess);
+            // send FCM notification
+            $this->sendNotificationToChatroomOnCond($updateSuccess,
+                $chatroom->getId(),
+                Constants::$EDIT_CHATROOM_TYPE,
+                $chatroom);
 
-            if($updateSuccess) {
-                $updateSuccess = $this->fcm->sendMessageToChatroom(
-                    $chatroom->getId(),
-                    Constants::$EDIT_CHATROOM_TYPE,
-                    $chatroom);
-            }
+            $this->finishTransactionOnCond($updateSuccess);
 
             return $updateSuccess;
         }
@@ -288,6 +287,10 @@
             ImageUtils::deleteImageFromPath($chatroomId, Constants::chatroomImagesDir($chatroomId), Constants::$chatrooms);
 
             $deleteSuccess = $stmt->affected_rows > 0;
+            $this->sendNotificationToChatroomOnCond($deleteSuccess,
+                $chatroomId,
+                Constants::$DELETE_CHATROOM_TYPE,
+                new Chatroom($chatroomId));
             $this->finishTransactionOnCond($deleteSuccess);
             return $deleteSuccess;
         }
@@ -350,12 +353,12 @@
             if(mysqli_num_rows($result) > 0) {
                 $rows = mysqli_fetch_all($result, MYSQLI_ASSOC);
                 $tags = $this->extractTagsFromJoinQuery($rows);
+                $this->connection->commit();
 
                 $chatrooms = array_reduce($rows, function($result, array $row) use($tags) {
                     if(array_key_exists($row[Constants::$id], $result)) {
                         return $result;
                     }
-
                     $result[$row[Constants::$id]] = new Chatroom(
                         $row[Constants::$id],
                         $row[Constants::$name],
@@ -394,6 +397,7 @@
 
             if(mysqli_num_rows($result) > 0) {
                 $rows = mysqli_fetch_all($result, MYSQLI_ASSOC);
+                $this->connection->commit();
                 return array_map(function($row) {
                     return new Message(
                         $row[Constants::$id],
@@ -429,9 +433,15 @@
 
             $insertSuccess = $stmt->execute();
             $messageId = mysqli_insert_id($this->connection);
+            $message->setId($messageId);
 
-            if($shouldFinishTransaction)
+            if($shouldFinishTransaction) {
+                $this->sendNotificationToChatroomOnCond($insertSuccess,
+                    $chatroomId,
+                    Constants::$CREATE_MESSAGE_TYPE,
+                    $message);
                 $this->finishTransactionOnCond($insertSuccess);
+            }
 
             return $insertSuccess ? $messageId : null;
         }
@@ -448,11 +458,18 @@
             $messagePhotoUrl = $message->withPhotoUrlAsMessage(); // clone message to pass for create chatroom method (photourl as message)
             if(!($messageId = $this->createChatroomMessage($messagePhotoUrl, $chatroomId,false))) {
                 $this->connection->rollback();
-                return $messageId;
+                return null;
             }
+            $message->setId($messageId);
 
             if(ImageUtils::uploadImageToPath($messageId, Constants::chatroomMessageImagesDir($chatroomId), $message->getMessage(), Constants::$message)) {
                 $this->connection->commit();
+                // no need for helper notification method here because this is in a "success create" context, per se
+                $this->fcm->sendMessageToChatroom(
+                    $chatroomId,
+                    Constants::$CREATE_MESSAGE_TYPE,
+                    $message
+                );
                 return $messageId;
             }
 
@@ -463,16 +480,21 @@
         public function deleteChatroomMessage(int $userId, int $messageId) {
             $this->connection->begin_transaction();
             // assert message owner OR chatroom owner
-            if(!($ownerId = $this->getMessageOwnerId($messageId))
-                || $userId != $ownerId || !($this->getOwnerChatroomId($userId))) {
+            if((!($ownerId = $this->getMessageOwnerId($messageId))
+                || $userId != $ownerId || !($chatroomId = $this->getOwnerChatroomId($userId)))
+                    || !($chatroomId = $this->getOwnerChatroomId($userId))) {
                 $this->connection->rollback();
                 return null;
             }
 
             $stmt = $this->executeSingleIdParamStatement($messageId, "DELETE FROM messages WHERE id = ?");
-            // FCM
 
             $affectedRows = $stmt->affected_rows > 0;
+            $this->sendNotificationToChatroomOnCond($affectedRows,
+                $chatroomId,
+                Constants::$DELETE_MESSAGE_TYPE,
+                new Message($messageId)
+            );
             $this->finishTransactionOnCond($affectedRows);
             return $affectedRows;
         }
@@ -480,15 +502,19 @@
         public function updateChatroomMessage(Message $message) {
             // assert message owner & correct chatroom
             $this->connection->begin_transaction();
-            if((!($ownerId = $this->getMessageOwnerId($message->getId()))) || $ownerId != $message->getUserSentId()
-                || !($this->getUserChatroomId($ownerId))) {
+            $userSentMessageId = $message->getUserSentId();
+            if(!($ownerId = $this->getMessageOwnerId($message->getId()))
+                    || $ownerId != $userSentMessageId || !($chatroomId = $this->getUserChatroomId($userSentMessageId))) {
                 $this->connection->rollback();
                 return false;
             }
-            // message id sent through body
-            // FCM
-            $updateSuccess = $this->connection->query($message->getUpdateQuery()); // TODO: Handle no update option in edit.php
 
+            $updateSuccess = $this->connection->query($message->getUpdateQuery()); // TODO: Handle no update option in edit.php
+            $this->sendNotificationToChatroomOnCond($updateSuccess,
+                $chatroomId,
+                Constants::$EDIT_MESSAGE_TYPE,
+                $message
+            );
             $this->finishTransactionOnCond($updateSuccess);
             return $updateSuccess;
         }
@@ -643,6 +669,16 @@
             }
 
             return false;
+        }
+
+        private function sendNotificationToChatroomOnCond(bool &$condition, int $chatroomId, string $notificationType, Model $message) {
+            if($condition) {
+                $condition = $this->fcm->sendMessageToChatroom(
+                    $chatroomId,
+                    $notificationType,
+                    $message
+                );
+            }
         }
     }
 ?>

@@ -50,10 +50,8 @@
             try {
                 $result = $this->messaging->send($message);
             } catch (\Kreait\Firebase\Exception\MessagingException $e) {
-                print_r($e);
                 return false;
             } catch (\Kreait\Firebase\Exception\FirebaseException $e) {
-                print_r($e);
                 return -1;
             }
 
