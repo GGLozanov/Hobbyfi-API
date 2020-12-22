@@ -25,6 +25,7 @@
         if(($userId = FacebookTokenUtils::validateAccessToken($token)) == null || $userId == false) {
             APIUtils::displayAPIResultAndDie(array(Constants::$response=>Constants::$facebookAuthUserCreateError));
         }
+        $user->setId($userId);
     }
  
     if($db->userExistsOrPasswordTaken($user->getName(), $password)) {
