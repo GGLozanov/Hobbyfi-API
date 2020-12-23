@@ -89,7 +89,6 @@
             return null; // else return nothing and mark user as unauth'd
         }
 
-        // TODO: Use transaction in multiple SELECT queries like these?
         public function getUser(int $id) { // user already auth'd at this point due to token => get user by id
             $user_result = $this->executeSingleIdParamStatement($id, "SELECT 
                 us.description, us.username, us.email, us.has_image, us.user_chatroom_id, us_tags.tag_name, tgs.colour, tgs.is_from_facebook
@@ -106,8 +105,8 @@
                     $rows[0][Constants::$email], $rows[0][Constants::$username],
                     $rows[0][Constants::$description], $rows[0][Constants::$hasImage],
                     $rows[0][Constants::$userChatroomId],
-                    ($rows[0][Constants::$tagName] != null && $rows[0][Constants::$colour] 
-                    != null && $rows[0][Constants::$isFromFacebook] != null) ? array_map(function(array $row) {
+                    (isset($rows[0][Constants::$tagName]) && isset($rows[0][Constants::$colour])
+                    && isset($rows[0][Constants::$isFromFacebook])) ? array_map(function(array $row) {
                         return new Tag($row[Constants::$tagName], $row[Constants::$colour], $row[Constants::$isFromFacebook]);
                     }, $rows) : null);
             }
@@ -162,13 +161,13 @@
                 return false;
             }
 
-            $multiplier = 5*($multiplier - 1);
+            $multiplier = 30*($multiplier - 1);
             $stmt = $this->connection->prepare(
                 "SELECT us.id, us.description, us.username, us.email, us.has_image, us_tags.tag_name, tgs.colour, tgs.is_from_facebook FROM 
                 users us
                 LEFT JOIN user_tags us_tags ON us_tags.user_id = us.id
                 LEFT JOIN tags tgs ON tgs.name LIKE us_tags.tag_name
-                WHERE id != ? AND us.user_chatroom_id = ? LIMIT 5 OFFSET ?");
+                WHERE id != ? AND us.user_chatroom_id = ? LIMIT 30 OFFSET ?");
             $stmt->bind_param("iii", $userId, $chatroomId, $multiplier);
             $stmt->execute();
 
@@ -387,7 +386,9 @@
             }
             $multiplier = 20*($multiplier - 1);
             $stmt = $this->connection->prepare(
-                "SELECT * FROM messages WHERE chatroom_sent_id = ? LIMIT 20 OFFSET ?"
+                "SELECT * FROM messages WHERE chatroom_sent_id = ?
+                    ORDER BY create_time
+                    LIMIT 20 OFFSET ?"
             );
 
             $stmt->bind_param("ii", $chatroomId, $multiplier);
@@ -590,8 +591,8 @@
         private function extractTagsFromJoinQuery(array $rows) {
             $tags = array();
             foreach($rows as $row) {
-                if($row[Constants::$tagName] == null ||
-                    $row[Constants::$colour] == null) {
+                if(!isset($row[Constants::$tagName]) ||
+                        !isset($row[Constants::$colour]) || !isset($row[Constants::$isFromFacebook])) {
                     continue;
                 }
 
