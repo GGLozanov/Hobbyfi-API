@@ -82,7 +82,7 @@
         public static string $type = "type";
 
         public static string $userNotCreated = "User not created";
-        public static string $userNotFound = "User not found";
+        public static string $userNotFound = "User/users not found";
         public static string $userNotUpdated = "User not updated. Username may be taken";
         public static string $userNotDeleted = "User not deleted";
 

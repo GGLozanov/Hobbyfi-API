@@ -101,14 +101,14 @@
             if(mysqli_num_rows($user_result) > 0) {
                 $rows = mysqli_fetch_all($user_result, MYSQLI_ASSOC); // fetch the resulting rows in the form of a map (associative array)
 
-                return new User($id,
+                return [new User($id,
                     $rows[0][Constants::$email], $rows[0][Constants::$username],
                     $rows[0][Constants::$description], $rows[0][Constants::$hasImage],
                     $rows[0][Constants::$userChatroomId],
                     (isset($rows[0][Constants::$tagName]) && isset($rows[0][Constants::$colour])
                     && isset($rows[0][Constants::$isFromFacebook])) ? array_map(function(array $row) {
                         return new Tag($row[Constants::$tagName], $row[Constants::$colour], $row[Constants::$isFromFacebook]);
-                    }, $rows) : null);
+                    }, $rows) : null)];
             }
 
             return null;
@@ -436,6 +436,13 @@
             $messageId = mysqli_insert_id($this->connection);
             $message->setId($messageId);
 
+            // kinda dumb but workaround for now to get create time needed for create response
+            // prolly have to do the same with event
+            $message->setCreateTime($this->executeSingleIdParamStatement($messageId,
+                "SELECT create_time FROM messages WHERE id = ?")
+                ->get_result()
+                ->fetch_assoc()[Constants::$createTime]);
+
             if($shouldFinishTransaction) {
                 $this->sendNotificationToChatroomOnCond($insertSuccess,
                     $chatroomId,
@@ -444,7 +451,7 @@
                 $this->finishTransactionOnCond($insertSuccess);
             }
 
-            return $insertSuccess ? $messageId : null;
+            return $insertSuccess ? $message : null;
         }
 
         // very bruh method
@@ -457,13 +464,12 @@
             $message->setChatroomSentId($chatroomId);
 
             $messagePhotoUrl = $message->withPhotoUrlAsMessage(); // clone message to pass for create chatroom method (photourl as message)
-            if(!($messageId = $this->createChatroomMessage($messagePhotoUrl, $chatroomId,false))) {
+            if(!($message = $this->createChatroomMessage($messagePhotoUrl, $chatroomId,false))) {
                 $this->connection->rollback();
                 return null;
             }
-            $message->setId($messageId);
 
-            if(ImageUtils::uploadImageToPath($messageId, Constants::chatroomMessageImagesDir($chatroomId), $message->getMessage(), Constants::$message)) {
+            if(ImageUtils::uploadImageToPath($message->getId(), Constants::chatroomMessageImagesDir($chatroomId), $message->getMessage(), Constants::$message)) {
                 $this->connection->commit();
                 // no need for helper notification method here because this is in a "success create" context, per se
                 $this->fcm->sendMessageToChatroom(
@@ -471,7 +477,7 @@
                     Constants::$CREATE_MESSAGE_TYPE,
                     $message
                 );
-                return $messageId;
+                return $message;
             }
 
             $this->connection->rollback();
