@@ -81,6 +81,8 @@
         public static string $chatroomTopicPrefix = "chatroom_";
         public static string $type = "type";
 
+        public static string $getId = "getId()";
+
         public static string $userNotCreated = "User not created";
         public static string $userNotFound = "User/users not found";
         public static string $userNotUpdated = "User not updated. Username may be taken";
@@ -108,6 +110,7 @@
         public static string $users = "users";
         public static string $chatrooms = "chatrooms";
         public static string $events = "events";
+        public static string $messages = "messages";
 
         // notification types
         public static string $CREATE_MESSAGE_TYPE = "CREATE_MESSAGE";
@@ -115,6 +118,7 @@
         public static string $DELETE_MESSAGE_TYPE = "DELETE_MESSAGE";
         public static string $JOIN_USER_TYPE = "JOIN_USER";
         public static string $LEAVE_USER_TYPE = "LEAVE_USER";
+        public static string $EDIT_USER_TYPE = "EDIT_USER";
         public static string $DELETE_CHATROOM_TYPE = "DELETE_CHATROOM";
         public static string $EDIT_CHATROOM_TYPE = "EDIT_CHATROOM";
         public static string $CREATE_EVENT_TYPE = "CREATE_EVENT";
@@ -128,12 +132,20 @@
                 $notificationType == Constants::$DELETE_MESSAGE_TYPE ||
                 $notificationType == Constants::$JOIN_USER_TYPE ||
                 $notificationType == Constants::$LEAVE_USER_TYPE ||
+                $notificationType == Constants::$EDIT_USER_TYPE ||
                 $notificationType == Constants::$DELETE_CHATROOM_TYPE ||
                 $notificationType == Constants::$EDIT_CHATROOM_TYPE ||
                 $notificationType == Constants::$CREATE_EVENT_TYPE ||
                 $notificationType == Constants::$EDIT_EVENT_TYPE ||
                 $notificationType == Constants::$DELETE_EVENT_TYPE;
         }
-    }
 
+        public static function timelineUserJoinMessage($username) {
+            return "$username has joined the room!";
+        }
+
+        public static function timelineUserLeaveMessage($username) {
+            return "$username has left the room!";
+        }
+    }
 ?>

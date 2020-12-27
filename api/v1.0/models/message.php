@@ -19,7 +19,7 @@
             $this->message = $message;
             $this->createTime = $createTime;
             $this->chatroomSentId = $chatroomSentId;
-            $this->userSentId = $userSentId; 
+            $this->userSentId = $userSentId;
         }
 
         public function getMessage() {
@@ -79,7 +79,7 @@
                     . "/" . $this->id . "jpg"),
                 $this->createTime,
                 $this->userSentId,
-                $this->chatroomSentId
+                $this->chatroomSentId,
             );
         }
 

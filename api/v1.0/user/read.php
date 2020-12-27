@@ -3,18 +3,17 @@
     header("Access-Control-Allow-Methods: GET");
     header("Content-Type: application/json; charset=UTF-8");
 
-    // Retrieves all the users except the one with the id passed in with the auth token
     require "../init.php";
     include_once '../config/core.php';
-    /* @var $db */
+    /** @var $db */
 
     $token = APIUtils::getTokenFromHeadersOrDie();
 
-    if($id = APIUtils::validateAuthorisedRequest($token)) {
-        if($users = $db->getChatroomUsers($id)) {
+    if($userId = APIUtils::validateAuthorisedRequest($token)) {
+        if($user = $db->getUser($userId)) {
             APIUtils::displayAPIResult(array(
                 Constants::$response=>Constants::$ok,
-                Constants::$data_list=>$users
+                Constants::$data=>$user
             ));
         } else {
             APIUtils::displayAPIResult(array(Constants::$response=>Constants::$userNotFound), 404);

@@ -23,12 +23,13 @@
             return $db->setModelHasImage($title, true, $modelType);
         }
 
-        public static function deleteImageFromPath(int $title, string $path, string $modelType, bool $isFile = false, bool $modifyUser = false) {
+        public static function deleteImageFromPath(int $title, string $path, string $modelType, bool $isFile = false, bool $modifyModel = false) {
             require "../init.php";
             /* @var Database $db */
             $dir = __DIR__ . ($isFile ? "/../../../uploads/$path.jpg" : "/../../../uploads/$path/");
             
-            if((!$isFile && !is_dir($dir)) || ($modelType != Constants::$chatrooms && $modelType != Constants::$users
+            if((!$isFile && !is_dir($dir)) || ($modelType != Constants::$chatrooms && $modelType != Constants::$users &&
+                        $modelType != Constants::$messages
                     && $modelType != Constants::$events)) {
                 return false;
             }
@@ -39,7 +40,7 @@
                 return false;
             }
 
-            if($modifyUser) {
+            if($modifyModel) {
                 $deletionSuccess |= $db->setModelHasImage($title, false, $modelType);
             }
 

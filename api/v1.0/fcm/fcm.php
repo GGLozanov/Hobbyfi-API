@@ -37,10 +37,11 @@
 
             // not using str constants here because external API
             $fields = array_filter($message->jsonSerialize(), function($element) {
-                return is_null($element);
+                return !empty($element);
             });
+
             if(isset($fields[Constants::$tags])) {
-                $fields[Constants::$tags] = "updated";
+                $fields[Constants::$tags] = '"' . json_encode($fields[Constants::$tags]) . '"';
             }
 
             $fields[Constants::$type] = $notificationType;
