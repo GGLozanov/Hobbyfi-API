@@ -23,15 +23,9 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="1ba16d1b-5e7e-476a-9cc1-ac6a9edbf432" name="Default Changelist" comment="">
-      <change afterPath="$PROJECT_DIR$/api/v1.0/user/read.php" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/api/v1.0/utils/model_utils.php" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/api/v1.0/consts/constants.php" beforeDir="false" afterPath="$PROJECT_DIR$/api/v1.0/consts/constants.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/api/v1.0/fcm/fcm.php" beforeDir="false" afterPath="$PROJECT_DIR$/api/v1.0/fcm/fcm.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/api/v1.0/models/message.php" beforeDir="false" afterPath="$PROJECT_DIR$/api/v1.0/models/message.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/api/v1.0/chatrooms/read.php" beforeDir="false" afterPath="$PROJECT_DIR$/api/v1.0/chatrooms/read.php" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/api/v1.0/service/database.php" beforeDir="false" afterPath="$PROJECT_DIR$/api/v1.0/service/database.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/api/v1.0/users/read.php" beforeDir="false" afterPath="$PROJECT_DIR$/api/v1.0/users/read.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/api/v1.0/utils/image_utils.php" beforeDir="false" afterPath="$PROJECT_DIR$/api/v1.0/utils/image_utils.php" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -153,7 +147,7 @@
       <workItem from="1608546660253" duration="12826000" />
       <workItem from="1608723890347" duration="5840000" />
       <workItem from="1608809269703" duration="4722000" />
-      <workItem from="1609071729262" duration="14019000" />
+      <workItem from="1609071729262" duration="18218000" />
     </task>
     <servers />
   </component>

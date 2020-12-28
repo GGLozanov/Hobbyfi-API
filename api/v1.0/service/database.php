@@ -134,6 +134,7 @@
                 if($userUpdateSuccess) {
                     if(!$userHasNoChatroom) { // if user has updated chatroom id by joining
                         // send notification for joining
+                        $user = $this->getUser($user->getId());
                         $this->sendNotificationToChatroomOnCond($userUpdateSuccess,
                             $currentUserChatroomId,
                             Constants::$JOIN_USER_TYPE,
@@ -143,7 +144,7 @@
                         $userUpdateSuccess = !empty($this->createChatroomMessage(new Message(
                             null,
                             Constants::timelineUserJoinMessage(
-                                $this->getUserName($user->getId())
+                                $user->getName()
                             ),
                             null,
                             $currentUserChatroomId,
@@ -151,6 +152,7 @@
                         ), $currentUserChatroomId));
                     } else if($chatroomId) { // else get if they are currently in chatroom (or previous chatroom for user)
                         // send notification for edit/leave otherwise
+                        $user = $this->getUser($user->getId());
                         if(isset($currentUserChatroomId)) {
                             $this->sendNotificationToChatroomOnCond($userUpdateSuccess,
                                 $chatroomId,
@@ -160,7 +162,7 @@
                             $userUpdateSuccess = !empty($this->createChatroomMessage(new Message(
                                 null,
                                 Constants::timelineUserLeaveMessage(
-                                    $this->getUserName($user->getId())
+                                    $user->getName()
                                 ),
                                 null,
                                 $chatroomId,
