@@ -62,10 +62,10 @@
             $headers = apache_request_headers();
 
             if(!array_key_exists('Authorization', $headers)) {
-                APIUtils::displayAPIResultAndDie(array(Constants::$response=>Constants::$noAuthorizationHeaderError), 400);
+                APIUtils::displayAPIResultAndDie(array(Constants::$response=>Constants::$noAuthorizationHeaderError), 401);
             }
 
-            return str_replace('Bearer: ', '', $headers['Authorization']);
+            return str_replace('Bearer ', '', $headers['Authorization']);
         }
 
         // Function should ONLY be called for models that use the `TagModel` and `ImageModel` trait

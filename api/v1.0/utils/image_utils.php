@@ -35,7 +35,7 @@
             }
 
             if(file_exists($path)) {
-                $deletionSuccess = unlink($path); // write decoded image to the filesystem (1.jpg, 2.jpg, etc.)
+                $deletionSuccess = unlink($path); // unlink file from the filesystem (1.jpg, 2.jpg, etc.)
             } else {
                 return false;
             }

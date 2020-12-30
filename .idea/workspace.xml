@@ -24,8 +24,17 @@
   <component name="ChangeListManager">
     <list default="true" id="1ba16d1b-5e7e-476a-9cc1-ac6a9edbf432" name="Default Changelist" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/api/v1.0/chatrooms/read.php" beforeDir="false" afterPath="$PROJECT_DIR$/api/v1.0/chatrooms/read.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/api/v1.0/chatroom/create.php" beforeDir="false" afterPath="$PROJECT_DIR$/api/v1.0/chatroom/create.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/api/v1.0/chatroom/edit.php" beforeDir="false" afterPath="$PROJECT_DIR$/api/v1.0/chatroom/edit.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/api/v1.0/message/create.php" beforeDir="false" afterPath="$PROJECT_DIR$/api/v1.0/message/create.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/api/v1.0/message/edit.php" beforeDir="false" afterPath="$PROJECT_DIR$/api/v1.0/message/edit.php" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/api/v1.0/service/database.php" beforeDir="false" afterPath="$PROJECT_DIR$/api/v1.0/service/database.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/api/v1.0/user/authenticate.php" beforeDir="false" afterPath="$PROJECT_DIR$/api/v1.0/user/authenticate.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/api/v1.0/user/create.php" beforeDir="false" afterPath="$PROJECT_DIR$/api/v1.0/user/create.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/api/v1.0/user/edit.php" beforeDir="false" afterPath="$PROJECT_DIR$/api/v1.0/user/edit.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/api/v1.0/utils/api_utils.php" beforeDir="false" afterPath="$PROJECT_DIR$/api/v1.0/utils/api_utils.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/api/v1.0/utils/converter_utils.php" beforeDir="false" afterPath="$PROJECT_DIR$/api/v1.0/utils/converter_utils.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/api/v1.0/utils/image_utils.php" beforeDir="false" afterPath="$PROJECT_DIR$/api/v1.0/utils/image_utils.php" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -147,7 +156,7 @@
       <workItem from="1608546660253" duration="12826000" />
       <workItem from="1608723890347" duration="5840000" />
       <workItem from="1608809269703" duration="4722000" />
-      <workItem from="1609071729262" duration="18218000" />
+      <workItem from="1609071729262" duration="45423000" />
     </task>
     <servers />
   </component>
@@ -199,14 +208,14 @@
       <screen x="0" y="0" width="1920" height="1040" />
     </state>
     <state width="498" height="446" key="SwitcherDM/0.0.1920.1040@0.0.1920.1040" timestamp="1608310622568" />
-    <state x="787" y="212" width="585" height="801" key="find.popup" timestamp="1609107761251">
+    <state x="1184" y="239" width="585" height="801" key="find.popup" timestamp="1609286769815">
       <screen x="0" y="0" width="1920" height="1040" />
     </state>
-    <state x="787" y="212" width="585" height="801" key="find.popup/0.0.1920.1040@0.0.1920.1040" timestamp="1609107761251" />
-    <state x="616" y="240" key="run.anything.popup" timestamp="1608418162707">
+    <state x="1184" y="239" width="585" height="801" key="find.popup/0.0.1920.1040@0.0.1920.1040" timestamp="1609286769815" />
+    <state x="616" y="240" key="run.anything.popup" timestamp="1609264248507">
       <screen x="0" y="0" width="1920" height="1040" />
     </state>
-    <state x="616" y="240" key="run.anything.popup/0.0.1920.1040@0.0.1920.1040" timestamp="1608418162707" />
+    <state x="616" y="240" key="run.anything.popup/0.0.1920.1040@0.0.1920.1040" timestamp="1609264248507" />
     <state x="623" y="225" width="672" height="160" key="search.everywhere.popup" timestamp="1609111018243">
       <screen x="0" y="0" width="1920" height="1040" />
     </state>

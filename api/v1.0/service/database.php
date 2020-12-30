@@ -90,7 +90,7 @@
         }
 
         public function getUser(int $id) { // user already auth'd at this point due to token => get user by id
-            $user_result = $this->executeSingleIdParamStatement($id, "SELECT 
+            $user_result = $this->executeSingleIdParamStatement($id, "SELECT
                 us.description, us.username, us.email, us.has_image, us.user_chatroom_id, us_tags.tag_name, tgs.colour, tgs.is_from_facebook
                 FROM users us
                 LEFT JOIN user_tags us_tags ON us.id = us_tags.user_id
@@ -182,7 +182,7 @@
             $tagsUpdateSuccess = true;
             if($tags = $user->getTags()) { // somewhat unnecessary check given the method..
                 $tagsUpdateSuccess = $this->updateModelTags(Constants::$userTagsTable,
-                    Constants::$userId, $user->getId(), $tags);
+                    Constants::$userId, $user->getId(), $tags, true);
             } else if(!$shouldUpdateUser) {
                 $userUpdateSuccess = false;
                 $tagsUpdateSuccess = false;
@@ -315,7 +315,8 @@
             if($tags = $chatroom->getTags()) { // somewhat unnecessary check given the method..
                 $tagsUpdateSuccess = $this->updateModelTags(
                     Constants::$chatroomTagsTable, Constants::$chatroomId,
-                    $chatroom->getId(), $tags
+                    $chatroom->getId(), $tags,
+                    true
                 );
             } else if(!$shouldUpdateChatroom) {
                 $chatroomUpdateSuccess = false;
@@ -606,14 +607,22 @@
             // FCM
         }
         
-        public function updateModelTags(string $table, string $modelColumn, int $modelId, ?array $tags) {
+        public function updateModelTags(string $table, string $modelColumn, int $modelId, ?array $tags, $shouldDeletePrior = false) {
             // INSERT tag if not in tags table => skip otherwise
             // REPLACE query - all user tags
             if(!$tags) {
                 return false;
             }
 
-            $result = $this->connection->query($this->getTagArrayReplaceQuery($table, $modelColumn, $modelId, $tags));
+            if($shouldDeletePrior) {
+                $stmt = $this->executeSingleIdParamStatement($modelId, "DELETE FROM $table WHERE $modelColumn = ?");
+                if($stmt->error) {
+                    return false;
+                }
+            }
+
+            $sql = $this->getTagArrayReplaceQuery($table, $modelColumn, $modelId, $tags, $shouldDeletePrior);
+            $result = $this->connection->query($sql);
 
             return mysqli_affected_rows($this->connection) > 0 || mysqli_num_rows($result) > 0;
         }
@@ -650,7 +659,7 @@
         
                 return "('$modelId', '$name')";
             }, $tags);
-        
+
             $sql = "REPLACE INTO $table ($modelColumn, tag_name) VALUES ";
             $sql .= implode(',', $dataArray);
 

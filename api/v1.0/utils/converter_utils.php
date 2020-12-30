@@ -94,10 +94,10 @@
 
             $encodedTags = ConverterUtils::getFieldFromRequestBody($tagField);
             // support both receiving tags in one json array line and in multiple
-            $tags = TagUtils::extractTagsFromJson($encodedTags);
+             $tags = TagUtils::extractTagsFromJson($encodedTags);
             if(empty($tags)) {
                 $tags = TagUtils::extractTagsFromSingleJson($encodedTags);
-            }
+             }
             return $tags;
         }
     }
