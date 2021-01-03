@@ -451,7 +451,7 @@
             $multiplier = 20*($multiplier - 1);
             $stmt = $this->connection->prepare(
                 "SELECT * FROM messages WHERE chatroom_sent_id = ?
-                    ORDER BY create_time
+                    ORDER BY create_time DESC
                     LIMIT 20 OFFSET ?"
             );
 

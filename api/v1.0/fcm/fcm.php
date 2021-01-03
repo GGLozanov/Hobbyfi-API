@@ -41,7 +41,7 @@
             });
 
             if(isset($fields[Constants::$tags])) {
-                $fields[Constants::$tags] = '"' . json_encode($fields[Constants::$tags]) . '"';
+                $fields[Constants::$tags] = json_encode($fields[Constants::$tags]);
             }
 
             $fields[Constants::$type] = $notificationType;
