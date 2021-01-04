@@ -78,8 +78,8 @@
                 Constants::getPhotoUrlForDir(Constants::chatroomMessageImagesDir($this->chatroomSentId)
                     . "/" . $this->id . "jpg"),
                 $this->createTime,
-                $this->userSentId,
                 $this->chatroomSentId,
+                $this->userSentId
             );
         }
 

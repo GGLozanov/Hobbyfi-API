@@ -512,6 +512,15 @@
                     Constants::$CREATE_MESSAGE_TYPE,
                     $message);
                 $this->finishTransactionOnCond($insertSuccess);
+            } else {
+                // for now this means message img insert => replace message photo url with right one with latest insert id
+                // FOR THIS TABLE (very bruh but such is life...)
+                $stmt = $this->connection->prepare("UPDATE messages SET message = ? WHERE id = ?");
+                $messagePhotoUrl = Constants::getPhotoUrlForDir(Constants::chatroomMessageImagesDir($chatroomId)
+                    . "/" . $messageId . ".jpg");
+                $stmt->bind_param("si", $messagePhotoUrl, $messageId);
+
+                $insertSuccess = $stmt->execute();
             }
 
             return $insertSuccess ? $message : null;
@@ -525,13 +534,15 @@
                 return false; // users should only send messages in a single chatroom from here (theirs) and nothing else
             }
 
-            $messagePhotoUrl = $message->withPhotoUrlAsMessage(); // clone message to pass for create chatroom method (photourl as message)
-            if(!($message = $this->createChatroomMessage($messagePhotoUrl, $chatroomId, false))) {
+            $base64Image = $message->getMessage();
+
+            if(!($message = $this->createChatroomMessage($message, $chatroomId, false))) {
                 $this->connection->rollback();
                 return null;
             }
 
-            if(ImageUtils::uploadImageToPath($message->getId(), Constants::chatroomMessageImagesDir($chatroomId), $message->getMessage(), Constants::$message)) {
+            if(ImageUtils::uploadImageToPath($message->getId(), Constants::chatroomMessageImagesDir($chatroomId),
+                    $base64Image, Constants::$messages, false)) {
                 $this->connection->commit();
                 // no need for helper notification method here because this is in a "success create" context, per se
                 $this->fcm->sendMessageToChatroom(
@@ -541,12 +552,14 @@
                 );
                 return $message;
             }
-
+            
             $this->connection->rollback();
-            return false;
+            return null;
         }
 
         public function deleteChatroomMessage(int $userId, int $messageId) {
+            require_once("../utils/image_utils.php");
+
             $this->connection->begin_transaction();
             // assert message owner OR chatroom owner
             if((!($ownerId = $this->getMessageOwnerId($messageId))

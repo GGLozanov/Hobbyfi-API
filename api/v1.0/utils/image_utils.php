@@ -1,12 +1,13 @@
 <?php
     class ImageUtils {
-        public static function uploadImageToPath(string $title, string $path, string $base64Image, string $modelType) {
+        public static function uploadImageToPath(string $title, string $path,
+                                                 string $base64Image, string $modelType, bool $modifyModel = true) {
             require "../init.php";
             /* @var Database $db */
 
             $decoded = base64_decode($base64Image);
             if($decoded == false || ($modelType != Constants::$chatrooms && $modelType != Constants::$users
-                    && $modelType != Constants::$events)) {
+                    && $modelType != Constants::$events && $modelType != Constants::$messages)) {
                 return false;
             }
 
@@ -18,12 +19,13 @@
 
             $upload_path = $dir . "$title.jpg";
 
-            file_put_contents($upload_path, $decoded); // write decoded image to the filesystem (1.jpg, 2.jpg, etc.)
+            $success = file_put_contents($upload_path, $decoded); // write decoded image to the filesystem (1.jpg, 2.jpg, etc.)
 
-            return $db->setModelHasImage($title, true, $modelType);
+            return ($modifyModel ? $db->setModelHasImage($title, true, $modelType) : true) && $success != false;
         }
 
-        public static function deleteImageFromPath(int $title, string $path, string $modelType, bool $isFile = false, bool $modifyModel = false) {
+        public static function deleteImageFromPath(int $title, string $path, string $modelType,
+                                                    bool $isFile = false, bool $modifyModel = false) {
             require "../init.php";
             /* @var Database $db */
             $dir = __DIR__ . ($isFile ? "/../../../uploads/$path.jpg" : "/../../../uploads/$path/");
@@ -45,10 +47,6 @@
             }
 
             return $deletionSuccess;
-        }
-
-        public static function validateBase64(string $data) {
-            return base64_encode(base64_decode($data, true)) === $data;
         }
     }
 ?>
