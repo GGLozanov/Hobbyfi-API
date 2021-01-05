@@ -30,6 +30,7 @@
             VALUES(?, ?, ?, ?, ?, ?, ?)");
 
             // bind_param accepts only references... bruh...
+            $user->escapeStringProperties($this->connection);
             $id = $user->getId();
             $email = $user->getEmail();
             $name = $user->getName();
@@ -40,7 +41,7 @@
             $stmt->bind_param("issssii", 
                 $id, 
                 $email,
-                $name, 
+                $name,
                 $password, 
                 $description, 
                 $hasImage, 
@@ -57,6 +58,7 @@
 
         public function userExistsOrPasswordTaken(string $username, $password) { // user exists if username or password are taken
             $stmt = $this->connection->prepare("SELECT username FROM users WHERE username = ? OR password = ?");
+            $username = mysqli_escape_string($this->connection, $username);
             $stmt->bind_param("ss", $username, $password);
             $stmt->execute();
 
@@ -72,6 +74,7 @@
 
         public function validateUser(string $email, string $password) {
             $stmt = $this->connection->prepare("SELECT id, password FROM users WHERE email = ?"); // get associated user by email
+            $email = mysqli_real_escape_string($this->connection, $email);
             $stmt->bind_param("s", $email);
             $stmt->execute();
             $result = $stmt->get_result();
@@ -127,6 +130,7 @@
                     $chatroomId = $this->getUserChatroomId($user->getId());
                 }
 
+                $user->escapeStringProperties($this->connection);
                 mysqli_query($this->connection, $user->getUpdateQuery($password));
 
                 // FIXME: Code dup
@@ -266,6 +270,7 @@
                 VALUES(?, ?, ?, ?, ?, ?)");
 
             // still need to destruct this class and allocate more variables for this goddamn bind_param() method...
+            $chatroom->escapeStringProperties($this->connection);
             $id = $chatroom->getId();
             $name = $chatroom->getName();
             $description = $chatroom->getDescription();
@@ -304,6 +309,7 @@
             $chatroomUpdateSuccess = true;
             $shouldUpdateChatroom = !$chatroom->isUpdateFormEmpty();
             if($shouldUpdateChatroom) {
+                $chatroom->escapeStringProperties($this->connection);
                 mysqli_query($this->connection, $chatroom->getUpdateQuery());
 
                 $chatroomUpdateSuccess = mysqli_affected_rows($this->connection);
@@ -488,6 +494,7 @@
             $stmt = $this->connection->prepare("INSERT INTO messages(id, message, create_time, chatroom_sent_id, user_sent_id) 
                 VALUES(?, ?, NOW(), ?, ?)");
 
+            $message->escapeStringProperties($this->connection);
             $id = $message->getId();
             $msg = $message->getMessage();
             $userSentId = $message->getUserSentId();

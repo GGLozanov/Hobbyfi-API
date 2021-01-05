@@ -84,6 +84,16 @@
                 Constants::$tags=>$this->tags
             ];
         }
+
+        public function escapeStringProperties(mysqli $conn) {
+            if(!is_null($this->name)) {
+                $this->setName($conn->real_escape_string($this->getName()));
+            }
+
+            if(!is_null($this->description)) {
+                $this->setDescription($conn->real_escape_string($this->getDescription()));
+            }
+        }
     }
 
 ?>

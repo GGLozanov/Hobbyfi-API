@@ -92,6 +92,10 @@
                 Constants::$chatroomSentId=>$this->chatroomSentId
             ];
         }
+
+        public function escapeStringProperties(mysqli $conn) {
+            $this->setMessage($conn->real_escape_string($this->getMessage()));
+        }
     }
 
 ?>
