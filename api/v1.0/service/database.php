@@ -139,39 +139,14 @@
                     if(!$userHasNoChatroom) { // if user has updated chatroom id by joining
                         // send notification for joining
                         $user = $this->getUser($user->getId());
-                        $this->sendNotificationToChatroomOnCond($userUpdateSuccess,
-                            $currentUserChatroomId,
-                            Constants::$JOIN_USER_TYPE,
-                            $user
-                        );
-
-                        $userUpdateSuccess = !empty($this->createChatroomMessage(new Message(
-                            null,
-                            Constants::timelineUserJoinMessage(
-                                $user->getName()
-                            ),
-                            null,
-                            $currentUserChatroomId,
-                            null
-                        ), $currentUserChatroomId));
+                        $this->sendUserChatroomNotification($currentUserChatroomId, $user,
+                            Constants::$JOIN_USER_TYPE, Constants::timelineUserJoinMessage($user->getName()));
                     } else if($chatroomId) { // else get if they are currently in chatroom (or previous chatroom for user)
                         // send notification for edit/leave otherwise
                         $user = $this->getUser($user->getId());
                         if(isset($currentUserChatroomId)) {
-                            $this->sendNotificationToChatroomOnCond($userUpdateSuccess,
-                                $chatroomId,
-                                Constants::$LEAVE_USER_TYPE,
-                                $user
-                            );
-                            $userUpdateSuccess = !empty($this->createChatroomMessage(new Message(
-                                null,
-                                Constants::timelineUserLeaveMessage(
-                                    $user->getName()
-                                ),
-                                null,
-                                $chatroomId,
-                                null
-                            ), $chatroomId));
+                            $this->sendUserChatroomNotification($chatroomId, $user,
+                                Constants::$LEAVE_USER_TYPE, Constants::timelineUserLeaveMessage($user->getName()));
                         } else {
                             $this->sendNotificationToChatroomOnCond($userUpdateSuccess,
                                 $chatroomId,
@@ -201,13 +176,34 @@
 
         public function deleteUser(int $id) {
             include_once "../utils/image_utils.php";
+            $this->connection->begin_transaction();
+
+            if($chatroomId = $this->getUserChatroomId($id)) {
+                if($ownerId = $this->getOwnerChatroomId($id)) {
+                    $this->fcm->sendMessageToChatroom(
+                        $chatroomId,
+                        Constants::$DELETE_CHATROOM_TYPE,
+                        new Chatroom($chatroomId)
+                    );
+                } else {
+                    $user = $this->getUser($id);
+                    $this->sendUserChatroomNotification(
+                        $chatroomId,
+                        $user,
+                        Constants::$LEAVE_USER_TYPE,
+                        Constants::timelineUserLeaveMessage($user->getName())
+                    );
+                }
+            }
 
             $stmt = $this->executeSingleIdParamStatement($id, "DELETE FROM users WHERE id = ?");
 
             ImageUtils::deleteImageFromPath($id, Constants::$userProfileImagesDir, Constants::$users, true);
             // FCM if user in chatroom => send notification
 
-            return $stmt->affected_rows > 0;
+            $deleteSuccess =  $stmt->affected_rows > 0;
+            $this->finishTransactionOnCond($deleteSuccess);
+            return $deleteSuccess;
         }
         
         // gets all users with any id BUT this one;
@@ -780,11 +776,20 @@
             }
         }
 
-        public function getUserName(int $id) {
-            return $this->getOneColumnValueFromSingleRow($this->executeSingleIdParamStatement(
-                $id, "SELECT username FROM users WHERE id = ?")->get_result(),
-                Constants::$username
+        private function sendUserChatroomNotification(int $currentUserChatroomId, User $user, string $type, string $chatMessage) {
+            $this->sendNotificationToChatroomOnCond($userUpdateSuccess,
+                $currentUserChatroomId,
+                $type,
+                $user
             );
+
+            $userUpdateSuccess = !empty($this->createChatroomMessage(new Message(
+                null,
+                $chatMessage,
+                null,
+                $currentUserChatroomId,
+                null
+            ), $currentUserChatroomId));
         }
     }
 ?>
