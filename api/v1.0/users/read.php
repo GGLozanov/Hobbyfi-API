@@ -9,15 +9,15 @@
     /* @var $db */
 
     $token = APIUtils::getTokenFromHeadersOrDie();
-    $page = ConverterUtils::getFieldFromRequestBodyOrDie(Constants::$page, $_GET);
 
     if($id = APIUtils::validateAuthorisedRequest($token)) {
-        if($users = $db->getChatroomUsers($id, $page)) {
+        if($users = $db->getChatroomUsers($id)) {
             APIUtils::displayAPIResult(array(
+                Constants::$response=>Constants::$ok,
                 Constants::$data_list=>$users
-            )); // mapping twice; FIXME - refactor database to return JSON responses directly instead of model classes?
+            ));
         } else {
-            APIUtils::displayAPIResult(array(Constants::$response=>Constants::$internalServerError, 500));
+            APIUtils::displayAPIResult(array(Constants::$response=>Constants::$userNotFound), 404);
         }
     }
 

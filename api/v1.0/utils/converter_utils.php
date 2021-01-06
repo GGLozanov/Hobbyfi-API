@@ -68,10 +68,17 @@
         }
 
         public static function getMessageCreate(int $ownerId) {
-            $message = ConverterUtils::getFieldFromRequestBodyOrDie(Constants::$message);
+            $message = ConverterUtils::getFieldFromRequestBody(Constants::$message);
 
             // chatroom sent id garnered from db method
-            return new Message(null, $message, null, null, $ownerId);
+            return new Message(
+                null,
+                !is_null($message) ? $message :
+                    ConverterUtils::getFieldFromRequestBodyOrDie(Constants::$image),
+                null,
+                null,
+                $ownerId
+            );
         }
 
         // this and getMessageCreate are the same method for now (semantic difference) but will be left
@@ -94,10 +101,10 @@
 
             $encodedTags = ConverterUtils::getFieldFromRequestBody($tagField);
             // support both receiving tags in one json array line and in multiple
-            $tags = TagUtils::extractTagsFromJson($encodedTags);
+             $tags = TagUtils::extractTagsFromJson($encodedTags);
             if(empty($tags)) {
                 $tags = TagUtils::extractTagsFromSingleJson($encodedTags);
-            }
+             }
             return $tags;
         }
     }

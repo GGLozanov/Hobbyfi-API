@@ -12,10 +12,9 @@
     if($userId = APIUtils::validateAuthorisedRequest($token)) {
         if($user = $db->getUser($userId)) {
             APIUtils::displayAPIResult(array(
-                    Constants::$response=>Constants::$ok,
-                    Constants::$data=>$user
-                )
-            );
+                Constants::$response=>Constants::$ok,
+                Constants::$data=>$user
+            ));
         } else {
             APIUtils::displayAPIResult(array(Constants::$response=>Constants::$userNotFound), 404);
         }

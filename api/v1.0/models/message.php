@@ -19,7 +19,7 @@
             $this->message = $message;
             $this->createTime = $createTime;
             $this->chatroomSentId = $chatroomSentId;
-            $this->userSentId = $userSentId; 
+            $this->userSentId = $userSentId;
         }
 
         public function getMessage() {
@@ -72,15 +72,14 @@
             return $sql;
         }
 
-
         public function withPhotoUrlAsMessage() {
             return new Message(
                 $this->id,
                 Constants::getPhotoUrlForDir(Constants::chatroomMessageImagesDir($this->chatroomSentId)
                     . "/" . $this->id . "jpg"),
                 $this->createTime,
-                $this->userSentId,
-                $this->chatroomSentId
+                $this->chatroomSentId,
+                $this->userSentId
             );
         }
 
@@ -92,6 +91,10 @@
                 Constants::$userSentId=>$this->userSentId,
                 Constants::$chatroomSentId=>$this->chatroomSentId
             ];
+        }
+
+        public function escapeStringProperties(mysqli $conn) {
+            $this->setMessage($conn->real_escape_string($this->getMessage()));
         }
     }
 

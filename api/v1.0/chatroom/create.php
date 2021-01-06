@@ -1,7 +1,7 @@
 <?php
     header("Access-Control-Allow-Origin: *");
     header("Access-Control-Allow-Methods: POST");
-    header("Content-Type: application/json; charset=UTF-8");
+    header("Content-Type: application/x-www-form-urlencoded; charset=UTF-8");
 
     require "../init.php";
     require "../config/core.php";
@@ -14,7 +14,6 @@
         $chatroom = ConverterUtils::getChatroomCreate($ownerId);
 
         if($id = $db->createChatroom($chatroom)) {
-
             if($tags = $chatroom->getTags()) {
                 if(!$db->updateModelTags(Constants::$chatroomTagsTable, Constants::$chatroomId, $id, $tags)) {
                     $db->closeConnection();

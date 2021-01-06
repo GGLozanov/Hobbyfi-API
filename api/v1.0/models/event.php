@@ -64,6 +64,10 @@
         public function jsonSerialize() {
             // TODO: Implement jsonSerialize() method.
         }
+
+        public function escapeStringProperties(mysqli $conn) {
+            // TODO: Implement escapeStringProperties() method.
+        }
     }
 
 ?>

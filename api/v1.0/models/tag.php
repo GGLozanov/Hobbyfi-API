@@ -24,8 +24,16 @@
             return $this->name;
         }
 
+        public function setName($name) {
+            $this->name = $name;
+        }
+
         public function getColour() {
             return $this->colour;
+        }
+
+        public function setColour($colour) {
+            $this->colour = $colour;
         }
 
         public function setIsFromFacebook($isFromFacebook) {
@@ -42,6 +50,16 @@
                 Constants::$colour => $this->colour,
                 Constants::$isFromFacebook => $this->isFromFacebook
             ];
+        }
+
+        public function escapeStringProperties(mysqli $conn) {
+            if(!is_null($this->name)) {
+                $this->setName($conn->real_escape_string($this->getName()));
+            }
+
+            if(!is_null($this->colour)) {
+                $this->setColour($conn->real_escape_string($this->getColour()));
+            }
         }
     }
 

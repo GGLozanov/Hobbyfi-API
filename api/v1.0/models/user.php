@@ -69,6 +69,20 @@
                 && !isset($this->description) && !isset($this->chatroomId);
         }
 
+        public function escapeStringProperties(mysqli $conn) {
+            if(!is_null($this->email)) {
+                $this->setEmail($conn->real_escape_string($this->getEmail()));
+            }
+
+            if(!is_null($this->name)) {
+                $this->setName($conn->real_escape_string($this->getName()));
+            }
+
+            if(!is_null($this->description)) {
+                $this->setDescription($conn->real_escape_string($this->getDescription()));
+            }
+        }
+
         public function jsonSerialize() {
             return [
                 Constants::$id=>$this->id,

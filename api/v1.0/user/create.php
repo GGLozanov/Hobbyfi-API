@@ -1,7 +1,6 @@
 <?php
     header("Access-Control-Allow-Origin: *");
     header("Access-Control-Allow-Methods: POST");
-    header("Content-Type: application/json; charset=UTF-8");
 
     require "../init.php"; // set up dependency for this script to init php script
     require "../config/core.php";
@@ -25,15 +24,14 @@
         if(($userId = FacebookTokenUtils::validateAccessToken($token)) == null || $userId == false) {
             APIUtils::displayAPIResultAndDie(array(Constants::$response=>Constants::$facebookAuthUserCreateError));
         }
+        $user->setId($userId);
     }
- 
+
     if($db->userExistsOrPasswordTaken($user->getName(), $password)) {
         $status = Constants::$userExists; // user w/ same username or password exists
         $code = 409; // 409 - conflict; resource already exists
     } else {
-
-        if($id = $db->createUser($user, $password)) { // hopefully short-circuit eval works here and doesn't perform a wrong sql query on an empty tag array
-            
+        if($id = $db->createUser($user, $password)) {
             if($tags = $user->getTags()) {
                 if(!$db->updateModelTags(Constants::$userTagsTable, Constants::$userId, $id, $tags)) {
                     $db->closeConnection();
@@ -65,10 +63,6 @@
     }
 
     APIUtils::displayAPIResult(array(Constants::$response=>$status), $code);
-        // output the result in the form of a json encoded response (response<->status & new user id<->last insert id)
-        // last insert Id might cause problems in the future and return incorrect ids if multiple queries are occurring at the same time
 
-        // id is nonexistent if there's a server error
-
-   $db->closeConnection();
+    $db->closeConnection();
 ?>

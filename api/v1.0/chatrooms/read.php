@@ -16,10 +16,10 @@
         $data = ($page == null ?
             $db->getChatroom($id) : $db->getChatrooms($page));
 
-        if(isset($data)) {
+        if($data || $page) {
             APIUtils::displayAPIResult(array(
                 Constants::$response=>Constants::$ok,
-                Constants::$data_list=>$data
+                Constants::$data_list=>$data == false ? array() : $data
             ));
         } else {
             // TODO: Handle not joined chatroom user going to this endpoint with just token error

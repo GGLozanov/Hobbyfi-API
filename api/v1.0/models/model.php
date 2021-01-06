@@ -18,5 +18,7 @@
         abstract public function getUpdateQuery(string $userPassword = null);
 
         abstract public function isUpdateFormEmpty();
+
+        abstract public function escapeStringProperties(mysqli $conn);
     }
 ?>

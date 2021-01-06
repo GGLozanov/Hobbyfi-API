@@ -1,7 +1,7 @@
 <?php
     header("Access-Control-Allow-Origin: *");
     header("Access-Control-Allow-Methods: POST");
-    header("Content-Type: application/json; charset=UTF-8");
+    header("Content-Type: application/x-www-form-urlencoded; charset=UTF-8");
 
     require "../init.php"; // set up dependency for this script to init php script
     require "../config/core.php";
@@ -15,7 +15,9 @@
 
         // leaking db knowledge for something that should be in updateChatroom() method but w/e for now
         if(!($chatroomId = $db->getOwnerChatroomId($id))) {
-            APIUtils::displayAPIResultAndDie(array(Constants::$response=>cONSTANTS::$chatroomNoPermissions), 406);
+            APIUtils::displayAPIResultAndDie(array(
+                Constants::$response=>Constants::$chatroomNoPermissions
+            ), 406);
         }
 
         $chatroom->setId($chatroomId);

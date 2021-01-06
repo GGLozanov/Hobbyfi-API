@@ -3,6 +3,7 @@
         "firebase/php-jwt": "^5.2",
         "facebook/graph-sdk": "^5.7",
         "php-http/curl-client": "^1.7",
-        "guzzlehttp/psr7": "^1.7"
+        "guzzlehttp/psr7": "^1.7",
+        "kreait/firebase-php": "^5.14"
     }
 }
