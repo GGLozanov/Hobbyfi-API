@@ -614,7 +614,8 @@
                 INNER JOIN users usrs ON usrs.user_chatroom_id = chrms.id
                 WHERE usrs.id = ?")->get_result();
 
-            $fetchSuccess = $result && ($row = $result->fetch_assoc()) != null;
+            $row = $result->fetch_assoc();
+            $fetchSuccess = $result && $row != null;
 
             $this->finishTransactionOnCond($fetchSuccess);
 

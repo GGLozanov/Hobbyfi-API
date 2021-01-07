@@ -22,15 +22,7 @@
     <select />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="1ba16d1b-5e7e-476a-9cc1-ac6a9edbf432" name="Default Changelist" comment="">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/api/v1.0/consts/constants.php" beforeDir="false" afterPath="$PROJECT_DIR$/api/v1.0/consts/constants.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/api/v1.0/event/create.php" beforeDir="false" afterPath="$PROJECT_DIR$/api/v1.0/event/create.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/api/v1.0/event/edit.php" beforeDir="false" afterPath="$PROJECT_DIR$/api/v1.0/event/edit.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/api/v1.0/models/event.php" beforeDir="false" afterPath="$PROJECT_DIR$/api/v1.0/models/event.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/api/v1.0/service/database.php" beforeDir="false" afterPath="$PROJECT_DIR$/api/v1.0/service/database.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/api/v1.0/utils/converter_utils.php" beforeDir="false" afterPath="$PROJECT_DIR$/api/v1.0/utils/converter_utils.php" afterDir="false" />
-    </list>
+    <list default="true" id="1ba16d1b-5e7e-476a-9cc1-ac6a9edbf432" name="Default Changelist" comment="" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -158,7 +150,7 @@
       <workItem from="1609847432708" duration="4199000" />
       <workItem from="1609955006239" duration="3038000" />
       <workItem from="1610018216153" duration="4514000" />
-      <workItem from="1610029558591" duration="9652000" />
+      <workItem from="1610029558591" duration="10532000" />
     </task>
     <servers />
   </component>
