@@ -24,6 +24,10 @@
         public static string $userSentId = "user_sent_id";
         public static string $createTime = "create_time";
         public static string $chatroomSentId = "chatroom_sent_id";
+        public static string $date = "date";
+        public static string $lat = "latitude";
+        public static string $long = "longitude";
+        public static string $startDate = "start_date";
 
         public static string $page = "page";
 

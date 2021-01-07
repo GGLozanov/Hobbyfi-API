@@ -334,7 +334,6 @@
                 $chatroom);
 
             $this->finishTransactionOnCond($updateSuccess);
-
             return $updateSuccess;
         }
 
@@ -606,21 +605,136 @@
             return $updateSuccess;
         }
 
+        public function getChatroomEvent(int $userId) {
+            $this->connection->begin_transaction();
+
+            $result = $this->executeSingleIdParamStatement($userId, "SELECT evnt.id, evnt.name, 
+                    evnt.description, evnt.latitude, evnt.longitude, evnt.has_image, evnt.start_date, evnt.date FROM events evnt
+                INNER JOIN chatrooms chrms ON chrms.last_event_id = evnt.id
+                INNER JOIN users usrs ON usrs.user_chatroom_id = chrms.id
+                WHERE usrs.id = ?")->get_result();
+
+            $fetchSuccess = $result && ($row = $result->fetch_assoc()) != null;
+
+            $this->finishTransactionOnCond($fetchSuccess);
+
+            return $fetchSuccess ?
+                new Event(
+                    $row[Constants::$id],
+                    $row[Constants::$name],
+                    $row[Constants::$description],
+                    $row[Constants::$hasImage],
+                    $row[Constants::$startDate],
+                    $row[Constants::$date],
+                    $row[Constants::$lat],
+                    $row[Constants::$long]
+                ) : null;
+        }
+
         // chatroom id is sent through query param
         public function createChatroomEvent(int $ownerId, Event $event) {
             // assert chatroom owner and update
             // update chatroom lastEventId
             // FCM
+            $this->connection->begin_transaction();
+
+            if(!($chatroomId = $this->getOwnerChatroomId($ownerId))) {
+                $this->connection->rollback();
+                return false;
+            }
+
+            $stmt = $this->connection->prepare("INSERT INTO 
+                events(id, name, description, start_date, date, has_image, latitude, longitude) 
+                    VALUES(?, ?, CURDATE(), ?, ?, ?, ?, ?)");
+            $event->escapeStringProperties($this->connection);
+            $id = $event->getId();
+            $name = $event->getName();
+            $description = $event->getDescription();
+            $date = $event->getDate();
+            $hasImage = $event->getHasImage();
+            $latitude = $event->getLat();
+            $longitude = $event->getLong();
+            
+            $stmt->bind_param("isssidd", $id, $name, $description, $date, $hasImage, $latitude, $longitude);
+
+            $eventCreateSuccess = $stmt->execute();
+
+            if(!$eventCreateSuccess) {
+                $this->connection->rollback();
+                return null;
+            }
+
+            $eventId = mysqli_insert_id($this->connection);
+            $event->setId($eventId);
+            $event->setStartDate($this->executeSingleIdParamStatement($event->getId(),
+                "SELECT start_date FROM events WHERE id = ?"
+                )->get_result()->fetch_assoc()[Constants::$startDate]);
+
+            $chatroomStmt = $this->connection->prepare("UPDATE chatrooms SET last_event_id = ? WHERE owner_id = ?");
+            $chatroomStmt->bind_param("ii", $eventId, $ownerId);
+
+            $eventCreateSuccess |= $chatroomStmt->execute() && $chatroomStmt->affected_rows > 0;
+            $this->sendNotificationToChatroomOnCond($eventCreateSuccess,
+                $chatroomId,
+                Constants::$CREATE_EVENT_TYPE,
+                $event
+            );
+
+            $this->finishTransactionOnCond($eventCreateSuccess);
+            return $eventId != null && $eventCreateSuccess ? $event : null;
         }
 
         public function deleteChatroomEvent(int $ownerId) {
-            // assert chatroom owner & delete
-            // FCM
+            $this->connection->begin_transaction();
+            $chatroomId = $this->getOwnerChatroomId($ownerId);
+
+            if(!$chatroomId || !($eventId = $this->getOneColumnValueFromSingleRow(
+                    $this->executeSingleIdParamStatement(
+                        $ownerId, "SELECT evnts.id FROM events evnts 
+                            INNER JOIN chatrooms chrms ON chrms.last_event_id = evnts.id 
+                            WHERE chrms.owner_id = ?")))) {
+                $this->connection->rollback();
+                return false;
+            }
+
+            $stmt = $this->executeSingleIdParamStatement($eventId, "DELETE FROM events WHERE id = ?")
+                ->get_result();
+
+            $deleteSuccess = $stmt->affected_rows > 0;
+
+            if(!$deleteSuccess) {
+                $this->connection->rollback();
+                return null;
+            }
+
+            $this->sendNotificationToChatroomOnCond($deleteSuccess,
+                $chatroomId,
+                Constants::$DELETE_EVENT_TYPE,
+                new Event($eventId)
+            );
+
+            return $deleteSuccess ? $deleteSuccess : null;
         }
 
         public function updateChatroomEvent(int $ownerId, Event $event) {
-            // assert chatroom owner & update
-            // FCM
+            $this->connection->begin_transaction();
+            if(!($chatroomId = $this->getOwnerChatroomId($ownerId))) {
+                $this->connection->rollback();
+                return false;
+            }
+
+
+            $event->escapeStringProperties($this->connection);
+            $eventUpdateSuccess = mysqli_affected_rows($this->connection);
+
+            $this->sendNotificationToChatroomOnCond($eventUpdateSuccess,
+                $chatroomId,
+                Constants::$EDIT_EVENT_TYPE,
+                $event
+            );
+
+            $this->finishTransactionOnCond($eventUpdateSuccess);
+            return $eventUpdateSuccess;
         }
         
         public function updateModelTags(string $table, string $modelColumn, int $modelId, ?array $tags, $shouldDeletePrior = false) {
@@ -642,8 +756,6 @@
 
             return mysqli_affected_rows($this->connection) > 0 || mysqli_num_rows($result) > 0;
         }
-
-        // TODO: Model CRUD operations here
 
         private function executeSingleIdParamStatement(int $id, string $sql) {
             $stmt = $this->connection->prepare($sql);

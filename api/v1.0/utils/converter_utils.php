@@ -90,6 +90,21 @@
             return new Message($id, $message, null, null, $ownerId);
         }
 
+        public static function getEventCreate() {
+            $name = ConverterUtils::getFieldFromRequestBodyOrDie(Constants::$name);
+            $description = ConverterUtils::getFieldFromRequestBody(Constants::$description);
+            $hasImage = ConverterUtils::getFieldFromRequestBody(Constants::$image) != null;
+            $date = ConverterUtils::getFieldFromRequestBodyOrDie(Constants::$date);
+            $lat = ConverterUtils::getFieldFromRequestBodyOrDie(Constants::$lat);
+            $long = ConverterUtils::getFieldFromRequestBodyOrDie(Constants::$long);
+
+            return new Event(null, $name, $description, $hasImage, null, $date, $lat, $long);
+        }
+
+        public static function getEventUpdate() {
+
+        }
+
         private static function getFieldIntValueOrNull(string $field, array $body = null) {
             $value = ConverterUtils::getFieldFromRequestBody($field, $body);
             return $value == null ? null : intval($value);
