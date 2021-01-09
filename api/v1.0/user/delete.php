@@ -10,14 +10,12 @@
     $token = APIUtils::getTokenFromHeadersOrDie();
 
     if($userId = APIUtils::validateAuthorisedRequest($token)) {
-        if($db->deleteUser(
-            $userId
-        )) {
+        if($db->deleteUser($userId)) {
             $status = Constants::$ok;
             $code = 200;
         } else {
             $status = Constants::$userNotDeleted;
-            $code = 500;
+            $code = 406;
         }
 
         APIUtils::displayAPIResult(array(Constants::$response=>$status), $code);

@@ -8,6 +8,8 @@
     /** @var $db */
 
     $token = APIUtils::getTokenFromHeadersOrDie();
+    $leaveChatroomId = ConverterUtils::getFieldFromRequestBody(Constants::$leaveChatroomId);
+
 
     if($userId = APIUtils::validateAuthorisedRequest($token)) {
         $user = ConverterUtils::getUserUpdate($userId);
@@ -26,7 +28,7 @@
             $code = 200;
         } else {
             $status = Constants::$userNotUpdated;
-            $code = 500;
+            $code = 406;
         }
 
         APIUtils::displayAPIResult(array(Constants::$response=>$status), $code);

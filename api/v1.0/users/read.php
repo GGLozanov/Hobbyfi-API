@@ -9,9 +9,10 @@
     /* @var $db */
 
     $token = APIUtils::getTokenFromHeadersOrDie();
+    $chatroomId = ConverterUtils::getFieldFromRequestBodyOrDie(Constants::$chatroomId, $_GET);
 
     if($id = APIUtils::validateAuthorisedRequest($token)) {
-        if($users = $db->getChatroomUsers($id)) {
+        if($users = $db->getChatroomUsers($id, $chatroomId)) {
             APIUtils::displayAPIResult(array(
                 Constants::$response=>Constants::$ok,
                 Constants::$data_list=>$users

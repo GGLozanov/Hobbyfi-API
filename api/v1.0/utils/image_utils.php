@@ -48,5 +48,15 @@
 
             return $deletionSuccess;
         }
+
+        public static function uploadImageBasedOnHasImage(Model $model, string $dir, string $modelTableName) {
+            if($model->getHasImage()) {
+                if(!ImageUtils::uploadImageToPath($model->getId(), $dir,
+                    $_POST[Constants::$image], $modelTableName)) {
+                    return Constants::$imageUploadFailed;
+                }
+            }
+            return Constants::$ok;
+        }
     }
 ?>

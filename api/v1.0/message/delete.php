@@ -18,13 +18,8 @@
             $status = Constants::$ok;
             $code = 200;
         } else {
-            if($success == false) {
-                $status = Constants::$messageNotDeletedPermission;
-                $code = 406;
-            } else {
-                $status = Constants::$messageNotDeleted;
-                $code = 500;
-            }
+            APIUtils::handleMultiDbResultError($success, Constants::$messageNotDeleted, Constants::$messageNotDeletedPermission,
+                404, 406);
         }
 
         APIUtils::displayAPIResult(array(Constants::$response=>$status), $code);

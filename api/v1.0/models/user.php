@@ -13,26 +13,24 @@
         
         private ?string $email;
 
-        private ?int $chatroomId; // FK
+        private ?array $chatroomIds;
 
         public function __construct(
                 int $id = null, 
                 string $email = null, 
                 string $username = null, 
-                string $description = null, bool $hasImage = null, 
-                int $chatroomId = null, 
-                array $tags = null) {     
+                string $description = null, bool $hasImage = null,
+                array $chatroomIds = null,
+                array $tags = null) {
             $this->id = $id;
             $this->email = $email;
             $this->name = $username;
             $this->description = $description;
             $this->hasImage = $hasImage;
-
-            $this->chatroomId = $chatroomId;
+            $this->chatroomIds = $chatroomIds;
             $this->tags = $tags;
         }
 
-        // this method is called for an update user to get the query for its existing/non-null fields
         public function getUpdateQuery(string $userPassword = null) {
             $sql = "UPDATE users SET";
 
@@ -41,7 +39,6 @@
             $updateColumns[] = $this->addUpdateFieldToQuery($userPassword != null, Constants::$password, $userPassword);
             $updateColumns[] = $this->addUpdateFieldToQuery($this->name != null, Constants::$username, $this->name);
             $updateColumns[] = $this->addUpdateFieldToQuery(isset($this->description), Constants::$description, $this->description);
-            $updateColumns[] = $this->addUpdateFieldToQuery(isset($this->chatroomId), Constants::$userChatroomId, $this->chatroomId);
 
             $updateColumns = array_filter($updateColumns);
             $sql .= implode(',', $updateColumns) . " WHERE id = $this->id";
@@ -56,12 +53,12 @@
             $this->email = $email;
         }
 
-        public function getChatroomId() {
-            return $this->chatroomId;
+        public function getChatroomIds() {
+            return $this->chatroomIds;
         }
 
-        public function setChatroomId(int $chatroomId = null) {
-            $this->chatroomId = $chatroomId;
+        public function setChatroomIds(array $chatroomId = null) {
+            $this->chatroomIds = $chatroomId;
         }
 
         public function isUpdateFormEmpty() {
@@ -89,7 +86,7 @@
                 Constants::$email=>$this->email,
                 Constants::$username=>$this->name,
                 Constants::$description=>$this->description,
-                Constants::$chatroomId=>$this->chatroomId,
+                Constants::$chatroomIds=>$this->chatroomIds,
                 Constants::$photoUrl=>$this->hasImage ?
                     Constants::getPhotoUrlForDir(Constants::userProfileImagesDir($this->id))
                     : null,

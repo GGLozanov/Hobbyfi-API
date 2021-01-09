@@ -2,6 +2,7 @@
     require_once("../models/user.php");
     require_once("../models/chatroom.php");
     require_once("../models/message.php");
+    require_once("../models/event.php");
     require_once("../models/chatroom.php");
     require_once("tag_utils.php");
 
@@ -44,7 +45,8 @@
             $hasImage = ConverterUtils::getFieldFromRequestBody(Constants::$image) != null;
             $tags = ConverterUtils::getMappedTags();
 
-            return new User($userId, $email, $username, $description, $hasImage, $chatroomId, $tags);
+            return new User($userId, $email, $username, $description, $hasImage,
+                $chatroomId != null ? array($chatroomId) : null, $tags);
         }
 
         public static function getChatroomCreate(int $ownerId) {
@@ -60,11 +62,10 @@
             $name = ConverterUtils::getFieldFromRequestBody(Constants::$name);
             $description = ConverterUtils::getFieldFromRequestBody(Constants::$description);
             $hasImage = ConverterUtils::getFieldFromRequestBody(Constants::$image) != null;
-            $lastEventId = ConverterUtils::getFieldIntValueOrNull(Constants::$lastEventId);
             $tags = ConverterUtils::getMappedTags();
 
             // ID is added later on in update query
-            return new Chatroom(null, $name, $description, $hasImage, $ownerId, $lastEventId, $tags);
+            return new Chatroom(null, $name, $description, $hasImage, $ownerId, null, $tags);
         }
 
         public static function getMessageCreate(int $ownerId) {
@@ -98,14 +99,23 @@
             $lat = ConverterUtils::getFieldFromRequestBodyOrDie(Constants::$lat);
             $long = ConverterUtils::getFieldFromRequestBodyOrDie(Constants::$long);
 
-            return new Event(null, $name, $description, $hasImage, null, $date, $lat, $long);
+            return new Event(null, $name, $description, $hasImage, null, $date, $lat, $long, null);
         }
 
+        // TODO: No support added for chatroom id changing yet but it still exists as an opportunity in the model
         public static function getEventUpdate() {
-
+            $id = ConverterUtils::getFieldFromRequestBodyOrDie(Constants::$id);
+            $name = ConverterUtils::getFieldFromRequestBody(Constants::$name);
+            $description = ConverterUtils::getFieldFromRequestBody(Constants::$description);
+            $hasImage = ConverterUtils::getFieldFromRequestBody(Constants::$image) != null;
+            $date = ConverterUtils::getFieldFromRequestBody(Constants::$date);
+            $lat = ConverterUtils::getFieldFromRequestBody(Constants::$lat);
+            $long = ConverterUtils::getFieldFromRequestBody(Constants::$long);
+            
+            return new Event($id, $name, $description, $hasImage, null, $date, $lat, $long, null);
         }
 
-        private static function getFieldIntValueOrNull(string $field, array $body = null) {
+        public static function getFieldIntValueOrNull(string $field, array $body = null) {
             $value = ConverterUtils::getFieldFromRequestBody($field, $body);
             return $value == null ? null : intval($value);
         }

@@ -14,12 +14,14 @@
         public static string $colour = "colour";
         public static string $isFromFacebook = "is_from_facebook";
         public static string $userId = "user_id";
+        public static string $leaveChatroomId = "leave_chatroom_id";
         public static string $chatroomId = "chatroom_id";
-        public static string $userChatroomId = "user_chatroom_id";
+        public static string $chatroomIds = "chatroom_ids";
         public static string $photoUrl = "photo_url";
         public static string $hasImage = "has_image";
         public static string $ownerId = "owner_id";
-        public static string $lastEventId = "last_event_id";
+        public static string $eventId = "event_id";
+        public static string $eventIds = "event_ids";
         public static string $message = "message";
         public static string $userSentId = "user_sent_id";
         public static string $createTime = "create_time";
@@ -47,7 +49,7 @@
         public static string $expiredTokenError = "Expired refresh token. Reauthenticate";
         public static string $invalidTokenError = "Unauthorised access. Invalid token. Reauthenticate";
         public static string $internalServerError = "Internal server error";
-        public static string $noAuthorizationHeaderError = "No Authorization header";
+        public static string $noAuthorizationHeaderError = "Missing Authorization. Reaffirm there's an Authorization header with a valid Bearer token present";
         public static string $missingTokenInfoError = "Missing token info";
         public static string $defaultTokenExpiredError = "Expired token. Get refresh token";
         public static string $defaultTokenInvalidError = "Unauthorised access. Invalid token";
@@ -76,6 +78,10 @@
             return Constants::chatroomImagesDir($chatroomId) . '/messages';
         }
 
+        public static function chatroomEventImagesDir(int $eventId) {
+            return '/events_imgs_' . $eventId;
+        }
+
         public static function getPhotoUrlForDir(string $dir) {
             return (array_key_exists('HTTPS', $_SERVER) ? 'https://' : 'http://') . $_SERVER['SERVER_NAME'] . ':'
                 . $_SERVER['SERVER_PORT'] .'/Hobbyfi-API/uploads/' . $dir;
@@ -95,7 +101,7 @@
         public static string $chatroomNotCreated = "Chatroom not created. User with this id might already own a chatroom or the chatroom's name might be taken";
         public static string $chatroomNotFound = "Chatroom/Chatrooms not found or user with this id is already in a chatroom and shouldn't be receiving rooms";
         public static string $chatroomNotUpdated = "Chatroom not updated. New name may already be taken";
-        public static string $chatroomNoPermissions = "No permissions to update this chatroom";
+        public static string $chatroomNoPermissions = "Insufficient permissions to update this chatroom";
         public static string $chatroomNotDeleted = "Chatroom not deleted. User with this id may not be the owner of their chatroom";
 
         public static string $userAlreadyInChatroom = "User already is an owner or part of a chatroom";
@@ -106,6 +112,13 @@
         public static string $messageNotDeletedPermission = "Message not deleted because user with this id does not have the right to delete it";
         public static string $messagesNoPermission = "Couldn't find messages because user with this id does not belong to a chatroom";
         public static string $messagesNotFound = "Couldn't fetch messages. Something's gone wrong";
+
+        public static string $eventNotDeleted = "Event not deleted";
+        public static string $eventDeleteNoPermission = "Insufficient permissions to delete this event";
+        public static string $eventsNotFound = "Events not found";
+        public static string $eventNotCreated = "Event not created. Max limit of 250 events may have been reached";
+        public static string $eventNotUpdated = "Event not updated";
+        public static string $eventCreateNoPermission = "Insufficient permissions to create this event";
 
         // TODO: Other models CRUD error strings
         public static string $userTagsTable = "user_tags";
