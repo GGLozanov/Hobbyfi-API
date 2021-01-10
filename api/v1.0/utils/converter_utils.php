@@ -34,6 +34,7 @@
             $hasImage = ConverterUtils::getFieldFromRequestBody(Constants::$image) != null;
             $tags = ConverterUtils::getMappedTags(Constants::$tagsCreate);
 
+            print_r($tags);
             return new User(null, $email, $username, $description, $hasImage, null, $tags);
         }
 
@@ -120,16 +121,23 @@
             return $value == null ? null : intval($value);
         }
 
-        private static function getMappedTags(?string $tagField = null) {
+        private static function getMappedTags(?string $tagField = null, int $recDepth = 0) {
             if($tagField == null)
                 $tagField = Constants::$tags;
 
             $encodedTags = ConverterUtils::getFieldFromRequestBody($tagField);
             // support both receiving tags in one json array line and in multiple
-             $tags = TagUtils::extractTagsFromJson($encodedTags);
+            $tags = ConverterUtils::extractTagsFromEncoded($encodedTags);
+            return empty($tags) && $recDepth < 1 ?
+                ConverterUtils::getMappedTags($tagField == Constants::$tagsCreate
+                    ? Constants::$tags : Constants::$tagsCreate, $recDepth + 1) : $tags;
+        }
+
+        private static function extractTagsFromEncoded(?array $encodedTags) {
+            $tags = TagUtils::extractTagsFromJson($encodedTags);
             if(empty($tags)) {
                 $tags = TagUtils::extractTagsFromSingleJson($encodedTags);
-             }
+            }
             return $tags;
         }
     }

@@ -19,18 +19,17 @@
                 $data = $chatroomSource == null ?
                     $authChatroomSource($id, $page) : $chatroomSource($page);
 
-                if($data || $page) {
+                if($data) {
                     APIUtils::displayAPIResult(array(
                         Constants::$response=>Constants::$ok,
-                        Constants::$data_list=>$data == false ? array() : $data
+                        Constants::$data_list=>$data
                     ));
                 } else {
                     // TODO: Handle not joined chatroom user going to this endpoint with just token error
-                    APIUtils::displayAPIResult(array(Constants::$response=>Constants::$chatroomNotFound), 404);
+                    APIUtils::handleMultiDbResultError($data, Constants::$chatroomNotFound, Constants::$chatroomReadNoPermissions,
+                        404, 403);
                 }
             }
-
-            $db->closeConnection();
         }
     }
 ?>

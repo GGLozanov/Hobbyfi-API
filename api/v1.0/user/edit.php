@@ -9,7 +9,11 @@
 
     $token = APIUtils::getTokenFromHeadersOrDie();
     $leaveChatroomId = ConverterUtils::getFieldFromRequestBody(Constants::$leaveChatroomId);
+    $chatroomId = ConverterUtils::getFieldFromRequestBody(Constants::$chatroomId);
 
+    if(isset($leaveChatroomId) && isset($chatroomId)) {
+        APIUtils::displayAPIResultAndDie(array(Constants::$response=>Constants::$invalidDataError), 406);
+    }
 
     if($userId = APIUtils::validateAuthorisedRequest($token)) {
         $user = ConverterUtils::getUserUpdate($userId);
@@ -19,11 +23,12 @@
             Constants::$userProfileImagesDir,
             Constants::$users,
             ($password = ConverterUtils::getFieldFromRequestBody(Constants::$password)) == null &&
-                $user->isUpdateFormEmpty()
+                $user->isUpdateFormEmpty() && $leaveChatroomId == null && $chatroomId == null
         );
 
         if($db->updateUser($user,
-            $password != null ? password_hash($password, PASSWORD_DEFAULT) : null)) {
+            $password != null ? password_hash($password, PASSWORD_DEFAULT) : null, $leaveChatroomId, $chatroomId
+        )) {
             $status = Constants::$ok;
             $code = 200;
         } else {

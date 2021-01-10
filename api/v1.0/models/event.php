@@ -112,7 +112,17 @@
         }
 
         public function escapeStringProperties(mysqli $conn) {
-            // TODO: Implement escapeStringProperties() method.
+            if(!is_null($this->name)) {
+                $this->setName($conn->real_escape_string($this->getName()));
+            }
+
+            if(!is_null($this->description)) {
+                $this->setDescription($conn->real_escape_string($this->getDescription()));
+            }
+
+            if(!is_null($this->date)) {
+                $this->setDate($conn->real_escape_string($this->getStartDate()));
+            }
         }
     }
 

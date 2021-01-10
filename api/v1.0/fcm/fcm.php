@@ -14,7 +14,7 @@
             $this->messaging = $factory->createMessaging();
         }
 
-        private function sendMessageToTopic(string $topicName, string $notificationType, Model $message) {
+        private function createCloudMessageForTopic(string $topicName, string $notificationType, Model $message) {
             /* @var string $fcmServerKey */
 
             if(!$message->getId() ||
@@ -29,14 +29,18 @@
                 return !empty($element);
             });
 
-            if(isset($fields[Constants::$tags])) {
-                $fields[Constants::$tags] = json_encode($fields[Constants::$tags]);
-            }
+            $this->encodeToJsonInArrayIfFieldExists($fields, Constants::$tags);
+            $this->encodeToJsonInArrayIfFieldExists($fields, Constants::$chatroomIds);
+            $this->encodeToJsonInArrayIfFieldExists($fields, Constants::$eventIds);
 
             $fields[Constants::$type] = $notificationType;
 
-            $message = CloudMessage::withTarget('topic', $topicName)
+            return CloudMessage::withTarget('topic', $topicName)
                 ->withData($fields);
+        }
+
+        private function sendMessageToTopic(string $topicName, string $notificationType, Model $message) {
+            $message = $this->createCloudMessageForTopic($topicName, $notificationType, $message);
 
             try {
                 $result = $this->messaging->send($message);
@@ -49,12 +53,42 @@
             return isset($result);
         }
 
+        public function sendBatchedMessageToTopics(array $topics, string $notificationType, Model $message) {
+            $messages = array_map(function(string $topic) use($notificationType, $message) {
+                return $this->createCloudMessageForTopic((string) $topic, $notificationType, $message);
+            }, $topics);
+
+            try {
+                $result = $this->messaging->sendAll($messages);
+            } catch (\Kreait\Firebase\Exception\MessagingException $e) {
+                return false;
+            } catch (\Kreait\Firebase\Exception\FirebaseException $e) {
+                return -1;
+            }
+
+            return isset($result);
+        }
+
+        public function sendBatchedMessageToChatroom(array $chatroomIds, string $notificationType, Model $message) {
+            return $this->sendBatchedMessageToTopics(
+                $chatroomIds,
+                $notificationType,
+                $message
+            );
+        }
+
         public function sendMessageToChatroom(int $chatroomId, string $notificationType, Model $message) {
             return $this->sendMessageToTopic(
                 Constants::$chatroomTopicPrefix . $chatroomId,
                 $notificationType,
                 $message
             );
+        }
+
+        private function encodeToJsonInArrayIfFieldExists(array& $fields, string $field) {
+            if(isset($fields[$field])) {
+                $fields[$field] = json_encode($fields[$field]);
+            }
         }
     }
 ?>

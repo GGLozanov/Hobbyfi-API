@@ -27,7 +27,7 @@
             $this->hasImage = $hasImage;
             
             $this->ownerId = $ownerId;
-            $this->$eventIds = $eventIds;
+            $this->eventIds = $eventIds;
             $this->tags = $tags;
         }
 
@@ -48,8 +48,7 @@
 
         public function isUpdateFormEmpty() {
             return $this->name == null
-                && !isset($this->description) &&
-                !isset($this->lastEventId);
+                && !isset($this->description);
         }
 
         function getOwnerId() {

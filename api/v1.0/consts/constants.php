@@ -57,6 +57,7 @@
         public static string $noCredentialsForUpdateError = "No credentials for update";
         public static string $authenticationErrorInvalidCredentials = "Invalid credentials";
         public static string $imageUploadFailed = "Image upload failed";
+        public static string $invalidDataError = "Invalid data format! Some of the fields sent are impossible to coexist in a single request";
 
         public static string $userIdJwtKey = "userId";
 
@@ -97,11 +98,13 @@
         public static string $userNotFound = "User/users not found";
         public static string $userNotUpdated = "User not updated. Username may be taken";
         public static string $userNotDeleted = "User not deleted";
+        public static string $userNoPermissions = "Insufficient permissions to access information about this/these user/users or given chatroom doesn't exist";
 
         public static string $chatroomNotCreated = "Chatroom not created. User with this id might already own a chatroom or the chatroom's name might be taken";
         public static string $chatroomNotFound = "Chatroom/Chatrooms not found or user with this id is already in a chatroom and shouldn't be receiving rooms";
         public static string $chatroomNotUpdated = "Chatroom not updated. New name may already be taken";
         public static string $chatroomNoPermissions = "Insufficient permissions to update this chatroom";
+        public static string $chatroomReadNoPermissions = "Insufficient permissions to read any chatrooms joined. Make sure user with this id has chatrooms joined";
         public static string $chatroomNotDeleted = "Chatroom not deleted. User with this id may not be the owner of their chatroom";
 
         public static string $userAlreadyInChatroom = "User already is an owner or part of a chatroom";
@@ -114,7 +117,8 @@
         public static string $messagesNotFound = "Couldn't fetch messages. Something's gone wrong";
 
         public static string $eventNotDeleted = "Event not deleted";
-        public static string $eventDeleteNoPermission = "Insufficient permissions to delete this event";
+        public static string $noEventsToDelete = "Events not deleted. There are possibly no old events to delete";
+        public static string $eventDeleteNoPermission = "Insufficient permissions to delete this/these event/events";
         public static string $eventsNotFound = "Events not found";
         public static string $eventNotCreated = "Event not created. Max limit of 250 events may have been reached";
         public static string $eventNotUpdated = "Event not updated";
@@ -141,6 +145,7 @@
         public static string $CREATE_EVENT_TYPE = "CREATE_EVENT";
         public static string $EDIT_EVENT_TYPE = "EDIT_EVENT";
         public static string $DELETE_EVENT_TYPE = "DELETE_EVENT";
+        public static string $DELETE_EVENT_BATCH_TYPE = "DELETE_EVENT_BATCH_TYPE";
 
         // very bruh func; would've done it with an array had PHP, again, allowed initialisation with static properties
         public static function isValidNotificationType(string $notificationType) {
@@ -154,7 +159,8 @@
                 $notificationType == Constants::$EDIT_CHATROOM_TYPE ||
                 $notificationType == Constants::$CREATE_EVENT_TYPE ||
                 $notificationType == Constants::$EDIT_EVENT_TYPE ||
-                $notificationType == Constants::$DELETE_EVENT_TYPE;
+                $notificationType == Constants::$DELETE_EVENT_TYPE ||
+                $notificationType == Constants::$DELETE_EVENT_BATCH_TYPE;
         }
 
         public static function timelineUserJoinMessage($username) {

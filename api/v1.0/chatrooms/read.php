@@ -3,6 +3,8 @@
     /* @var $db */
 
     RequestUtils::performChatroomsReadRequestWithDbSource(function(int $page) use ($db) {
-        $db->getChatrooms($page);
+        return $db->getChatrooms($page);
     });
+
+    $db->closeConnection();
 ?>
