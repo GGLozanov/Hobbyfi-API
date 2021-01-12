@@ -9,9 +9,10 @@
     /* @var $db */
 
     $token = APIUtils::getTokenFromHeadersOrDie();
+    $chatroomId = ConverterUtils::getFieldFromRequestBody(Constants::$chatroomId);
 
     if($ownerId = APIUtils::validateAuthorisedRequest($token)) {
-        $message = ConverterUtils::getMessageCreate($ownerId);
+        $message = ConverterUtils::getMessageCreate($ownerId, $chatroomId);
 
         if($message = (array_key_exists(Constants::$message, $_POST) ?
                 $db->createChatroomMessage($message)

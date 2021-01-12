@@ -69,7 +69,7 @@
             return new Chatroom(null, $name, $description, $hasImage, $ownerId, null, $tags);
         }
 
-        public static function getMessageCreate(int $ownerId) {
+        public static function getMessageCreate(int $ownerId, int $chatroomId) {
             $message = ConverterUtils::getFieldFromRequestBody(Constants::$message);
 
             // chatroom sent id garnered from db method
@@ -78,7 +78,7 @@
                 !is_null($message) ? $message :
                     ConverterUtils::getFieldFromRequestBodyOrDie(Constants::$image),
                 null,
-                null,
+                $chatroomId,
                 $ownerId
             );
         }

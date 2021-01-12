@@ -110,7 +110,7 @@
         public static string $userAlreadyInChatroom = "User already is an owner or part of a chatroom";
         public static string $messageNotCreated = "Message not created. Bad input";
         public static string $messageNoChatroom = "Message not created. User with this id is not in any chatroom";
-        public static string $messageNotUpdated = "Message not updated. User with this id may not have the right to update the message";
+        public static string $messageNotUpdated = "Message not updated. User with this id may not have the right to update the message or the message may be a timeline";
         public static string $messageNotDeleted = "Message not deleted";
         public static string $messageNotDeletedPermission = "Message not deleted because user with this id does not have the right to delete it";
         public static string $messagesNoPermission = "Couldn't find messages because user with this id does not belong to a chatroom";
