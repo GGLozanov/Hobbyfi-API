@@ -148,17 +148,17 @@
                     $this->deleteUserChatroomId($user->getId(), $leaveChatroomId);
                     $userUpdateSuccess = $this->sendUserChatroomNotification($leaveChatroomId, $user,
                         Constants::$LEAVE_USER_TYPE, Constants::timelineUserLeaveMessage($user->getName()));
-                } else {
-                    $this->sendBatchedNotificationToChatroomOnCond($userUpdateSuccess,
-                        $user->getChatroomIds(),
-                        Constants::$EDIT_USER_TYPE,
-                        $user
-                    );
                 }
+            } else if($chatroomIds = $this->getUserChatroomsId($user->getId())) {
+                $this->sendBatchedNotificationToChatroomOnCond($userUpdateSuccess,
+                    $chatroomIds,
+                    Constants::$EDIT_USER_TYPE,
+                    $user
+                );
             }
 
             $tagsUpdateSuccess = true;
-            if($tags = $user->getTags()) { // somewhat unnecessary check given the method..
+            if(($tags = $user->getTags())) { // somewhat unnecessary check given the method..
                 $tagsUpdateSuccess = $this->updateModelTags(Constants::$userTagsTable,
                     Constants::$userId, $user->getId(), $tags, true);
             } else if(!$shouldUpdateUser && !$shouldUpdateChatroomId) {
@@ -299,10 +299,8 @@
                 $chatroomUpdateSuccess = mysqli_affected_rows($this->connection);
             }
 
-            // FIXME: Code dup with updateUser
-
             $tagsUpdateSuccess = true;
-            if($tags = $chatroom->getTags()) { // somewhat unnecessary check given the method..
+            if(($tags = $chatroom->getTags())) { // somewhat unnecessary check given the method..
                 $tagsUpdateSuccess = $this->updateModelTags(
                     Constants::$chatroomTagsTable, Constants::$chatroomId,
                     $chatroom->getId(), $tags,
@@ -419,9 +417,9 @@
             return (empty($stmt->error)) ? array() : null; // want to show empty array for pagination end limit purposes
         }
 
-        public function getChatroomMessages(int $userId, int $multiplier = 1) {
+        public function getChatroomMessages(int $userId, int $chatroomId, int $multiplier = 1) {
             $this->connection->begin_transaction();
-            if(!($chatroomId = $this->getUserChatroomsId($userId))) {
+            if(!($chatroomIds = $this->getUserChatroomsId($userId))) {
                 $this->connection->rollback();
                 return false;
             }
@@ -1030,6 +1028,7 @@
                         }
                     }
                 }
+                if($parseTags && !$keyTagsByRowId) $tags = array_values(array_unique($tags, SORT_REGULAR));
             }
         }
 
@@ -1069,7 +1068,7 @@
                 $chatMessage,
                 null,
                 $currentUserChatroomId,
-                null
+                $user->getId()
             ), $currentUserChatroomId));
         }
 
