@@ -1,7 +1,7 @@
 <?php
 
     class RequestUtils {
-        public static function performChatroomsReadRequestWithDbSource($chatroomSource = null, $authChatroomSource = null) {
+        public static function performChatroomsReadRequestWithDbSource($chatroomSource = null) {
             header("Access-Control-Allow-Origin: *");
             header("Access-Control-Allow-Methods: GET");
             header("Content-Type: application/json; charset=UTF-8");
@@ -16,10 +16,9 @@
             $page = ConverterUtils::getFieldFromRequestBodyOrDie(Constants::$page, $_GET);
 
             if($id = APIUtils::validateAuthorisedRequest($token)) {
-                $data = $chatroomSource == null ?
-                    $authChatroomSource($id, $page) : $chatroomSource($page);
+                $data = $chatroomSource($id, $page);
 
-                if($data) {
+                if($data || count($data) == 0) {
                     APIUtils::displayAPIResult(array(
                         Constants::$response=>Constants::$ok,
                         Constants::$data_list=>$data

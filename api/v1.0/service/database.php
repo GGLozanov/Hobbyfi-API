@@ -108,7 +108,7 @@
 
                 $tags = null;
                 $chatroomIds = null;
-                $this->extractTagsAndNumericArrayFromJoinQuery($rows, Constants::$chatroomId, $tags, $chatroomIds);
+                $this->extractTagsAndUniqueNumericArrayFromJoinQuery($rows, Constants::$chatroomId, $tags, $chatroomIds);
 
                 return new User($id,
                     $rows[0][Constants::$email], $rows[0][Constants::$username],
@@ -231,7 +231,7 @@
 
                 $tags = null;
                 $chatroomIds = null;
-                $this->extractTagsAndNumericArrayFromJoinQuery($rows, Constants::$chatroomId,
+                $this->extractTagsAndUniqueNumericArrayFromJoinQuery($rows, Constants::$chatroomId,
                     $tags, $chatroomIds, true, true);
 
                 return $this->extractUsersFromJoinQuery($rows, $tags, $chatroomIds);
@@ -369,7 +369,7 @@
 
                 $tags = null;
                 $eventIds = null;
-                $this->extractTagsAndNumericArrayFromJoinQuery($rows, Constants::$eventIds, $tags, $eventIds);
+                $this->extractTagsAndUniqueNumericArrayFromJoinQuery($rows, Constants::$eventIds, $tags, $eventIds);
 
                 return new Chatroom(
                     $rows[0][Constants::$id],
@@ -383,13 +383,13 @@
             }
         }
 
-        public function getUserChatrooms(int $userId, int $multiplier = 1) {
-            if(!($chatroomIds = $this->getUserChatroomsId($userId))) {
-                return false; // users should only get a single chatroom from here (theirs) and nothing else
+        public function getChatrooms(int $userId, int $multiplier = 1, bool $fetchOwnChatrooms = false) {
+            if($fetchOwnChatrooms && !($chatroomIds = $this->getUserChatroomsId($userId))) {
+                return false;
             }
 
-            // FIXME: Code dup with getChatrooms!
             $multiplier = 5*($multiplier - 1);
+
             $stmt = $this->connection->prepare(
                 "SELECT `s`.`id`, `s`.`name`, `s`.`description`, 
                     `s`.`has_image`, `s`.`owner_id`, 
@@ -398,41 +398,15 @@
                         (SELECT `ch`.`id`, `ch`.`name`, 
                         `ch`.`description`, `ch`.`has_image`, `ch`.`owner_id`
                          FROM chatrooms `ch` 
-                         INNER JOIN user_chatrooms usr_chrms ON usr_chrms.chatroom_id = `ch`.id AND usr_chrms.user_id = ?
+                         INNER JOIN user_chatrooms usr_chrms ON usr_chrms.chatroom_id = `ch`.id AND ch.id ". ($fetchOwnChatrooms ? "" : "NOT ") ."IN 
+                                (SELECT chatroom_id FROM user_chatrooms WHERE user_id = ?)
+                         GROUP BY `ch`.`id`
                          LIMIT 5 OFFSET ?) as `s`
                     LEFT JOIN events evnts ON evnts.chatroom_id = s.id 
                     LEFT JOIN chatroom_tags `ch_tags` ON `s`.`id` = `ch_tags`.`chatroom_id` 
                     LEFT JOIN tags `tgs` ON `ch_tags`.`tag_name` LIKE `tgs`.`name`"
             );
             $stmt->bind_param("ii", $userId, $multiplier);
-
-            $stmt->execute();
-            $result = $stmt->get_result();
-
-            if($result && mysqli_num_rows($result) > 0) {
-                return $this->parseChatroomsOnFinishedTransaction($result);
-            }
-
-            return null;
-        }
-
-        public function getChatrooms(int $multiplier = 1) {
-            $multiplier = 5*($multiplier - 1);
-            $stmt = $this->connection->prepare(
-                "SELECT `s`.`id`, `s`.`name`, `s`.`description`, 
-                    `s`.`has_image`, `s`.`owner_id`, 
-                    `ch_tags`.`tag_name`, `tgs`.`is_from_facebook`, 
-                    `tgs`.`colour`, `evnts`.`id` AS `event_id` FROM 
-                        (SELECT `ch`.`id`, `ch`.`name`, 
-                        `ch`.`description`, `ch`.`has_image`, 
-                        `ch`.`owner_id`
-                         FROM chatrooms `ch` LIMIT 5 OFFSET ?) as `s`
-                    LEFT JOIN events `evnts` ON `evnts`.`chatroom_id` = `s`.`id`
-                    LEFT JOIN chatroom_tags `ch_tags` ON `s`.`id` = `ch_tags`.`chatroom_id` 
-                    LEFT JOIN tags `tgs` ON `ch_tags`.`tag_name` LIKE `tgs`.`name`"
-            );
-
-            $stmt->bind_param("i", $multiplier);
             $stmt->execute();
 
             $result = $stmt->get_result();
@@ -936,7 +910,7 @@
                     $row[Constants::$hasImage],
                     $row[Constants::$ownerId],
                     $eventIds != null ? (array_key_exists($row[Constants::$id], $eventIds) ?
-                        $row[$row[Constants::$id]] : null) : null,
+                        $eventIds[$row[Constants::$id]] : null) : null,
                     $tags != null ? (array_key_exists($row[Constants::$id], $tags) ?
                         $tags[$row[Constants::$id]] : null) : null
                 );
@@ -969,11 +943,11 @@
 
             $tags = null;
             $eventIds = null;
-            $this->extractTagsAndNumericArrayFromJoinQuery($rows, Constants::$eventId, $tags,
+            $this->extractTagsAndUniqueNumericArrayFromJoinQuery($rows, Constants::$eventId, $tags,
                 $eventIds, true, true);
-            $chatrooms = $this->extractChatroomsFromJoinQuery($rows, $tags, $eventIds);
+            $chatrooms = array_values($this->extractChatroomsFromJoinQuery($rows, $tags, $eventIds));
 
-            return array_values($chatrooms);
+            return $chatrooms == false ? array() : $chatrooms;
         }
 
         public function setModelHasImage(int $id, bool $hasImage, string $table) {
@@ -1000,9 +974,9 @@
             return false;
         }
 
-        private function extractTagsAndNumericArrayFromJoinQuery(array $rows, string $column,
-                                                                 ?array& $tags, ?array& $numeric,
-                                                                 bool $keyTagsByRowId = false, bool $keyNumericByRowId = false) {
+        private function extractTagsAndUniqueNumericArrayFromJoinQuery(array $rows, string $column,
+                                                                       ?array& $tags, ?array& $numeric,
+                                                                       bool $keyTagsByRowId = false, bool $keyNumericByRowId = false) {
             $parseTags = isset($rows[0][Constants::$tagName]) && isset($rows[0][Constants::$colour])
                     && isset($rows[0][Constants::$isFromFacebook]);
             $parseNumericRow = isset($rows[0][$column]);
@@ -1028,11 +1002,16 @@
                         }
                     }
                     if($parseNumericRow) {
-                        if($row[$column] != null && !in_array($row[$column], $numeric)) {
+                        if($row[$column] != null) {
                             if($keyNumericByRowId) {
-                                $numeric[$row[Constants::$id]][] = $row[$column];
+                                if(!in_array($row[$column],
+                                    (array_key_exists($row[Constants::$id], $numeric)
+                                        ? $numeric[$row[Constants::$id]] : array()))) {
+                                    $numeric[$row[Constants::$id]][] = $row[$column];
+                                }
+                            } else if(!in_array($row[$column], $numeric)) {
+                                $numeric[] = $row[$column];
                             }
-                            $numeric[] = $row[$column];
                         }
                     }
                 }
