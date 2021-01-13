@@ -12,13 +12,12 @@
     $chatroomId = ConverterUtils::getFieldFromRequestBodyOrDie(Constants::$id, $_GET);
 
     if($userId = APIUtils::validateAuthorisedRequest($token)) {
-        if($db->getChatroom($userId, $chatroomId)) {
-            APIUtils::displayAPIResult(array(Constants::$response=>Constants::$chatroomNotFound), 404);
+        if($chatroom = $db->getChatroom($userId, $chatroomId)) {
+            APIUtils::displayAPIResult(array(Constants::$response=>Constants::$ok, Constants::$data=>$chatroom));
         } else {
             APIUtils::displayAPIResult(array(Constants::$response=>Constants::$chatroomNotFound), 404);
         }
     }
 
     $db->closeConnection();
-
 ?>

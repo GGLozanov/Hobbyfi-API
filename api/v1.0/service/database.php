@@ -359,10 +359,10 @@
 
             $stmt->bind_param("ii", $userId, $chatroomId);
 
-            $fetchSuccess = $stmt->execute();
+            $stmt->execute();
             $result = $stmt->get_result();
 
-            if($fetchSuccess && $result != null && mysqli_affected_rows($result) > 0) {
+            if($result != null && mysqli_num_rows($result) > 0) {
                 $rows = mysqli_fetch_all($result, MYSQLI_ASSOC);
 
                 $tags = null;
@@ -455,7 +455,9 @@
 
         public function createChatroomMessage(Message $message, bool $shouldFinishTransaction = true) {
             $this->connection->begin_transaction();
-            if(!($chatroomIds = $this->getUserChatroomsId($message->getUserSentId()))) {
+
+            if($message->getUserSentId() != null && (!($chatroomIds = $this->getUserChatroomsId($message->getUserSentId())) ||
+                    !in_array($message->getChatroomSentId(), $chatroomIds))) {
                 $this->connection->rollback();
                 return false; // users should only send messages in a their chatrooms from here (theirs) and nothing else
             }
@@ -564,12 +566,13 @@
             $this->connection->begin_transaction();
             $userSentMessageId = $message->getUserSentId();
             if(!($messageInfo = $this->getMessageOwnerIdAndChatroomId($message->getId()))
-                    || (array_key_exists(Constants::$userSentId, $messageInfo) ?
-                            $messageInfo[Constants::$userSentId] : -1) != $userSentMessageId) {
+                    || ((array_key_exists(Constants::$userSentId, $messageInfo) ?
+                            $messageInfo[Constants::$userSentId] : -1) != $userSentMessageId)) {
                 $this->connection->rollback();
                 return false;
             }
-            
+
+            $message->escapeStringProperties($this->connection);
             $updateSuccess = $this->connection->query($message->getUpdateQuery()); // TODO: Handle no update option in edit.php
             $this->sendNotificationToChatroomOnCond($updateSuccess,
                 $messageInfo[Constants::$chatroomSentId],
@@ -1063,13 +1066,14 @@
                 $user
             );
 
-            return !empty($this->createChatroomMessage(new Message(
+            $messageCreated = $this->createChatroomMessage(new Message(
                 null,
                 $chatMessage,
                 null,
                 $currentUserChatroomId,
-                $user->getId()
-            ), $currentUserChatroomId));
+                null
+            ));
+            return isset($messageCreated);
         }
 
         private function sendUserChatroomBatchedNotification(array $chatroomIds, User $user, string $type, string $chatMessage) {
@@ -1086,7 +1090,7 @@
                     null,
                     $chatroomId,
                     null
-                ), $chatroomId);
+                ));
             }
             return !empty($chatroomMessages);
         }
