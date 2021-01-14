@@ -12,7 +12,7 @@
     $chatroomId = ConverterUtils::getFieldFromRequestBodyOrDie(Constants::$chatroomId, $_GET);
 
     if($id = APIUtils::validateAuthorisedRequest($token)) {
-        if($users = $db->getChatroomUsers($id, $chatroomId)) {
+        if(($users = $db->getChatroomUsers($id, $chatroomId)) || count($users) == 0) {
             APIUtils::displayAPIResult(array(
                 Constants::$response=>Constants::$ok,
                 Constants::$data_list=>$users
