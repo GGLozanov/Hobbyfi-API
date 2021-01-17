@@ -11,10 +11,10 @@
     $token = APIUtils::getTokenFromHeadersOrDie();
 
     if($ownerId = APIUtils::validateAuthorisedRequest($token)) {
-        if($success = $db->deleteOldChatroomEvents($ownerId)) {
-            APIUtils::displayAPIResult(array(Constants::$response=>Constants::$ok));
+        if($deletedEventIds = $db->deleteOldChatroomEvents($ownerId)) {
+            APIUtils::displayAPIResult(array(Constants::$response=>Constants::$ok, Constants::$data_list=>$deletedEventIds));
         } else {
-            APIUtils::handleMultiDbResultError($success, Constants::$noEventsToDelete, Constants::$eventDeleteNoPermission,
+            APIUtils::handleMultiDbResultError($deletedEventIds, Constants::$noEventsToDelete, Constants::$eventDeleteNoPermission,
                 406, 403);
         }
     }

@@ -400,7 +400,7 @@
                             ($fetchOwnChatrooms ? "" : "NOT ") ."IN (SELECT chatroom_id FROM user_chatrooms WHERE user_id = ?)
                          GROUP BY `ch`.`id`
                          LIMIT 5 OFFSET ?) as `s`
-                    LEFT JOIN events evnts ON evnts.chatroom_id = s.id 
+                    LEFT JOIN events evnts ON evnts.chatroom_id = s.id
                     LEFT JOIN chatroom_tags `ch_tags` ON `s`.`id` = `ch_tags`.`chatroom_id` 
                     LEFT JOIN tags `tgs` ON `ch_tags`.`tag_name` LIKE `tgs`.`name`"
             );
@@ -729,7 +729,7 @@
             );
             $this->finishTransactionOnCond($deleteSuccess);
 
-            return $deleteSuccess ? $deleteSuccess : null;
+            return $deleteSuccess ? $eventIds : null;
         }
 
         public function updateChatroomEvent(int $ownerId, Event $event) {
@@ -1009,12 +1009,15 @@
                 foreach($rows as $row) {
                     if($parseTags) {
                         if(!$this->isTagRowInvalid($row)) {
+                            $tag = new Tag($row[Constants::$tagName], $row[Constants::$colour], $row[Constants::$isFromFacebook]);
                             if($keyTagsByRowId) {
-                                $tags[$row[Constants::$id]][] =
-                                    new Tag($row[Constants::$tagName], $row[Constants::$colour], $row[Constants::$isFromFacebook]);
-                            } else
-                                $tags[] =
-                                    new Tag($row[Constants::$tagName], $row[Constants::$colour], $row[Constants::$isFromFacebook]);
+                                if(!in_array($tag,
+                                    (array_key_exists($row[Constants::$id], $tags)
+                                        ? $tags[$row[Constants::$id]] : array()))) {
+                                    $tags[$row[Constants::$id]][] = $tag;
+                                }
+                            } else if(!in_array($tag, $tags))
+                                $tags[] = $tag;
                         }
                     }
                     if($parseNumericRow) {
