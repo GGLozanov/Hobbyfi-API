@@ -23,7 +23,7 @@
             ));
         } else {
             APIUtils::handleMultiDbResultError($event, Constants::$eventNotCreated,
-                Constants::$eventCreateNoPermission, 406, 403);
+                Constants::$eventCreateNoPermission, 429, 403);
         }
     }
 

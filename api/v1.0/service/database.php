@@ -13,7 +13,7 @@
         function __construct() {
             $this->connection = mysqli_connect(
                 $this->host,
-                 $this->user_name, 
+                 $this->user_name,
                  $this->user_password,
                   $this->db_name, "3308"
             );
@@ -38,11 +38,11 @@
             $hasImage = $user->getHasImage();
 
             $stmt->bind_param("issssi",
-                $id, 
+                $id,
                 $email,
                 $name,
-                $password, 
-                $description, 
+                $password,
+                $description,
                 $hasImage);
 
             $insertSuccess = $stmt->execute();
@@ -203,7 +203,7 @@
             $this->finishTransactionOnCond($deleteSuccess);
             return $deleteSuccess;
         }
-        
+
         // gets all users with any id BUT this one;
         public function getChatroomUsers(int $userId, int $chatroomId) { // multiplier starts from 1
             require_once("../utils/model_utils.php");
@@ -526,7 +526,7 @@
                 );
                 return $message;
             }
-            
+
             $this->connection->rollback();
             return null;
         }
@@ -636,7 +636,7 @@
             $hasImage = $event->getHasImage();
             $latitude = $event->getLat();
             $longitude = $event->getLong();
-            
+
             $stmt->bind_param("isssiddi", $id, $name, $description,
                 $date, $hasImage, $latitude, $longitude, $chatroomId);
 
@@ -752,7 +752,7 @@
             $this->finishTransactionOnCond($eventUpdateSuccess);
             return $eventUpdateSuccess;
         }
-        
+
         public function updateModelTags(string $table, string $modelColumn, int $modelId, ?array $tags, $shouldDeletePrior = false) {
             // INSERT tag if not in tags table => skip otherwise
             // REPLACE query - all user tags
@@ -777,7 +777,7 @@
             $stmt = $this->connection->prepare($sql);
             $stmt->bind_param("i", $id);
             $stmt->execute();
-        
+
             return $stmt;
         }
 
@@ -800,7 +800,7 @@
         private function getTagArrayReplaceQuery(string $table, string $modelColumn, int $modelId, array $tags) {
             $dataArray = array_map(function($tag) use($modelId) {
                 $name = $this->connection->real_escape_string($tag->getName());
-        
+
                 return "('$modelId', '$name')";
             }, $tags);
 
@@ -993,9 +993,8 @@
         private function extractTagsAndUniqueNumericArrayFromJoinQuery(array $rows, string $column,
                                                                        ?array& $tags, ?array& $numeric,
                                                                        bool $keyTagsByRowId = false, bool $keyNumericByRowId = false) {
-            $parseTags = isset($rows[0][Constants::$tagName]) && isset($rows[0][Constants::$colour])
-                    && isset($rows[0][Constants::$isFromFacebook]);
-            $parseNumericRow = isset($rows[0][$column]);
+            $parseTags = $this->validateAllRowTags($rows);
+            $parseNumericRow = $this->validateAllRowColumns($rows, $column);
 
             if($parseTags) {
                 $tags = array();
@@ -1096,6 +1095,20 @@
                 ));
             }
             return !empty($chatroomMessages);
+        }
+
+        private function validateAllRowColumns(array $rows, string $column) {
+            foreach($rows as $row) {
+                if(isset($row[$column])) return true;
+            }
+            return false;
+        }
+
+        private function validateAllRowTags(array $rows) {
+            foreach($rows as $row) {
+                if(!$this->isTagRowInvalid($row)) return true;
+            }
+            return false;
         }
     }
 ?>

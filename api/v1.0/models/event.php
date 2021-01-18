@@ -123,7 +123,7 @@
             }
 
             if(!is_null($this->date)) {
-                $this->setDate($conn->real_escape_string($this->getStartDate()));
+                $this->setDate($conn->real_escape_string($this->getDate()));
             }
         }
     }

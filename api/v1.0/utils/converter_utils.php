@@ -34,7 +34,6 @@
             $hasImage = ConverterUtils::getFieldFromRequestBody(Constants::$image) != null;
             $tags = ConverterUtils::getMappedTags(Constants::$tagsCreate);
 
-            print_r($tags);
             return new User(null, $email, $username, $description, $hasImage, null, $tags);
         }
 
