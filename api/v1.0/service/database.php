@@ -3,12 +3,12 @@
     require_once("../fcm/fcm.php");
 
     class Database {
-        public $host = "localhost"; // to be changed if hosted on server
-        public $user_name = "root";
-        public $user_password = "";
-        public $db_name = "hobbyfi_db";
-        public $connection;
-        public $fcm;
+        private string $host = "127.0.0.1"; // to be changed if hosted on server
+        private string $user_name = "root";
+        private string $user_password = "";
+        private string $db_name = "hobbyfi_db";
+        private mysqli $connection;
+        private FCM $fcm;
 
         function __construct() {
             $this->connection = mysqli_connect(
@@ -26,7 +26,8 @@
 
         public function createUser(User $user, ?string $password) {
             $this->connection->begin_transaction();
-            $stmt = $this->connection->prepare("INSERT INTO users(id, email, username, password, description, has_image) 
+            $stmt = $this->connection->prepare(
+                "INSERT INTO users(id, email, username, password, description, has_image) 
             VALUES(?, ?, ?, ?, ?, ?)");
 
             // bind_param accepts only references... bruh...
