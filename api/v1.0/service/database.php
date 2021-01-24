@@ -735,7 +735,13 @@
 
         public function updateChatroomEvent(int $ownerId, Event $event) {
             $this->connection->begin_transaction();
-            if(!($chatroomId = $this->getOwnerChatroomId($ownerId))) {
+            if(!($chatroomId = $this->getOwnerChatroomId($ownerId)) ||
+                    ($chatroomId !=
+                        $this->getOneColumnValueFromSingleRow(
+                            $this->executeSingleIdParamStatement($event->getId(), "SELECT chatroom_id FROM events WHERE id = ?")->get_result(),
+                            Constants::$chatroomId)
+                    )
+            ) {
                 $this->connection->rollback();
                 return false;
             }

@@ -39,7 +39,7 @@
             $updateColumns = array();
             $updateColumns[] = $this->addUpdateFieldToQuery($this->name != null, Constants::$name, $this->name);
             $updateColumns[] = $this->addUpdateFieldToQuery(isset($this->description), Constants::$description, $this->description);
-            $updateColumns[] = $this->addUpdateFieldToQuery($this->date != null, Constants::$startDate, $this->date);
+            $updateColumns[] = $this->addUpdateFieldToQuery($this->date != null, Constants::$date, $this->date);
             $updateColumns[] = $this->addUpdateFieldToQuery($this->lat != null, Constants::$lat, $this->lat);
             $updateColumns[] = $this->addUpdateFieldToQuery($this->long != null, Constants::$long, $this->long);
             $updateColumns[] = $this->addUpdateFieldToQuery($this->chatroomId != null, Constants::$chatroomId, $this->chatroomId);

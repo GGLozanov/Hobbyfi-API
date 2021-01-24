@@ -18,14 +18,11 @@
         );
 
         if($success = $db->updateChatroomEvent($ownerId, $event)) {
-            $status = Constants::$ok;
-            $code = 200;
+            APIUtils::displayAPIResult(array(Constants::$response=>Constants::$ok), 200);
         } else {
-            $status = Constants::$eventNotUpdated;
-            $code = 406;
+            APIUtils::handleMultiDbResultError($success, Constants::$eventNotUpdated,
+                Constants::$eventUpdateNoPermission, 406, 403);
         }
-
-        APIUtils::displayAPIResult(array(Constants::$response=>$status), $code);
     }
 
     $db->closeConnection();

@@ -118,11 +118,12 @@
 
         public static string $eventNotDeleted = "Event not deleted";
         public static string $noEventsToDelete = "Events not deleted. There are possibly no old events to delete";
-        public static string $eventDeleteNoPermission = "Insufficient permissions to delete this/these event/events";
         public static string $eventsNotFound = "Events not found";
         public static string $eventNotCreated = "Event not created. Max limit of 250 events may have been reached";
         public static string $eventNotUpdated = "Event not updated";
         public static string $eventCreateNoPermission = "Insufficient permissions to create this event";
+        public static string $eventUpdateNoPermission = "Insufficient permissions to update this event";
+        public static string $eventDeleteNoPermission = "Insufficient permissions to delete this/these event/events";
 
         // TODO: Other models CRUD error strings
         public static string $userTagsTable = "user_tags";
