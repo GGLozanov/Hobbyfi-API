@@ -567,7 +567,7 @@
             ImageUtils::deleteImageFromPath(
                 $messageId,
                 Constants::chatroomMessageImagesDir($messageInfo[Constants::$chatroomSentId]),
-                Constants::$message
+                Constants::$messages
             );
 
             $affectedRows = $stmt->affected_rows > 0;

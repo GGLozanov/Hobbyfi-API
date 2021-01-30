@@ -17,8 +17,7 @@
         private function createCloudMessageForTopic(string $topicName, string $notificationType, Model $message) {
             /* @var string $fcmServerKey */
 
-            if(!$message->getId() ||
-                !Constants::isValidNotificationType($notificationType)) {
+            if(!Constants::isValidNotificationType($notificationType)) {
                 // if there is no id key in data (which will be used in client ALWAYS for each model),
                 // then return null for bad input
                 return null;
