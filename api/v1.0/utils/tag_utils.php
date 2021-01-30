@@ -9,7 +9,10 @@
             if($tags == null) return array();
 
             return array_filter(array_map(function($tag) {
-                return TagUtils::mapTag(json_decode($tag, true));
+                if(!is_null($tag)) {
+                    return TagUtils::mapTag(json_decode($tag, true));
+                }
+                return null;
             }, $tags));
         }
 
@@ -17,7 +20,10 @@
             if($tags == null) return array();
 
             return array_filter(array_map(function($tag) {
-                return TagUtils::mapTag($tag);
+                if(!is_null($tag)) {
+                    return TagUtils::mapTag($tag);
+                }
+                return null;
             }, json_decode($tags[0], true)));
         }
 

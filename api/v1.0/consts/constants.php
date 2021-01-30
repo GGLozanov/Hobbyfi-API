@@ -65,6 +65,7 @@
         public static string $chatroomImagesDir = "chatroom_imgs_";
         public static string $data = "data";
         public static string $data_list = "data_list";
+        public static string $locations = "locations";
 
         public static function userProfileImagesDir(int $userId) {
           return Constants::$userProfileImagesDir . "/" . $userId . ".jpg";

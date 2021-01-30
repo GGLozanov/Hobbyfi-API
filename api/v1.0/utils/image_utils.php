@@ -38,6 +38,9 @@
 
             if(file_exists($path)) {
                 $deletionSuccess = unlink($path); // unlink file from the filesystem (1.jpg, 2.jpg, etc.)
+            } else if(file_exists($dir)) {
+                rrmdir($dir);
+                $deletionSuccess = true;
             } else {
                 return false;
             }
@@ -57,6 +60,21 @@
                 }
             }
             return Constants::$ok;
+        }
+    }
+
+    function rrmdir($dir) {
+        if (is_dir($dir)) {
+            $objects = scandir($dir);
+            foreach ($objects as $object) {
+                if ($object != "." && $object != "..") {
+                    if (filetype($dir."/".$object) == "dir")
+                        rrmdir($dir."/".$object);
+                    else unlink($dir."/".$object);
+                }
+            }
+            reset($objects);
+            rmdir($dir);
         }
     }
 ?>

@@ -1,6 +1,8 @@
 <?php
     include_once "../consts/constants.php";
     require_once("../fcm/fcm.php");
+    use Kreait\Firebase\Factory;
+    use Google\Cloud\Firestore\FirestoreClient;
 
     class Database {
         private string $host = "127.0.0.1"; // to be changed if hosted on server
@@ -9,6 +11,7 @@
         private string $db_name = "hobbyfi_db";
         private mysqli $connection;
         private FCM $fcm;
+        private FirestoreClient $firestore;
 
         function __construct() {
             $this->connection = mysqli_connect(
@@ -17,6 +20,9 @@
                  $this->user_password,
                   $this->db_name, "3308"
             );
+            $this->firestore = (new Factory)->withServiceAccount(
+                __DIR__ . '/../keys/hobbyfi-firebase-adminsdk-o1f83-e1d558ffae.json'
+            )->createFirestore()->database();
             $this->fcm = new FCM();
         }
 
@@ -31,7 +37,7 @@
             VALUES(?, ?, ?, ?, ?, ?)");
 
             // bind_param accepts only references... bruh...
-            $user->escapeStringProperties($this->connection);
+            // $user->escapeStringProperties($this->connection);
             $id = $user->getId();
             $email = $user->getEmail();
             $name = $user->getName();
@@ -130,7 +136,7 @@
             $shouldUpdateChatroomId = $leaveChatroomId != null || $joinChatroomId != null;
 
             if($shouldUpdateUser) {
-                $user->escapeStringProperties($this->connection);
+                // $user->escapeStringProperties($this->connection);
                 mysqli_query($this->connection, $user->getUpdateQuery($password));
                 // FIXME: Code dup
                 $userUpdateSuccess = mysqli_affected_rows($this->connection) > 0;
@@ -185,6 +191,18 @@
                         Constants::$DELETE_CHATROOM_TYPE,
                         new Chatroom($ownerId)
                     );
+                    foreach($this->firestore->collection(Constants::$locations)
+                        ->where(Constants::$chatroomId, 'array-contains', $ownerId)
+                        ->documents()->rows() as $doc) {
+                        if(count($doc->data()[Constants::$chatroomId]) == 1) {
+                            $doc->reference()->delete();
+                        } else {
+                            $doc->reference()
+                                ->update(
+                                    array(Constants::$chatroomId=>array_diff($doc->data()[Constants::$chatroomId], array($ownerId)))
+                                );
+                        }
+                    }
                 } else {
                     $user = $this->getUser($id);
                     $this->sendUserChatroomBatchedNotification($chatroomIds,
@@ -254,7 +272,7 @@
                 VALUES(?, ?, ?, ?, ?)");
 
             // still need to destruct this class and allocate more variables for this goddamn bind_param() method...
-            $chatroom->escapeStringProperties($this->connection);
+            // $chatroom->escapeStringProperties($this->connection);
             $id = $chatroom->getId();
             $name = $chatroom->getName();
             $description = $chatroom->getDescription();
@@ -294,7 +312,7 @@
             $chatroomUpdateSuccess = true;
             $shouldUpdateChatroom = !$chatroom->isUpdateFormEmpty();
             if($shouldUpdateChatroom) {
-                $chatroom->escapeStringProperties($this->connection);
+                // $chatroom->escapeStringProperties($this->connection);
                 mysqli_query($this->connection, $chatroom->getUpdateQuery());
 
                 $chatroomUpdateSuccess = mysqli_affected_rows($this->connection);
@@ -466,7 +484,7 @@
             $stmt = $this->connection->prepare("INSERT INTO messages(id, message, create_time, chatroom_sent_id, user_sent_id) 
                 VALUES(?, ?, NOW(), ?, ?)");
 
-            $message->escapeStringProperties($this->connection);
+            // $message->escapeStringProperties($this->connection);
             $id = $message->getId();
             $msg = $message->getMessage();
             $userSentId = $message->getUserSentId();
@@ -573,7 +591,7 @@
                 return false;
             }
 
-            $message->escapeStringProperties($this->connection);
+            // $message->escapeStringProperties($this->connection);
             $updateSuccess = $this->connection->query($message->getUpdateQuery()); // TODO: Handle no update option in edit.php
             $this->sendNotificationToChatroomOnCond($updateSuccess,
                 $messageInfo[Constants::$chatroomSentId],
@@ -629,7 +647,7 @@
             $stmt = $this->connection->prepare("INSERT INTO 
                 events(id, name, description, date, has_image, latitude, longitude, chatroom_id) 
                     VALUES(?, ?, ?, ?, ?, ?, ?, ?)");
-            $event->escapeStringProperties($this->connection);
+            // $event->escapeStringProperties($this->connection);
             $id = $event->getId();
             $name = $event->getName();
             $description = $event->getDescription();
@@ -746,7 +764,7 @@
                 return false;
             }
 
-            $event->escapeStringProperties($this->connection);
+            // $event->escapeStringProperties($this->connection);
             $this->connection->query($event->getUpdateQuery());
             $eventUpdateSuccess = mysqli_affected_rows($this->connection) > 0;
 
@@ -774,7 +792,7 @@
                 }
             }
 
-            $sql = $this->getTagArrayReplaceQuery($table, $modelColumn, $modelId, $tags, $shouldDeletePrior);
+            $sql = $this->getTagArrayReplaceQuery($table, $modelColumn, $modelId, $tags);
             $result = $this->connection->query($sql);
 
             return mysqli_affected_rows($this->connection) > 0 || mysqli_num_rows($result) > 0;
