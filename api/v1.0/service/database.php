@@ -386,7 +386,7 @@
 
                 $tags = null;
                 $eventIds = null;
-                $this->extractTagsAndUniqueNumericArrayFromJoinQuery($rows, Constants::$eventIds, $tags, $eventIds);
+                $this->extractTagsAndUniqueNumericArrayFromJoinQuery($rows, Constants::$eventId, $tags, $eventIds);
 
                 return new Chatroom(
                     $rows[0][Constants::$id],
