@@ -215,7 +215,12 @@
 
             $stmt = $this->executeSingleIdParamStatement($id, "DELETE FROM users WHERE id = ?");
 
-            ImageUtils::deleteImageFromPath($id, Constants::$userProfileImagesDir, Constants::$users, true);
+            ImageUtils::deleteImageFromPath(
+                $id,
+                Constants::$userProfileImagesDir,
+                Constants::$users,
+                true
+            );
             // FCM if user in chatroom => send notification
 
             $deleteSuccess = $stmt->affected_rows > 0;
@@ -566,8 +571,9 @@
 
             ImageUtils::deleteImageFromPath(
                 $messageId,
-                Constants::chatroomMessageImagesDir($messageInfo[Constants::$chatroomSentId]),
-                Constants::$messages
+                Constants::chatroomMessageImagesDir($messageInfo[Constants::$chatroomSentId]) . "/" . $messageId,
+                Constants::$messages,
+                true
             );
 
             $affectedRows = $stmt->affected_rows > 0;

@@ -36,11 +36,13 @@
                 return false;
             }
 
-            if(file_exists($path)) {
-                $deletionSuccess = unlink($path); // unlink file from the filesystem (1.jpg, 2.jpg, etc.)
-            } else if(file_exists($dir)) {
-                rrmdir($dir);
-                $deletionSuccess = true;
+            if(file_exists($dir)) {
+                if($isFile) {
+                    $deletionSuccess = unlink($dir); // unlink file from the filesystem (1.jpg, 2.jpg, etc.)
+                } else {
+                    rrmdir($dir);
+                    $deletionSuccess = true;
+                }
             } else {
                 return false;
             }
