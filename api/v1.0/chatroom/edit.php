@@ -17,7 +17,7 @@
         if(!($chatroomId = $db->getOwnerChatroomId($id))) {
             APIUtils::displayAPIResultAndDie(array(
                 Constants::$response=>Constants::$chatroomNoPermissions
-            ), 406);
+            ), 403);
         }
 
         $chatroom->setId($chatroomId);

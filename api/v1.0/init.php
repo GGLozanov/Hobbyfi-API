@@ -8,6 +8,7 @@
     require_once ("utils/converter_utils.php");
     require_once("utils/tag_utils.php");
     require_once("utils/api_utils.php");
+    require_once("utils/request_utils.php");
 
     $db = new Database(); // connects to DB with given web server params
 ?>

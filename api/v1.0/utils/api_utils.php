@@ -68,8 +68,23 @@
             return str_replace('Bearer ', '', $headers['Authorization']);
         }
 
+        public static function handleMultiDbResultError($result, string $nullError, string $falseError,
+                                                        int $nullStatus, int $falseStatus) {
+            if(is_null($result)) {
+                $status = $nullError;
+                $code = $nullStatus;
+            } else {
+                $status = $falseError;
+                $code = $falseStatus;
+            }
+            APIUtils::displayAPIResult(array(Constants::$response=>$status), $code);
+        }
+
         // Function should ONLY be called for models that use the `TagModel` and `ImageModel` trait
-        public static function evaluateModelEditImageUpload($model, int $id, string $dir, string $modelType, bool $shouldNotUpdateModel) {
+        public static function evaluateModelEditImageUpload($model, int $id, string $dir, string $modelType,
+                                                            bool $shouldNotUpdateModel, bool $hasTags = true) {
+            require_once("../utils/image_utils.php");
+
             if($model->getHasImage()) {
                 ImageUtils::uploadImageToPath($id, $dir, $_POST[Constants::$image], $modelType);
 
@@ -77,7 +92,7 @@
                 if($shouldNotUpdateModel) {
                     APIUtils::displayAPIResultAndDie(array(Constants::$response=>Constants::$ok), 200);
                 }
-            } else if($shouldNotUpdateModel && !($model->getTags())) {
+            } else if($shouldNotUpdateModel && (!$hasTags || !($model->getTags()))) {
                 APIUtils::displayAPIResultAndDie(array(Constants::$response=>Constants::$noCredentialsForUpdateError), 400);
             }
         }

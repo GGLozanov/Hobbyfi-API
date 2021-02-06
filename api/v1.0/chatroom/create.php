@@ -21,12 +21,8 @@
                 }
             }
 
-            $status = Constants::$ok;
-            if($chatroom->getHasImage()) {
-                if(!ImageUtils::uploadImageToPath($id, Constants::chatroomImagesDir($id), $_POST[Constants::$image], Constants::$chatrooms)) {
-                    $status = Constants::$imageUploadFailed;
-                }
-            }
+            $status = ImageUtils::uploadImageBasedOnHasImage($chatroom,
+                Constants::chatroomImagesDir($id), Constants::$chatrooms);
 
             $db->closeConnection(); // make sure to close the connection after that (don't allow too many auths in one instance of the web service)
 
@@ -35,15 +31,8 @@
                 Constants::$id=>$id
             )); // no need to return chatroom if client already has it; can be read & fetched in read endpoint
         } else {
-            if($id == null) {
-                $status = Constants::$chatroomNotCreated;
-                $code = 406; // bad input
-            } else {
-                // false -> user already in a chatroom
-                $status = Constants::$userAlreadyInChatroom;
-                $code = 403; // forbidden
-            }
-            APIUtils::displayAPIResult(array(Constants::$response=>$status), $code);
+            APIUtils::handleMultiDbResultError($id,
+                Constants::$chatroomNotCreated, Constants::$userAlreadyInChatroom, 406, 403);
         }
     }
 

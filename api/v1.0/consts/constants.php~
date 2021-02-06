@@ -147,7 +147,7 @@
         public static string $CREATE_EVENT_TYPE = "CREATE_EVENT";
         public static string $EDIT_EVENT_TYPE = "EDIT_EVENT";
         public static string $DELETE_EVENT_TYPE = "DELETE_EVENT";
-        public static string $DELETE_EVENT_BATCH_TYPE = "DELETE_EVENT_BATCH";
+        public static string $DELETE_EVENT_BATCH_TYPE = "DELETE_EVENT_BATCH_TYPE";
 
         // very bruh func; would've done it with an array had PHP, again, allowed initialisation with static properties
         public static function isValidNotificationType(string $notificationType) {

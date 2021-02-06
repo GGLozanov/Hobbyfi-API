@@ -36,8 +36,13 @@
                 return false;
             }
 
-            if(file_exists($path)) {
-                $deletionSuccess = unlink($path); // unlink file from the filesystem (1.jpg, 2.jpg, etc.)
+            if(file_exists($dir)) {
+                if($isFile) {
+                    $deletionSuccess = unlink($dir); // unlink file from the filesystem (1.jpg, 2.jpg, etc.)
+                } else {
+                    rrmdir($dir);
+                    $deletionSuccess = true;
+                }
             } else {
                 return false;
             }
@@ -47,6 +52,31 @@
             }
 
             return $deletionSuccess;
+        }
+
+        public static function uploadImageBasedOnHasImage(Model $model, string $dir, string $modelTableName) {
+            if($model->getHasImage()) {
+                if(!ImageUtils::uploadImageToPath($model->getId(), $dir,
+                    $_POST[Constants::$image], $modelTableName)) {
+                    return Constants::$imageUploadFailed;
+                }
+            }
+            return Constants::$ok;
+        }
+    }
+
+    function rrmdir($dir) {
+        if (is_dir($dir)) {
+            $objects = scandir($dir);
+            foreach ($objects as $object) {
+                if ($object != "." && $object != "..") {
+                    if (filetype($dir."/".$object) == "dir")
+                        rrmdir($dir."/".$object);
+                    else unlink($dir."/".$object);
+                }
+            }
+            reset($objects);
+            rmdir($dir);
         }
     }
 ?>

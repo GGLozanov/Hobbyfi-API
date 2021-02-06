@@ -38,17 +38,13 @@
                     APIUtils::displayAPIResultAndDie(array(Constants::$response=>Constants::$tagsUploadFailed), 406);
                 }
             }
+            $user->setId($id);
 
             // if facebook user authenticates here, send the token back but just don't use it and authenticate facebook user client-side
             $jwt = JWTUtils::encodeJWT(JWTUtils::getPayload($id, time() + (8 * 60 * 60))); // encodes specific jwt w/ expiry time for access token
             $refresh_jwt = JWTUtils::encodeJWT(JWTUtils::getPayload($id, time() + (24 * 60 * 60))); // encode refresh token w/ long expiry
 
-            $status = Constants::$ok;
-            if($user->getHasImage()) {
-                if(!ImageUtils::uploadImageToPath($id, Constants::$userProfileImagesDir, $_POST[Constants::$image], Constants::$users)) {
-                    $status = Constants::$imageUploadFailed;
-                }
-            }
+            $status = ImageUtils::uploadImageBasedOnHasImage($user, Constants::$userProfileImagesDir, Constants::$users);
 
             $db->closeConnection(); // make sure to close the connection after that (don't allow too many auths in one instance of the web service)
 

@@ -12,14 +12,14 @@
         use \TagModel;
 
         private ?int $ownerId;
-        private ?int $lastEventId;
+        private ?array $eventIds;
 
         function __construct(
                 int $id = null, 
                 string $name = null, 
                 string $description = null, 
                 bool $hasImage = null, 
-                int $ownerId = null, int $lastEventId = null,
+                int $ownerId = null, array $eventIds = null,
                 array $tags = null) {
             $this->id = $id;
             $this->name = $name;
@@ -27,7 +27,7 @@
             $this->hasImage = $hasImage;
             
             $this->ownerId = $ownerId;
-            $this->lastEventId = $lastEventId;
+            $this->eventIds = $eventIds;
             $this->tags = $tags;
         }
 
@@ -38,7 +38,6 @@
             $updateColumns[] = $this->addUpdateFieldToQuery($this->name != null, Constants::$name, $this->name);
             $updateColumns[] = $this->addUpdateFieldToQuery(isset($this->description), Constants::$description, $this->description);
             $updateColumns[] = $this->addUpdateFieldToQuery($this->ownerId != null, Constants::$ownerId, $this->ownerId);
-            $updateColumns[] = $this->addUpdateFieldToQuery(isset($this->lastEventId), Constants::$lastEventId, $this->lastEventId);
 
             $updateColumns = array_filter($updateColumns);
 
@@ -49,8 +48,7 @@
 
         public function isUpdateFormEmpty() {
             return $this->name == null
-                && !isset($this->description) &&
-                !isset($this->lastEventId);
+                && !isset($this->description);
         }
 
         function getOwnerId() {
@@ -61,12 +59,12 @@
             $this->ownerId = $ownerId;
         }
 
-        function getLastEventId() {
-            return $this->lastEventId;
+        function getEventIds() {
+            return $this->eventIds;
         }
 
-        function setLastEventId(int $lastEventId) {
-            $this->lastEventId = $lastEventId;
+        function setEventIds(array $eventIds) {
+            $this->eventIds = $eventIds;
         }
 
         public function jsonSerialize() {
@@ -80,7 +78,7 @@
                         . "/" . $this->id . ".jpg"
                     : null,
                 Constants::$ownerId=>$this->ownerId,
-                Constants::$lastEventId=>$this->lastEventId,
+                Constants::$eventIds=>$this->eventIds,
                 Constants::$tags=>$this->tags
             ];
         }

@@ -5,10 +5,11 @@
     /* @var $db */
 
     $token = APIUtils::getTokenFromHeadersOrDie();
+    $chatroomId = ConverterUtils::getFieldFromRequestBodyOrDie(Constants::$chatroomId, $_GET);
     $page = ConverterUtils::getFieldFromRequestBodyOrDie(Constants::$page, $_GET);
 
     if($userId = APIUtils::validateAuthorisedRequest($token)) {
-        $messages = $db->getChatroomMessages($userId, $page);
+        $messages = $db->getChatroomMessages($userId, $chatroomId, $page);
 
         if(isset($messages)) {
             APIUtils::displayAPIResult(array(Constants::$response=>Constants::$ok,

@@ -9,14 +9,13 @@
     /** @var $db **/
 
     $token = APIUtils::getTokenFromHeadersOrDie();
-    $eventId = ConverterUtils::getFieldFromRequestBodyOrDie(Constants::$id, $_GET);
 
     if($ownerId = APIUtils::validateAuthorisedRequest($token)) {
-        if($success = $db->deleteChatroomEvent($ownerId, $eventId)) {
-            APIUtils::displayAPIResult(array(Constants::$response=>Constants::$ok));
+        if($deletedEventIds = $db->deleteOldChatroomEvents($ownerId)) {
+            APIUtils::displayAPIResult(array(Constants::$response=>Constants::$ok, Constants::$data_list=>$deletedEventIds));
         } else {
-            APIUtils::handleMultiDbResultError($success, Constants::$eventNotDeleted,
-                Constants::$eventDeleteNoPermission, 406, 403);
+            APIUtils::handleMultiDbResultError($deletedEventIds, Constants::$noEventsToDelete, Constants::$eventDeleteNoPermission,
+                406, 403);
         }
     }
 

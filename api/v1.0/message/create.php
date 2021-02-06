@@ -9,9 +9,10 @@
     /* @var $db */
 
     $token = APIUtils::getTokenFromHeadersOrDie();
+    $chatroomId = ConverterUtils::getFieldFromRequestBody(Constants::$chatroomId);
 
     if($ownerId = APIUtils::validateAuthorisedRequest($token)) {
-        $message = ConverterUtils::getMessageCreate($ownerId);
+        $message = ConverterUtils::getMessageCreate($ownerId, $chatroomId);
 
         if($message = (array_key_exists(Constants::$message, $_POST) ?
                 $db->createChatroomMessage($message)
@@ -19,16 +20,8 @@
             APIUtils::displayAPIResult(array(Constants::$response=>Constants::$ok,
                 Constants::$id=>$message->getId(), Constants::$createTime=>$message->getCreateTime()));
         } else {
-            // TODO: Maybe extract into util function ? ?
-            if(is_null($message)) {
-                $status = Constants::$messageNotCreated;
-                $code = 406; // bad input
-            } else {
-                // false -> user not in a chatroom
-                $status = Constants::$messageNoChatroom;
-                $code = 403; // forbidden
-            }
-            APIUtils::displayAPIResult(array(Constants::$response=>$status), $code);
+            APIUtils::handleMultiDbResultError($message, Constants::$messageNotCreated, Constants::$messageNoChatroom,
+                406, 403);
         }
     }
 

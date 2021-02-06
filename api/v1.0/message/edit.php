@@ -15,7 +15,7 @@
         if($db->updateChatroomMessage($message)) {
             APIUtils::displayAPIResult(array(Constants::$response=>Constants::$ok));
         } else {
-            APIUtils::displayAPIResult(array(Constants::$response=>Constants::$messageNotUpdated));
+            APIUtils::displayAPIResult(array(Constants::$response=>Constants::$messageNotUpdated), 406);
         }
     }
 
