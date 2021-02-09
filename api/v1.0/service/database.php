@@ -608,6 +608,40 @@
             return $updateSuccess;
         }
 
+        public function getChatroomEvent(int $userId, int $eventId) {
+            $this->connection->begin_transaction();
+
+            $stmt = $this->connection->prepare("SELECT evnt.id, evnt.name, 
+                    evnt.description, evnt.latitude, evnt.longitude, evnt.has_image, evnt.start_date, evnt.date, evnt.chatroom_id
+                 FROM events evnt
+                INNER JOIN chatrooms chrms ON chrms.id = evnt.chatroom_id
+                INNER JOIN user_chatrooms usr_chrms ON usr_chrms.chatroom_id = chrms.id 
+                    AND usr_chrms.user_id = ? AND evnt.id = ?");
+            $stmt->bind_param("ii", $userId, $eventId);
+            $stmt->execute();
+            $result = $stmt->get_result();
+
+            if($result && mysqli_num_rows($result) == 1) {
+                $row = mysqli_fetch_assoc($result);
+                $this->connection->commit();
+
+                return new Event(
+                    $row[Constants::$id],
+                    $row[Constants::$name],
+                    $row[Constants::$description],
+                    $row[Constants::$hasImage],
+                    $row[Constants::$startDate],
+                    $row[Constants::$date],
+                    $row[Constants::$lat],
+                    $row[Constants::$long],
+                    $row[Constants::$chatroomId]
+                );
+            }
+
+            $this->connection->rollback();
+            return null;
+        }
+
         public function getChatroomEvents(int $userId) {
             $this->connection->begin_transaction();
 

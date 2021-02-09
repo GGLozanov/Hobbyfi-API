@@ -51,7 +51,7 @@
             APIUtils::displayAPIResultAndDie(array(
                 Constants::$response=>$status,
                 Constants::$jwt=>$isFacebookUser ? Constants::$facebookUserCreated : $jwt,
-                Constants::$refreshJwt=>$isFacebookUser ? Constants::$facebookAccessGranted : $refresh_jwt), 201); // 201 - created; not the best API design... lol
+                Constants::$refreshJwt=>$isFacebookUser ? Constants::$facebookAccessGranted : $refresh_jwt), 201); // 201 - created
         } else {
             $status = Constants::$userNotCreated;
             $code = 406; // 406 - bad input

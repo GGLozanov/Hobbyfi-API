@@ -119,6 +119,7 @@
 
         public static string $eventNotDeleted = "Event not deleted";
         public static string $noEventsToDelete = "Events not deleted. There are possibly no old events to delete";
+        public static string $eventNotFound = "Event not found. User may not be in the necessary chatroom and have permission to view it";
         public static string $eventsNotFound = "Events not found";
         public static string $eventNotCreated = "Event not created. Max limit of 250 events may have been reached";
         public static string $eventNotUpdated = "Event not updated";
