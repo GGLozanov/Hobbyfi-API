@@ -18,7 +18,7 @@
                 Constants::$data_list=>$users
             ));
         } else {
-            APIUtils::handleMultiDbResultError($id, Constants::$userNotFound, Constants::$userNoPermissions,
+            APIUtils::handleMultiResultError($id, Constants::$userNotFound, Constants::$userNoPermissions,
                 403, 404);
         }
     }

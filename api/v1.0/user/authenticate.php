@@ -16,8 +16,8 @@
     if($id = $db->validateUser($email, $password)) {
         // Create token and send it here (without id and other information; just unique username)
 
-        $jwt = JWTUtils::encodeJWT(JWTUtils::getPayload($id, time() + (60 * 60 * 6))); // encodes specific jwt w/ exp time for access token
-        $refresh_jwt = JWTUtils::encodeJWT(JWTUtils::getPayload($id, time() + (24 * 60 * 60))); // encode refresh token w/ long expiry
+        $jwt = JWTUtils::encodeJWT(JWTUtils::getUserTokenPayload($id, time() + (60 * 60 * 6))); // encodes specific jwt w/ exp time for access token
+        $refresh_jwt = JWTUtils::encodeJWT(JWTUtils::getUserTokenPayload($id, time() + (24 * 60 * 60))); // encode refresh token w/ long expiry
 
         APIUtils::displayAPIResult(array(Constants::$response=>Constants::$ok, Constants::$jwt=>$jwt, Constants::$refreshJwt=>$refresh_jwt));
     } else {

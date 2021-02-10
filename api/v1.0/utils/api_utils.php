@@ -68,16 +68,22 @@
             return str_replace('Bearer ', '', $headers['Authorization']);
         }
 
-        public static function handleMultiDbResultError($result, string $nullError, string $falseError,
-                                                        int $nullStatus, int $falseStatus) {
+        public static function handleMultiResultError($result, string $nullError, string $falseError,
+                                                      int $nullStatus, int $falseStatus, bool $displayRaw = false, bool $optionalError = false) {
             if(is_null($result)) {
                 $status = $nullError;
                 $code = $nullStatus;
-            } else {
+            } else if(!$optionalError) {
                 $status = $falseError;
                 $code = $falseStatus;
+            } else {
+                return;
             }
-            APIUtils::displayAPIResult(array(Constants::$response=>$status), $code);
+
+            if($displayRaw) {
+                http_response_code($code);
+                print $status;
+            } else APIUtils::displayAPIResult(array(Constants::$response=>$status), $code);
         }
 
         // Function should ONLY be called for models that use the `TagModel` and `ImageModel` trait

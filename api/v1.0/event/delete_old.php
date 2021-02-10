@@ -14,7 +14,7 @@
         if($deletedEventIds = $db->deleteOldChatroomEvents($ownerId)) {
             APIUtils::displayAPIResult(array(Constants::$response=>Constants::$ok, Constants::$data_list=>$deletedEventIds));
         } else {
-            APIUtils::handleMultiDbResultError($deletedEventIds, Constants::$noEventsToDelete, Constants::$eventDeleteNoPermission,
+            APIUtils::handleMultiResultError($deletedEventIds, Constants::$noEventsToDelete, Constants::$eventDeleteNoPermission,
                 406, 403);
         }
     }

@@ -20,7 +20,7 @@
         if($success = $db->updateChatroomEvent($ownerId, $event)) {
             APIUtils::displayAPIResult(array(Constants::$response=>Constants::$ok), 200);
         } else {
-            APIUtils::handleMultiDbResultError($success, Constants::$eventNotUpdated,
+            APIUtils::handleMultiResultError($success, Constants::$eventNotUpdated,
                 Constants::$eventUpdateNoPermission, 406, 403);
         }
     }

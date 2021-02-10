@@ -13,9 +13,8 @@
     // exp time for refresh token is one full day from time of issuing
     // if the request is authorised => reissue token
     if($userId = APIUtils::validateAuthorisedRequest($refresh_jwt, Constants::$expiredTokenError, Constants::$invalidTokenError)) {
-
         // reissue token (new access token); 
-        $jwt = JWTUtils::encodeJWT(JWTUtils::getPayload($userId, time() + (8 * 60 * 60))); // new jwt (access token)
+        $jwt = JWTUtils::encodeJWT(JWTUtils::getUserTokenPayload($userId, time() + (8 * 60 * 60))); // new jwt (access token)
 
         APIUtils::displayAPIResult(array(Constants::$response=>Constants::$ok, Constants::$jwt=>$jwt));
     }

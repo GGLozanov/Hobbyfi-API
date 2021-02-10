@@ -18,7 +18,7 @@
             $status = Constants::$ok;
             $code = 200;
         } else {
-            APIUtils::handleMultiDbResultError($success, Constants::$messageNotDeleted, Constants::$messageNotDeletedPermission,
+            APIUtils::handleMultiResultError($success, Constants::$messageNotDeleted, Constants::$messageNotDeletedPermission,
                 404, 406);
         }
 

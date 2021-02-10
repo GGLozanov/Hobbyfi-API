@@ -25,7 +25,7 @@
                     ));
                 } else {
                     // TODO: Handle not joined chatroom user going to this endpoint with just token error
-                    APIUtils::handleMultiDbResultError($data, Constants::$chatroomNotFound, Constants::$chatroomReadNoPermissions,
+                    APIUtils::handleMultiResultError($data, Constants::$chatroomNotFound, Constants::$chatroomReadNoPermissions,
                         404, 403);
                 }
             }

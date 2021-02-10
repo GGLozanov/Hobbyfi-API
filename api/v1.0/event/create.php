@@ -22,7 +22,7 @@
                 Constants::$startDate=>$event->getStartDate()
             ));
         } else {
-            APIUtils::handleMultiDbResultError($event, Constants::$eventNotCreated,
+            APIUtils::handleMultiResultError($event, Constants::$eventNotCreated,
                 Constants::$eventCreateNoPermission, 429, 403);
         }
     }

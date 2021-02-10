@@ -20,7 +20,7 @@
             APIUtils::displayAPIResult(array(Constants::$response=>Constants::$ok,
                 Constants::$id=>$message->getId(), Constants::$createTime=>$message->getCreateTime()));
         } else {
-            APIUtils::handleMultiDbResultError($message, Constants::$messageNotCreated, Constants::$messageNoChatroom,
+            APIUtils::handleMultiResultError($message, Constants::$messageNotCreated, Constants::$messageNoChatroom,
                 406, 403);
         }
     }

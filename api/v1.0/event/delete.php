@@ -15,7 +15,7 @@
         if($success = $db->deleteChatroomEvent($ownerId, $eventId)) {
             APIUtils::displayAPIResult(array(Constants::$response=>Constants::$ok));
         } else {
-            APIUtils::handleMultiDbResultError($success, Constants::$eventNotDeleted,
+            APIUtils::handleMultiResultError($success, Constants::$eventNotDeleted,
                 Constants::$eventDeleteNoPermission, 406, 403);
         }
     }

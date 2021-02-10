@@ -101,9 +101,8 @@
                 Constants::$name=>$this->name,
                 Constants::$description=>$this->description,
                 Constants::$photoUrl=>$this->hasImage ?
-                    (array_key_exists('HTTPS', $_SERVER) ? 'https://' : 'http://') . $_SERVER['SERVER_NAME'] . ':'
-                    . $_SERVER['SERVER_PORT'] .'/Hobbyfi-API/uploads' . Constants::chatroomEventImagesDir($this->id)
-                    . "/" . $this->id . ".jpg"
+                    Constants::getServerPath() . '/uploads' . Constants::chatroomEventImagesDir($this->id)
+                        . "/" . $this->id . ".jpg"
                     : null,
                 Constants::$startDate=>$this->startDate,
                 Constants::$date=>$this->date,

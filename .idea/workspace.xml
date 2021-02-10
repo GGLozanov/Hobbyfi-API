@@ -23,16 +23,34 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="1ba16d1b-5e7e-476a-9cc1-ac6a9edbf432" name="Default Changelist" comment="">
-      <change afterPath="$PROJECT_DIR$/api/v1.0/event/read.php" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/api/v1.0/user/reset_password.php" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/api/v1.0/user/confirm_reset.php" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/api/v1.0/user/password_reset.html" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/static/password_reset_success.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/Hobbyfi-API.iml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/Hobbyfi-API.iml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/php.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/php.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/api/v1.0/chatrooms/read.php" beforeDir="false" afterPath="$PROJECT_DIR$/api/v1.0/chatrooms/read.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/api/v1.0/chatrooms/read_own.php" beforeDir="false" afterPath="$PROJECT_DIR$/api/v1.0/chatrooms/read_own.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/api/v1.0/chatroom/create.php" beforeDir="false" afterPath="$PROJECT_DIR$/api/v1.0/chatroom/create.php" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/api/v1.0/consts/constants.php" beforeDir="false" afterPath="$PROJECT_DIR$/api/v1.0/consts/constants.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/api/v1.0/events/read.php" beforeDir="false" afterPath="$PROJECT_DIR$/api/v1.0/events/read.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/api/v1.0/messages/read.php" beforeDir="false" afterPath="$PROJECT_DIR$/api/v1.0/messages/read.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/api/v1.0/event/create.php" beforeDir="false" afterPath="$PROJECT_DIR$/api/v1.0/event/create.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/api/v1.0/event/delete.php" beforeDir="false" afterPath="$PROJECT_DIR$/api/v1.0/event/delete.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/api/v1.0/event/delete_old.php" beforeDir="false" afterPath="$PROJECT_DIR$/api/v1.0/event/delete_old.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/api/v1.0/event/edit.php" beforeDir="false" afterPath="$PROJECT_DIR$/api/v1.0/event/edit.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/api/v1.0/init.php" beforeDir="false" afterPath="$PROJECT_DIR$/api/v1.0/init.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/api/v1.0/message/create.php" beforeDir="false" afterPath="$PROJECT_DIR$/api/v1.0/message/create.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/api/v1.0/message/delete.php" beforeDir="false" afterPath="$PROJECT_DIR$/api/v1.0/message/delete.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/api/v1.0/models/chatroom.php" beforeDir="false" afterPath="$PROJECT_DIR$/api/v1.0/models/chatroom.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/api/v1.0/models/event.php" beforeDir="false" afterPath="$PROJECT_DIR$/api/v1.0/models/event.php" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/api/v1.0/service/database.php" beforeDir="false" afterPath="$PROJECT_DIR$/api/v1.0/service/database.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/api/v1.0/user/authenticate.php" beforeDir="false" afterPath="$PROJECT_DIR$/api/v1.0/user/authenticate.php" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/api/v1.0/user/create.php" beforeDir="false" afterPath="$PROJECT_DIR$/api/v1.0/user/create.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/api/v1.0/user/refresh_token.php" beforeDir="false" afterPath="$PROJECT_DIR$/api/v1.0/user/refresh_token.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/api/v1.0/user/reset_password.php" beforeDir="false" afterPath="$PROJECT_DIR$/api/v1.0/user/reset_password.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/api/v1.0/users/read.php" beforeDir="false" afterPath="$PROJECT_DIR$/api/v1.0/users/read.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/api/v1.0/utils/api_utils.php" beforeDir="false" afterPath="$PROJECT_DIR$/api/v1.0/utils/api_utils.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/api/v1.0/utils/jwt_utils.php" beforeDir="false" afterPath="$PROJECT_DIR$/api/v1.0/utils/jwt_utils.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/api/v1.0/utils/request_utils.php" beforeDir="false" afterPath="$PROJECT_DIR$/api/v1.0/utils/request_utils.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/composer.json" beforeDir="false" afterPath="$PROJECT_DIR$/composer.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/composer.lock" beforeDir="false" afterPath="$PROJECT_DIR$/composer.lock" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -47,6 +65,7 @@
     <option name="RECENT_TEMPLATES">
       <list>
         <option value="composer.json" />
+        <option value="HTML File" />
       </list>
     </option>
   </component>
@@ -103,6 +122,7 @@
       <path value="$PROJECT_DIR$/vendor/google/common-protos" />
       <path value="$PROJECT_DIR$/vendor/google/cloud-firestore" />
       <path value="$PROJECT_DIR$/vendor/brick/math" />
+      <path value="$PROJECT_DIR$/vendor/phpmailer/phpmailer" />
     </include_path>
   </component>
   <component name="ProjectId" id="1kY3RmCSKXW1hf6Dqve0q9b2Dds" />
@@ -112,6 +132,7 @@
   </component>
   <component name="PropertiesComponent">
     <property name="DatabaseDriversLRU" value="mysql" />
+    <property name="DefaultHtmlFileTemplate" value="HTML File" />
     <property name="RunOnceActivity.OpenProjectViewOnStart" value="true" />
     <property name="WebServerToolWindowFactoryState" value="false" />
     <property name="last_opened_file_path" value="$PROJECT_DIR$" />
@@ -121,6 +142,7 @@
   </component>
   <component name="RecentsManager">
     <key name="MoveFile.RECENT_KEYS">
+      <recent name="C:\wamp64\www\Hobbyfi-API\api\v1.0\user" />
       <recent name="C:\wamp64\www\Hobbyfi-API\api\v1.0\chatrooms" />
       <recent name="C:\wamp64\www\Hobbyfi-API\api\v1.0\events" />
       <recent name="C:\wamp64\www\Hobbyfi-API\api\v1.0\keys" />
@@ -198,6 +220,7 @@
       <workItem from="1612467230857" duration="2254000" />
       <workItem from="1612804009284" duration="6276000" />
       <workItem from="1612859239633" duration="10887000" />
+      <workItem from="1612939379310" duration="30626000" />
     </task>
     <servers />
   </component>
@@ -233,14 +256,14 @@
       <screen x="0" y="0" width="1920" height="1040" />
     </state>
     <state x="394" y="0" key="#com.intellij.refactoring.rename.AutomaticRenamingDialog/0.0.1920.1040@0.0.1920.1040" timestamp="1608382051183" />
-    <state x="751" y="243" key="NewPhpClassDialog" timestamp="1610231482886">
+    <state x="751" y="243" key="NewPhpClassDialog" timestamp="1612988329593">
       <screen x="0" y="0" width="1920" height="1040" />
     </state>
-    <state x="751" y="243" key="NewPhpClassDialog/0.0.1920.1040@0.0.1920.1040" timestamp="1610231482886" />
-    <state x="794" y="443" key="NewPhpFileDialog" timestamp="1612896483075">
+    <state x="751" y="243" key="NewPhpClassDialog/0.0.1920.1040@0.0.1920.1040" timestamp="1612988329593" />
+    <state x="794" y="443" key="NewPhpFileDialog" timestamp="1612988335686">
       <screen x="0" y="0" width="1920" height="1040" />
     </state>
-    <state x="794" y="443" key="NewPhpFileDialog/0.0.1920.1040@0.0.1920.1040" timestamp="1612896483075" />
+    <state x="794" y="443" key="NewPhpFileDialog/0.0.1920.1040@0.0.1920.1040" timestamp="1612988335686" />
     <state x="779" y="288" width="998" height="709" key="SettingsEditor" timestamp="1612859521368">
       <screen x="0" y="0" width="1920" height="1040" />
     </state>
@@ -249,17 +272,17 @@
       <screen x="0" y="0" width="1920" height="1040" />
     </state>
     <state width="498" height="446" key="SwitcherDM/0.0.1920.1040@0.0.1920.1040" timestamp="1608310622568" />
-    <state x="169" y="340" width="585" height="700" key="find.popup" timestamp="1612884699015">
+    <state x="1301" y="340" width="585" height="700" key="find.popup" timestamp="1612988403805">
       <screen x="0" y="0" width="1920" height="1040" />
     </state>
-    <state x="169" y="340" width="585" height="700" key="find.popup/0.0.1920.1040@0.0.1920.1040" timestamp="1612884699015" />
-    <state x="616" y="240" key="run.anything.popup" timestamp="1610232892796">
+    <state x="1301" y="340" width="585" height="700" key="find.popup/0.0.1920.1040@0.0.1920.1040" timestamp="1612988403805" />
+    <state x="616" y="240" key="run.anything.popup" timestamp="1612989384237">
       <screen x="0" y="0" width="1920" height="1040" />
     </state>
-    <state x="616" y="240" key="run.anything.popup/0.0.1920.1040@0.0.1920.1040" timestamp="1610232892796" />
-    <state x="623" y="225" width="672" height="160" key="search.everywhere.popup" timestamp="1610116865741">
+    <state x="616" y="240" key="run.anything.popup/0.0.1920.1040@0.0.1920.1040" timestamp="1612989384237" />
+    <state x="623" y="225" width="672" height="160" key="search.everywhere.popup" timestamp="1612988440232">
       <screen x="0" y="0" width="1920" height="1040" />
     </state>
-    <state x="623" y="225" width="672" height="160" key="search.everywhere.popup/0.0.1920.1040@0.0.1920.1040" timestamp="1610116865741" />
+    <state x="623" y="225" width="672" height="160" key="search.everywhere.popup/0.0.1920.1040@0.0.1920.1040" timestamp="1612988440232" />
   </component>
 </project>

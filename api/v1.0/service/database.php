@@ -79,12 +79,30 @@
             return mysqli_num_rows($result) > 0 ? "true" : "false"; // if more than one row found => user exists
         }
 
-        public function validateUser(string $email, string $password) {
+        private function getUserIdAndHashPasswordByEmail(string $email) {
             $stmt = $this->connection->prepare("SELECT id, password FROM users WHERE email = ?"); // get associated user by email
             $email = mysqli_real_escape_string($this->connection, $email);
             $stmt->bind_param("s", $email);
             $stmt->execute();
-            $result = $stmt->get_result();
+            return $stmt->get_result();
+        }
+
+        public function validateUserByEmail(string $email) {
+            $result = $this->getUserIdAndHashPasswordByEmail($email);
+            if(mysqli_num_rows($result) > 0 && ($rows = mysqli_fetch_all($result, MYSQLI_ASSOC))) {
+                if(count($rows) && $row = $rows[0]) {
+                    if($row[Constants::$password] == null) {
+                        return null;
+                    }
+                    return array(Constants::$id=>$row[Constants::$id], Constants::$password=>$row[Constants::$password]);
+                        // get first user (?) FIXME: Handle multiple accounts with unique email
+                }
+            }
+            return false;
+        }
+
+        public function validateUser(string $email, string $password) {
+            $result = $this->getUserIdAndHashPasswordByEmail($email);
 
             if(mysqli_num_rows($result) > 0 && ($rows = mysqli_fetch_all($result, MYSQLI_ASSOC))) {
                 $filteredRows = array_filter($rows, function (array $row) use ($password) {
