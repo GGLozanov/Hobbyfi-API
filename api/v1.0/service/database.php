@@ -539,6 +539,7 @@
                     . "/" . $messageId . ".jpg");
                 $stmt->bind_param("si", $messagePhotoUrl, $messageId);
 
+                $message->setMessage($messagePhotoUrl);
                 $insertSuccess = $stmt->execute();
             }
 
@@ -598,7 +599,7 @@
             $this->sendNotificationToChatroomOnCond($affectedRows,
                 $messageInfo[Constants::$chatroomSentId],
                 Constants::$DELETE_MESSAGE_TYPE,
-                new Message($messageId)
+                new Message($messageId, null, null, null, $userId)
             );
             $this->finishTransactionOnCond($affectedRows);
             return $affectedRows;

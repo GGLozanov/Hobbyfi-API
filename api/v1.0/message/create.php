@@ -9,7 +9,7 @@
     /* @var $db */
 
     $token = APIUtils::getTokenFromHeadersOrDie();
-    $chatroomId = ConverterUtils::getFieldFromRequestBody(Constants::$chatroomId);
+    $chatroomId = ConverterUtils::getFieldFromRequestBodyOrDie(Constants::$chatroomId);
 
     if($ownerId = APIUtils::validateAuthorisedRequest($token)) {
         $message = ConverterUtils::getMessageCreate($ownerId, $chatroomId);
