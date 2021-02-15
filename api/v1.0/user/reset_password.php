@@ -69,7 +69,7 @@ header("Access-Control-Allow-Origin: *");
             APIUtils::displayAPIResult(array(Constants::$response=>Constants::$emailSentFail), 406);
         }
     } else {
-        APIUtils::handleMultiResultError($idAndHash, Constants::$facebookUserResetAttempt, Constants::$userEmailNotFound, 406, 404);
+        APIUtils::handleMultiResultError($idAndHash, Constants::$facebookUserResetAttempt, Constants::$userEmailNotFound, 409, 404);
     }
 
     $db->closeConnection();
