@@ -51,8 +51,8 @@
 
         public function isUpdateFormEmpty() {
             return $this->name == null && !isset($this->description)
-                && $this->hasImage == null && $this->date == null && $this->startDate == null
-                && $this->lat == null && $this->long == null && $this->chatroomId == null;
+                && $this->date == null && $this->startDate == null
+                && $this->lat == null && $this->long == null;
         }
 
         public function getStartDate() {

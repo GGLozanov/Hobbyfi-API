@@ -174,7 +174,7 @@
                     $userUpdateSuccess = $this->sendUserChatroomNotification($leaveChatroomId, $user,
                         Constants::$LEAVE_USER_TYPE, Constants::timelineUserLeaveMessage($user->getName()));
                 }
-            } else if($chatroomIds = $this->getUserChatroomsId($user->getId())) {
+            } else if($chatroomIds = $this->getUserChatroomId($user->getId())) {
                 $this->sendBatchedNotificationToChatroomOnCond($userUpdateSuccess,
                     $chatroomIds,
                     Constants::$EDIT_USER_TYPE,
@@ -202,7 +202,7 @@
             include_once "../utils/image_utils.php";
             $this->connection->begin_transaction();
 
-            if($chatroomIds = $this->getUserChatroomsId($id)) {
+            if($chatroomIds = $this->getUserChatroomId($id)) {
                 if($ownerId = $this->getOwnerChatroomId($id)) {
                     $this->fcm->sendMessageToChatroom(
                         $ownerId,
@@ -252,7 +252,7 @@
 
             $this->connection->begin_transaction();
 
-            if(!($chatroomIds = $this->getUserChatroomsId($userId)) || !in_array($chatroomId, $chatroomIds)) {
+            if(!($chatroomIds = $this->getUserChatroomId($userId)) || !in_array($chatroomId, $chatroomIds)) {
                 return false;
             }
 
@@ -424,7 +424,7 @@
         }
 
         public function getChatrooms(int $userId, int $multiplier = 1, bool $fetchOwnChatrooms = false) {
-            if($fetchOwnChatrooms && !($chatroomIds = $this->getUserChatroomsId($userId))) {
+            if($fetchOwnChatrooms && !($chatroomIds = $this->getUserChatroomId($userId))) {
                 return false;
             }
 
@@ -461,7 +461,7 @@
 
         public function getChatroomMessages(int $userId, int $chatroomId, int $multiplier = 1) {
             $this->connection->begin_transaction();
-            if(!($chatroomIds = $this->getUserChatroomsId($userId))) {
+            if(!($chatroomIds = $this->getUserChatroomId($userId))) {
                 $this->connection->rollback();
                 return false;
             }
@@ -498,7 +498,7 @@
         public function createChatroomMessage(Message $message, bool $shouldFinishTransaction = true) {
             $this->connection->begin_transaction();
 
-            if($message->getUserSentId() != null && (!($chatroomIds = $this->getUserChatroomsId($message->getUserSentId())) ||
+            if($message->getUserSentId() != null && (!($chatroomIds = $this->getUserChatroomId($message->getUserSentId())) ||
                     !in_array($message->getChatroomSentId(), $chatroomIds))) {
                 $this->connection->rollback();
                 return false; // users should only send messages in a their chatrooms from here (theirs) and nothing else
@@ -810,25 +810,15 @@
             return $deleteSuccess ? $eventIds : null;
         }
 
-        public function updateChatroomEvent(int $ownerId, Event $event) {
+        public function updateChatroomEvent(Event $event) {
             $this->connection->begin_transaction();
-            if(!($chatroomId = $this->getOwnerChatroomId($ownerId)) ||
-                    ($chatroomId !=
-                        $this->getOneColumnValueFromSingleRow(
-                            $this->executeSingleIdParamStatement($event->getId(), "SELECT chatroom_id FROM events WHERE id = ?")->get_result(),
-                            Constants::$chatroomId)
-                    )
-            ) {
-                $this->connection->rollback();
-                return false;
-            }
 
             // $event->escapeStringProperties($this->connection);
             $this->connection->query($event->getUpdateQuery());
             $eventUpdateSuccess = mysqli_affected_rows($this->connection) > 0;
 
             $this->sendNotificationToChatroomOnCond($eventUpdateSuccess,
-                $chatroomId,
+                $event->getChatroomId(),
                 Constants::$EDIT_EVENT_TYPE,
                 $event
             );
@@ -907,8 +897,8 @@
             return empty($tags) ? null : $tags;
         }
 
-        // should be always called in transaction context for CRUD methods
-        private function getUserChatroomsId(int $userId) {
+        // should be always called in transaction context for CRUD methods OR only as a single query
+        function getUserChatroomId(int $userId) {
             $result = $this->executeSingleIdParamStatement($userId,
                 "SELECT us_chrms.chatroom_id FROM user_chatrooms us_chrms WHERE user_id = ?")
                 ->get_result();
@@ -930,6 +920,19 @@
                     AND us_chrms.user_id = ?")->get_result();
 
             return $this->getOneColumnValueFromSingleRow($result, Constants::$id);
+        }
+
+        function getEventChatroomIdByOwnerIdAndEvent(int $ownerId, Event $event) {
+            if(!($chatroomId = $this->getOwnerChatroomId($ownerId)) ||
+                ($chatroomId !=
+                    $this->getOneColumnValueFromSingleRow(
+                        $this->executeSingleIdParamStatement($event->getId(), "SELECT chatroom_id FROM events WHERE id = ?")->get_result(),
+                        Constants::$chatroomId
+                    ))
+            ) {
+                return false;
+            }
+            return $chatroomId;
         }
 
         private function getMessageOwnerIdAndChatroomId(int $messageId) {
@@ -1128,22 +1131,34 @@
 
         private function sendNotificationToChatroomOnCond(bool &$condition, int $chatroomId, string $notificationType, Model $message) {
             if($condition) {
-                $condition = $this->fcm->sendMessageToChatroom(
-                    $chatroomId,
+                $condition = $this->sendNotificationToChatroom($chatroomId, $notificationType, $message);
+            }
+        }
+
+        function sendNotificationToChatroom(int $chatroomId, string $notificationType, Model $message) {
+            return $this->fcm->sendMessageToChatroom(
+                $chatroomId,
+                $notificationType,
+                $message
+            );
+        }
+
+        private function sendBatchedNotificationToChatroomOnCond(bool &$condition, array $chatroomIds, string $notificationType, Model $message) {
+            if($condition) {
+                $condition = $this->sendBatchedNotificationToChatroom(
+                    $chatroomIds,
                     $notificationType,
                     $message
                 );
             }
         }
 
-        private function sendBatchedNotificationToChatroomOnCond(bool &$condition, array $chatroomIds, string $notificationType, Model $message) {
-            if($condition) {
-                $condition = $this->fcm->sendBatchedMessageToTopics(
-                    $chatroomIds,
-                    $notificationType,
-                    $message
-                );
-            }
+        function sendBatchedNotificationToChatroom(array $chatroomIds, string $notificationType, Model $message) {
+            return $this->fcm->sendBatchedMessageToTopics(
+                $chatroomIds,
+                $notificationType,
+                $message
+            );
         }
 
         private function sendUserChatroomNotification(int $currentUserChatroomId, User $user, string $type, string $chatMessage) {
