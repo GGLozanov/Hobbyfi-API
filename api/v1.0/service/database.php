@@ -87,6 +87,12 @@
             return $stmt->get_result();
         }
 
+
+        private function getUserUsername(int $id) {
+            return $this->executeSingleIdParamStatement($id, "SELECT username FROM users WHERE id = ?")
+                ->get_result()->fetch_assoc()[Constants::$username];
+        }
+
         public function validateUserByEmail(string $email) {
             $result = $this->getUserIdAndHashPasswordByEmail($email);
             if(mysqli_num_rows($result) > 0 && ($rows = mysqli_fetch_all($result, MYSQLI_ASSOC))) {
@@ -154,10 +160,25 @@
             $shouldUpdateChatroomId = $leaveChatroomId != null || $joinChatroomId != null;
 
             if($shouldUpdateUser) {
-                // $user->escapeStringProperties($this->connection);
+                $originalUsername = $this->getUserUsername($user->getId()); // transaction context => old one still accessible
                 mysqli_query($this->connection, $user->getUpdateQuery($password));
                 // FIXME: Code dup
                 $userUpdateSuccess = mysqli_affected_rows($this->connection) > 0;
+
+                // change Firestore record username, if needed
+                if(!is_null($user->getName())) {
+                    $document = $this->firestore->collection(Constants::$locations)
+                        ->document($originalUsername);
+                    $docSnapshot = $document->snapshot();
+
+                    if($docSnapshot->exists()) {
+                        // doc exists and needs name change
+                        $this->firestore->collection(Constants::$locations)
+                            ->document($user->getName())
+                            ->create($docSnapshot->data());
+                        $document->delete();
+                    }
+                }
             }
 
             if($shouldUpdateChatroomId) {
@@ -202,26 +223,51 @@
             include_once "../utils/image_utils.php";
             $this->connection->begin_transaction();
 
+            $deleteChatroom = false;
+            $leaveChatroom = false;
+            $ownerId = null;
+            // db checks prior to deletion (can't access later on, duh)
             if($chatroomIds = $this->getUserChatroomId($id)) {
                 if($ownerId = $this->getOwnerChatroomId($id)) {
+                    if(count($chatroomIds) > 1) { // has other chatrooms apart from his own
+                        $leaveChatroom = true;
+                    }
+
+                    $deleteChatroom = true;
+                } else {
+                    $leaveChatroom = true;
+                }
+            }
+
+            $username = $this->getUserUsername($id);
+
+            $stmt = $this->executeSingleIdParamStatement($id, "DELETE FROM users WHERE id = ?");
+            $deleteSuccess = $stmt->affected_rows > 0;
+
+            if($deleteSuccess) {
+                if($deleteChatroom) {
                     $this->fcm->sendMessageToChatroom(
                         $ownerId,
                         Constants::$DELETE_CHATROOM_TYPE,
                         new Chatroom($ownerId)
                     );
                     foreach($this->firestore->collection(Constants::$locations)
-                        ->where(Constants::$chatroomId, 'array-contains', $ownerId)
-                        ->documents()->rows() as $doc) {
+                                ->where(Constants::$chatroomId, 'array-contains', $ownerId)
+                                ->documents()->rows() as $doc) {
                         if(count($doc->data()[Constants::$chatroomId]) == 1) {
                             $doc->reference()->delete();
                         } else {
-                            $doc->reference()
-                                ->update(
-                                    array(Constants::$chatroomId=>array_diff($doc->data()[Constants::$chatroomId], array($ownerId)))
-                                );
+                            $doc->reference()->update([
+                                [
+                                    'path' => Constants::$chatroomId,
+                                    'value' => \Google\Cloud\Firestore\FieldValue::arrayRemove([$ownerId])
+                                ]
+                            ]);
                         }
                     }
-                } else {
+                }
+
+                if($leaveChatroom) {
                     $user = $this->getUser($id);
                     $this->sendUserChatroomBatchedNotification($chatroomIds,
                         $user,
@@ -229,19 +275,18 @@
                         Constants::timelineUserLeaveMessage($user->getName())
                     );
                 }
+
+                ImageUtils::deleteImageFromPath(
+                    $id,
+                    Constants::$userProfileImagesDir,
+                    Constants::$users,
+                    true
+                );
+
+                $this->firestore->collection(Constants::$locations)->document($username)
+                        ->delete();
             }
 
-            $stmt = $this->executeSingleIdParamStatement($id, "DELETE FROM users WHERE id = ?");
-
-            ImageUtils::deleteImageFromPath(
-                $id,
-                Constants::$userProfileImagesDir,
-                Constants::$users,
-                true
-            );
-            // FCM if user in chatroom => send notification
-
-            $deleteSuccess = $stmt->affected_rows > 0;
             $this->finishTransactionOnCond($deleteSuccess);
             return $deleteSuccess;
         }
@@ -378,6 +423,24 @@
             ImageUtils::deleteImageFromPath($chatroomId, Constants::chatroomImagesDir($chatroomId), Constants::$chatrooms);
 
             $deleteSuccess = $stmt->affected_rows > 0;
+            
+            if($deleteSuccess) {
+                foreach($this->firestore->collection(Constants::$locations)
+                            ->where(Constants::$chatroomId, 'array-contains', $chatroomId)
+                            ->documents()->rows() as $doc) {
+                    if(count($doc->data()[Constants::$chatroomId]) == 1) {
+                        $doc->reference()->delete();
+                    } else {
+                        $doc->reference()->update([
+                            [
+                                'path' => Constants::$chatroomId,
+                                'value' => \Google\Cloud\Firestore\FieldValue::arrayRemove([$chatroomId])
+                            ]
+                        ]);
+                    }
+                }
+            }
+
             // FCM - delete chatroom
             $this->sendNotificationToChatroomOnCond($deleteSuccess,
                 $chatroomId,
@@ -759,6 +822,21 @@
                 return null;
             }
 
+            foreach($this->firestore->collection(Constants::$locations)
+                        ->where(Constants::$eventIds, 'array-contains', $eventId)
+                        ->documents()->rows() as $doc) {
+                if(count($doc->data()[Constants::$eventIds]) == 1) {
+                    $doc->reference()->delete();
+                } else {
+                    $doc->reference()->update([
+                        [
+                            'path' => Constants::$eventIds,
+                            'value' => \Google\Cloud\Firestore\FieldValue::arrayRemove([$eventId])
+                        ]
+                    ]);
+                }
+            }
+
             $this->sendNotificationToChatroomOnCond($deleteSuccess,
                 $chatroomId,
                 Constants::$DELETE_EVENT_TYPE,
@@ -798,6 +876,21 @@
             if(!$deleteSuccess) {
                 $this->connection->rollback();
                 return null;
+            }
+
+            foreach($this->firestore->collection(Constants::$locations)
+                        ->where(Constants::$eventIds, 'array-contains', $eventIds)
+                        ->documents()->rows() as $doc) {
+                if(count($doc->data()[Constants::$eventIds]) == count($eventIds)) {
+                    $doc->reference()->delete();
+                } else {
+                    $doc->reference()->update([
+                        [
+                            'path' => Constants::$eventIds,
+                            'value' => \Google\Cloud\Firestore\FieldValue::arrayRemove($eventIds)
+                        ]
+                    ]);
+                }
             }
 
             $this->sendNotificationToChatroomOnCond($deleteSuccess,
@@ -1209,5 +1302,6 @@
             }
             return false;
         }
+
     }
 ?>

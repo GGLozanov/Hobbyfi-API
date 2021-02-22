@@ -9,7 +9,7 @@
     $token = APIUtils::getTokenFromHeadersOrDie();
 
     if($ownerId = APIUtils::validateAuthorisedRequest($token)) {
-        if($events = $db->getChatroomEvents($ownerId)) {
+        if(($events = $db->getChatroomEvents($ownerId)) || count($events) == 0) {
             APIUtils::displayAPIResult(array(
                 Constants::$response=>Constants::$ok,
                 Constants::$data_list=>$events
