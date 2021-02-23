@@ -32,6 +32,7 @@
         public static string $startDate = "start_date";
 
         public static string $page = "page";
+        public static string $query = "query";
 
         public static string $response = "response";
         public static string $jwt = "jwt";

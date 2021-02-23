@@ -10,12 +10,16 @@
     $chatroomId = ConverterUtils::getFieldFromRequestBodyOrDie(Constants::$chatroomId, $_GET);
     $page = ConverterUtils::getFieldFromRequestBodyOrDie(Constants::$page, $_GET);
 
+    $query = ConverterUtils::getFieldFromRequestBody(Constants::$query, $_GET);
+
     if($userId = APIUtils::validateAuthorisedRequest($token)) {
-        $messages = $db->getChatroomMessages($userId, $chatroomId, $page);
+        $messages = $db->getChatroomMessages($userId, $chatroomId, $query, $page);
 
         if(isset($messages)) {
-            APIUtils::displayAPIResult(array(Constants::$response=>Constants::$ok,
-                Constants::$data_list=>$messages));
+            APIUtils::displayAPIResult(array(
+                Constants::$response=>Constants::$ok,
+                Constants::$data_list=>$messages
+            ));
         } else {
             if($messages == false) {
                 $status = Constants::$messagesNoPermission;

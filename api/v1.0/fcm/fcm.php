@@ -54,7 +54,7 @@
 
         public function sendBatchedMessageToTopics(array $topics, string $notificationType, Model $message) {
             $messages = array_map(function(string $topic) use($notificationType, $message) {
-                return $this->createCloudMessageForTopic((string) $topic, $notificationType, $message);
+                return $this->createCloudMessageForTopic(Constants::$chatroomTopicPrefix . $topic, $notificationType, $message);
             }, $topics);
 
             try {

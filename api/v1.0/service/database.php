@@ -522,20 +522,24 @@
             return (empty($stmt->error)) ? array() : null; // want to show empty array for pagination end limit purposes
         }
 
-        public function getChatroomMessages(int $userId, int $chatroomId, int $multiplier = 1) {
+        public function getChatroomMessages(int $userId, int $chatroomId, ?string $query, int $multiplier = 1) {
             $this->connection->begin_transaction();
             if(!($chatroomIds = $this->getUserChatroomId($userId))) {
                 $this->connection->rollback();
                 return false;
             }
             $multiplier = 20*($multiplier - 1);
+            $querySearch = !is_null($query);
             $stmt = $this->connection->prepare(
-                "SELECT * FROM messages WHERE chatroom_sent_id = ?
-                    ORDER BY create_time DESC
+                "SELECT * FROM messages WHERE chatroom_sent_id = ?" . ($querySearch ? " AND INSTR(message, ?) > 0 " : " ") .
+                    "ORDER BY create_time DESC
                     LIMIT 20 OFFSET ?"
             );
 
-            $stmt->bind_param("ii", $chatroomId, $multiplier);
+            if($querySearch) {
+                $stmt->bind_param("isi", $chatroomId, $query, $multiplier);
+            } else $stmt->bind_param("ii", $chatroomId, $multiplier);
+
             $stmt->execute();
 
             $result = $stmt->get_result();
