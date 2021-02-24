@@ -72,6 +72,9 @@
         public static string $token = "token";
         public static string $newPassword = "newPassword";
         public static string $newPasswordConfirm = "newPasswordConfirm";
+        public static string $pageNumber = "page_number";
+        public static string $messageId = "message_id";
+        public static string $maxId = "max_id";
 
         public static function userProfileImagesDir(int $userId) {
           return Constants::$userProfileImagesDir . "/" . $userId . ".jpg";
@@ -127,6 +130,7 @@
         public static string $messageNotDeletedPermission = "Message not deleted because user with this id does not have the right to delete it";
         public static string $messagesNoPermission = "Couldn't find messages because user with this id does not belong to a chatroom";
         public static string $messagesNotFound = "Couldn't fetch messages. Something's gone wrong";
+        public static string $messagePageWithIdNotFound = "Couldn't find page containing message with the given ID and given Chatroom ID";
 
         public static string $eventNotDeleted = "Event not deleted";
         public static string $noEventsToDelete = "Events not deleted. There are possibly no old events to delete";

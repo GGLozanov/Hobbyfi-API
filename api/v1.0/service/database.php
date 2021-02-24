@@ -522,13 +522,35 @@
             return (empty($stmt->error)) ? array() : null; // want to show empty array for pagination end limit purposes
         }
 
-        public function getChatroomMessages(int $userId, int $chatroomId, ?string $query, int $multiplier = 1) {
+        public function getChatroomMessages(int $userId, int $chatroomId, ?string $query, ?int $messageId, ?int $multiplier = 1) {
             $this->connection->begin_transaction();
             if(!($chatroomIds = $this->getUserChatroomId($userId))) {
                 $this->connection->rollback();
                 return false;
             }
-            $multiplier = 20*($multiplier - 1);
+            $messagePageSearch = !is_null($messageId);
+
+            $page = null;
+            if($messagePageSearch && is_null($multiplier)) {
+                $stmt = $this->connection->prepare("SELECT COUNT(*) AS page_number 
+                        FROM messages WHERE create_time > (SELECT create_time FROM messages WHERE id = ? ORDER BY create_time DESC) 
+                        AND chatroom_sent_id = ? ORDER BY create_time DESC");
+                $stmt->bind_param("ii", $messageId, $chatroomId);
+                $stmt->execute();
+
+                $count = $stmt->get_result()->fetch_assoc()[Constants::$pageNumber];
+                $page = floor($count / 20);
+                $multiplier = 20 * $page;
+
+                // if count = 0 BUT the message ID is NOT the newest message for room (where no more messages is acceptable)
+                // => false message id sent
+                if($count == 0 && $messageId != $this->executeSingleIdParamStatement($chatroomId,
+                        "SELECT MAX(id) AS max_id FROM messages WHERE chatroom_sent_id = ?")->get_result()->fetch_assoc()[Constants::$maxId]) {
+                    $this->connection->rollback();
+                    return null;
+                }
+            } else $multiplier = 20*($multiplier - 1);
+
             $querySearch = !is_null($query);
             $stmt = $this->connection->prepare(
                 "SELECT * FROM messages WHERE chatroom_sent_id = ?" . ($querySearch ? " AND INSTR(message, ?) > 0 " : " ") .
@@ -547,15 +569,28 @@
             if(mysqli_num_rows($result) > 0) {
                 $rows = mysqli_fetch_all($result, MYSQLI_ASSOC);
                 $this->connection->commit();
-                return array_map(function($row) {
-                    return new Message(
-                        $row[Constants::$id],
-                        $row[Constants::$message],
-                        $row[Constants::$createTime],
-                        $row[Constants::$chatroomSentId],
-                        $row[Constants::$userSentId],
-                    );
-                }, $rows);
+
+                if(!$messagePageSearch) {
+                    return array_map(function($row) {
+                        return new Message(
+                            $row[Constants::$id],
+                            $row[Constants::$message],
+                            $row[Constants::$createTime],
+                            $row[Constants::$chatroomSentId],
+                            $row[Constants::$userSentId],
+                        );
+                    }, $rows);
+                } else {
+                    return array(array_map(function($row) {
+                        return new Message(
+                            $row[Constants::$id],
+                            $row[Constants::$message],
+                            $row[Constants::$createTime],
+                            $row[Constants::$chatroomSentId],
+                            $row[Constants::$userSentId],
+                        );
+                    }, $rows), $page + 1);
+                }
             }
 
             $this->connection->rollback();
@@ -572,7 +607,7 @@
             }
 
             $stmt = $this->connection->prepare("INSERT INTO messages(id, message, create_time, chatroom_sent_id, user_sent_id) 
-                VALUES(?, ?, NOW(), ?, ?)");
+                VALUES(?, ?, CURRENT_TIMESTAMP(6), ?, ?)");
 
             // $message->escapeStringProperties($this->connection);
             $id = $message->getId();
@@ -860,7 +895,7 @@
             }
 
             $preDeleteResult = $this->executeSingleIdParamStatement($chatroomId,
-                "SELECT id FROM events WHERE date < NOW() AND chatroom_id = ?")->get_result();
+                "SELECT id FROM events WHERE date < NOW(3) AND chatroom_id = ?")->get_result();
             if($preDeleteResult && ($rows = mysqli_fetch_all($preDeleteResult, MYSQLI_ASSOC))
                     && mysqli_num_rows($preDeleteResult) > 0) {
                 $eventIds = array_filter(array_map(function($row) {
@@ -873,7 +908,7 @@
             }
 
             $stmt = $this->executeSingleIdParamStatement($chatroomId,
-                "DELETE FROM events WHERE date < NOW() AND chatroom_id = ?");
+                "DELETE FROM events WHERE date < NOW(3) AND chatroom_id = ?");
 
             $deleteSuccess = $stmt->affected_rows > 0;
 
