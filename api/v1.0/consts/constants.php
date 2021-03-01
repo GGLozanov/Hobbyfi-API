@@ -108,6 +108,8 @@
 
         public static string $getId = "getId()";
 
+        public static string $kickFailedResponse = "Couldn't kick user with the given ID! Check if permissions for token are correct and user with this ID is in the Chatroom";
+
         public static string $userNotCreated = "User not created";
         public static string $userNotFound = "User/users not found";
         public static string $userNotUpdated = "User not updated. Username may be taken";

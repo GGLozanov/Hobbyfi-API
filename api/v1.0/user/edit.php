@@ -25,7 +25,7 @@
             ($password = ConverterUtils::getFieldFromRequestBody(Constants::$password)) == null &&
                 $user->isUpdateFormEmpty() && $leaveChatroomId == null && $chatroomId == null
         )) {
-            if($chatroomIds = $db->getUserChatroomId($userId)) {
+            if($chatroomIds = $db->getUserChatroomIds($userId)) {
                 $db->sendBatchedNotificationToChatroom($chatroomIds,
                     Constants::$EDIT_USER_TYPE,
                     $user

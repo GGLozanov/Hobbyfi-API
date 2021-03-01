@@ -195,7 +195,7 @@
                     $userUpdateSuccess = $this->sendUserChatroomNotification($leaveChatroomId, $user,
                         Constants::$LEAVE_USER_TYPE, Constants::timelineUserLeaveMessage($user->getName()));
                 }
-            } else if($chatroomIds = $this->getUserChatroomId($user->getId())) {
+            } else if($chatroomIds = $this->getUserChatroomIds($user->getId())) {
                 $this->sendBatchedNotificationToChatroomOnCond($userUpdateSuccess,
                     $chatroomIds,
                     Constants::$EDIT_USER_TYPE,
@@ -219,6 +219,22 @@
             return $updateSuccess;
         }
 
+        public function kickUserFromChatroom(int $ownerId, int $kickUserId) {
+            $this->connection->begin_transaction();
+            $ownerChatroomId = $this->getOwnerChatroomId($ownerId);
+            $userChatroomIds = $this->getUserChatroomIds($kickUserId);
+
+            if(!is_array($userChatroomIds) || !in_array($ownerChatroomId, $userChatroomIds)) {
+                $this->connection->rollback();
+                return false;
+            }
+
+            $updateSuccess = $this->updateUser(new User($kickUserId), null, $ownerChatroomId, null);
+
+            $this->finishTransactionOnCond($updateSuccess);
+            return $updateSuccess;
+        }
+
         public function deleteUser(int $id) {
             include_once "../utils/image_utils.php";
             $this->connection->begin_transaction();
@@ -227,7 +243,7 @@
             $leaveChatroom = false;
             $ownerId = null;
             // db checks prior to deletion (can't access later on, duh)
-            if($chatroomIds = $this->getUserChatroomId($id)) {
+            if($chatroomIds = $this->getUserChatroomIds($id)) {
                 if($ownerId = $this->getOwnerChatroomId($id)) {
                     if(count($chatroomIds) > 1) { // has other chatrooms apart from his own
                         $leaveChatroom = true;
@@ -297,7 +313,7 @@
 
             $this->connection->begin_transaction();
 
-            if(!($chatroomIds = $this->getUserChatroomId($userId)) || !in_array($chatroomId, $chatroomIds)) {
+            if(!($chatroomIds = $this->getUserChatroomIds($userId)) || !in_array($chatroomId, $chatroomIds)) {
                 return false;
             }
 
@@ -487,7 +503,7 @@
         }
 
         public function getChatrooms(int $userId, int $multiplier = 1, bool $fetchOwnChatrooms = false) {
-            if($fetchOwnChatrooms && !($chatroomIds = $this->getUserChatroomId($userId))) {
+            if($fetchOwnChatrooms && !($chatroomIds = $this->getUserChatroomIds($userId))) {
                 return false;
             }
 
@@ -524,7 +540,7 @@
 
         public function getChatroomMessages(int $userId, int $chatroomId, ?string $query, ?int $messageId, ?int $multiplier = 1) {
             $this->connection->begin_transaction();
-            if(!($chatroomIds = $this->getUserChatroomId($userId))) {
+            if(!($chatroomIds = $this->getUserChatroomIds($userId))) {
                 $this->connection->rollback();
                 return false;
             }
@@ -600,7 +616,7 @@
         public function createChatroomMessage(Message $message, bool $shouldFinishTransaction = true) {
             $this->connection->begin_transaction();
 
-            if($message->getUserSentId() != null && (!($chatroomIds = $this->getUserChatroomId($message->getUserSentId())) ||
+            if($message->getUserSentId() != null && (!($chatroomIds = $this->getUserChatroomIds($message->getUserSentId())) ||
                     !in_array($message->getChatroomSentId(), $chatroomIds))) {
                 $this->connection->rollback();
                 return false; // users should only send messages in a their chatrooms from here (theirs) and nothing else
@@ -1030,7 +1046,7 @@
         }
 
         // should be always called in transaction context for CRUD methods OR only as a single query
-        function getUserChatroomId(int $userId) {
+        function getUserChatroomIds(int $userId) {
             $result = $this->executeSingleIdParamStatement($userId,
                 "SELECT us_chrms.chatroom_id FROM user_chatrooms us_chrms WHERE user_id = ?")
                 ->get_result();
