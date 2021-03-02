@@ -12,7 +12,7 @@
      */
 
     $token = APIUtils::getTokenFromHeadersOrDie();
-    $kickUserId = ConverterUtils::getFieldFromRequestBodyOrDie(Constants::$userId);
+    $kickUserId = ConverterUtils::getFieldIntValueFromRequestBodyOrDie(Constants::$userId);
 
     if($id = APIUtils::validateAuthorisedRequest($token)) {
         if($db->kickUserFromChatroom($id, $kickUserId)) {

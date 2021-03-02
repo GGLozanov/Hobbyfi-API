@@ -11,7 +11,7 @@
     $token = APIUtils::getTokenFromHeadersOrDie();
 
     if($ownerId = APIUtils::validateAuthorisedRequest($token)) {
-        $messageId = ConverterUtils::getFieldFromRequestBodyOrDie(Constants::$id, $_GET);
+        $messageId = ConverterUtils::getFieldIntValueFromRequestBodyOrDie(Constants::$id, $_GET);
 
         // TODO: Extract into util method and fix code dup with other delete endpoints... zzzz
         if($success = $db->deleteChatroomMessage($ownerId, $messageId)) {

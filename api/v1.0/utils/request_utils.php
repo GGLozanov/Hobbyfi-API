@@ -45,11 +45,11 @@
             $page = null;
             $messageId = null;
             if($messageIdReq) {
-                $chatroomId = ConverterUtils::getFieldFromRequestBodyOrDie(Constants::$chatroomId, $_GET);
-                $messageId = ConverterUtils::getFieldFromRequestBodyOrDie(Constants::$messageId, $_GET);
+                $chatroomId = ConverterUtils::getFieldIntValueFromRequestBodyOrDie(Constants::$chatroomId, $_GET);
+                $messageId = ConverterUtils::getFieldIntValueFromRequestBodyOrDie(Constants::$messageId, $_GET);
             } else {
-                $chatroomId = ConverterUtils::getFieldFromRequestBodyOrDie(Constants::$chatroomId, $_GET);
-                $page = ConverterUtils::getFieldFromRequestBodyOrDie(Constants::$page, $_GET);
+                $chatroomId = ConverterUtils::getFieldIntValueFromRequestBodyOrDie(Constants::$chatroomId, $_GET);
+                $page = ConverterUtils::getFieldIntValueFromRequestBodyOrDie(Constants::$page, $_GET);
 
                 $query = ConverterUtils::getFieldFromRequestBody(Constants::$query, $_GET);
             }

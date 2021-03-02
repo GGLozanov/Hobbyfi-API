@@ -9,7 +9,7 @@
     /* @var $db */
 
     $token = APIUtils::getTokenFromHeadersOrDie();
-    $chatroomId = ConverterUtils::getFieldFromRequestBodyOrDie(Constants::$id, $_GET);
+    $chatroomId = ConverterUtils::getFieldIntValueFromRequestBodyOrDie(Constants::$id, $_GET);
 
     if($userId = APIUtils::validateAuthorisedRequest($token)) {
         if($chatroom = $db->getChatroom($userId, $chatroomId)) {

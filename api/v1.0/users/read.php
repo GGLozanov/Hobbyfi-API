@@ -9,7 +9,7 @@
     /* @var $db */
 
     $token = APIUtils::getTokenFromHeadersOrDie();
-    $chatroomId = ConverterUtils::getFieldFromRequestBodyOrDie(Constants::$chatroomId, $_GET);
+    $chatroomId = ConverterUtils::getFieldIntValueFromRequestBodyOrDie(Constants::$chatroomId, $_GET);
 
     if($id = APIUtils::validateAuthorisedRequest($token)) {
         if(($users = $db->getChatroomUsers($id, $chatroomId)) || count($users) == 0) {

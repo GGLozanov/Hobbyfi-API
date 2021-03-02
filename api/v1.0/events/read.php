@@ -8,8 +8,10 @@
 
     $token = APIUtils::getTokenFromHeadersOrDie();
 
+    $chatroomId = ConverterUtils::getFieldIntValueFromRequestBodyOrDie(Constants::$chatroomId, $_GET);
+
     if($ownerId = APIUtils::validateAuthorisedRequest($token)) {
-        if(($events = $db->getChatroomEvents($ownerId)) || count($events) == 0) {
+        if(($events = $db->getChatroomEvents($ownerId, $chatroomId)) || count($events) == 0) {
             APIUtils::displayAPIResult(array(
                 Constants::$response=>Constants::$ok,
                 Constants::$data_list=>$events

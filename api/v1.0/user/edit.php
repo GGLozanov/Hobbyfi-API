@@ -9,7 +9,7 @@
 
     $token = APIUtils::getTokenFromHeadersOrDie();
     $leaveChatroomId = ConverterUtils::getFieldFromRequestBody(Constants::$leaveChatroomId);
-    $chatroomId = ConverterUtils::getFieldFromRequestBody(Constants::$chatroomId);
+    $chatroomId = ConverterUtils::getFieldIntValueFromRequestBodyOrNull(Constants::$chatroomId);
 
     if(isset($leaveChatroomId) && isset($chatroomId)) {
         APIUtils::displayAPIResultAndDie(array(Constants::$response=>Constants::$invalidDataError), 406);
