@@ -717,7 +717,7 @@
             $this->sendNotificationToChatroomOnCond($affectedRows,
                 $messageInfo[Constants::$chatroomSentId],
                 Constants::$DELETE_MESSAGE_TYPE,
-                new Message($messageId, null, null, null, $userId)
+                new Message($messageId, null, null, $messageInfo[Constants::$chatroomSentId], $userId)
             );
             $this->finishTransactionOnCond($affectedRows);
             return $affectedRows;
@@ -734,7 +734,7 @@
                 return false;
             }
 
-            // $message->escapeStringProperties($this->connection);
+            $message->setChatroomSentId($messageInfo[Constants::$chatroomSentId]);
             $updateSuccess = $this->connection->query($message->getUpdateQuery()); // TODO: Handle no update option in edit.php
             $this->sendNotificationToChatroomOnCond($updateSuccess,
                 $messageInfo[Constants::$chatroomSentId],

@@ -24,18 +24,9 @@
   <component name="ChangeListManager">
     <list default="true" id="1ba16d1b-5e7e-476a-9cc1-ac6a9edbf432" name="Default Changelist" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/api/v1.0/chatroom/kick.php" beforeDir="false" afterPath="$PROJECT_DIR$/api/v1.0/chatroom/kick.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/api/v1.0/chatroom/read.php" beforeDir="false" afterPath="$PROJECT_DIR$/api/v1.0/chatroom/read.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/api/v1.0/event/delete.php" beforeDir="false" afterPath="$PROJECT_DIR$/api/v1.0/event/delete.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/api/v1.0/event/read.php" beforeDir="false" afterPath="$PROJECT_DIR$/api/v1.0/event/read.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/api/v1.0/events/read.php" beforeDir="false" afterPath="$PROJECT_DIR$/api/v1.0/events/read.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/api/v1.0/message/create.php" beforeDir="false" afterPath="$PROJECT_DIR$/api/v1.0/message/create.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/api/v1.0/message/delete.php" beforeDir="false" afterPath="$PROJECT_DIR$/api/v1.0/message/delete.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/api/v1.0/config/core.php" beforeDir="false" afterPath="$PROJECT_DIR$/api/v1.0/config/core.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/api/v1.0/consts/constants.php" beforeDir="false" afterPath="$PROJECT_DIR$/api/v1.0/consts/constants.php" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/api/v1.0/service/database.php" beforeDir="false" afterPath="$PROJECT_DIR$/api/v1.0/service/database.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/api/v1.0/user/edit.php" beforeDir="false" afterPath="$PROJECT_DIR$/api/v1.0/user/edit.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/api/v1.0/users/read.php" beforeDir="false" afterPath="$PROJECT_DIR$/api/v1.0/users/read.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/api/v1.0/utils/converter_utils.php" beforeDir="false" afterPath="$PROJECT_DIR$/api/v1.0/utils/converter_utils.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/api/v1.0/utils/request_utils.php" beforeDir="false" afterPath="$PROJECT_DIR$/api/v1.0/utils/request_utils.php" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -121,6 +112,12 @@
     <property name="RunOnceActivity.OpenProjectViewOnStart" value="true" />
     <property name="WebServerToolWindowFactoryState" value="false" />
     <property name="last_opened_file_path" value="$PROJECT_DIR$" />
+    <property name="node.js.detected.package.eslint" value="true" />
+    <property name="node.js.detected.package.tslint" value="true" />
+    <property name="node.js.path.for.package.eslint" value="project" />
+    <property name="node.js.path.for.package.tslint" value="project" />
+    <property name="node.js.selected.package.eslint" value="(autodetect)" />
+    <property name="node.js.selected.package.tslint" value="(autodetect)" />
     <property name="php.override.implement.member.chooser.php.doc" value="NONE" />
     <property name="settings.editor.selected.configurable" value="reference.settingsdialog.IDE.editor.colors.Color Scheme Font" />
     <property name="vue.rearranger.settings.migration" value="true" />
@@ -218,7 +215,8 @@
       <workItem from="1614099359682" duration="4290000" />
       <workItem from="1614166809870" duration="14528000" />
       <workItem from="1614605520641" duration="9596000" />
-      <workItem from="1614681143455" duration="6813000" />
+      <workItem from="1614681143455" duration="7972000" />
+      <workItem from="1614969161774" duration="2732000" />
     </task>
     <servers />
   </component>
@@ -266,10 +264,10 @@
       <screen x="0" y="0" width="1920" height="1040" />
     </state>
     <state width="498" height="446" key="SwitcherDM/0.0.1920.1040@0.0.1920.1040" timestamp="1608310622568" />
-    <state x="1301" y="340" width="585" height="700" key="find.popup" timestamp="1614697511719">
+    <state x="1226" y="313" width="585" height="700" key="find.popup" timestamp="1614970066393">
       <screen x="0" y="0" width="1920" height="1040" />
     </state>
-    <state x="1301" y="340" width="585" height="700" key="find.popup/0.0.1920.1040@0.0.1920.1040" timestamp="1614697511719" />
+    <state x="1226" y="313" width="585" height="700" key="find.popup/0.0.1920.1040@0.0.1920.1040" timestamp="1614970066393" />
     <state x="616" y="240" key="run.anything.popup" timestamp="1612989384237">
       <screen x="0" y="0" width="1920" height="1040" />
     </state>

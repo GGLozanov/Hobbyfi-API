@@ -52,6 +52,7 @@
         public static string $expiredTokenError = "Expired refresh token. Reauthenticate";
         public static string $invalidTokenError = "Unauthorised access. Invalid token. Reauthenticate";
         public static string $internalServerError = "Internal server error";
+        public static string $internalServerErrorNotConfigured = "Server not configured properly! Please contact a developer";
         public static string $noAuthorizationHeaderError = "Missing Authorization. Reaffirm there's an Authorization header with a valid Bearer token present";
         public static string $missingTokenInfoError = "Missing token info";
         public static string $defaultTokenExpiredError = "Expired token. Get refresh token";
