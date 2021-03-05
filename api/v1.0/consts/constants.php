@@ -62,6 +62,8 @@
         public static string $authenticationErrorInvalidCredentials = "Invalid credentials";
         public static string $imageUploadFailed = "Image upload failed";
         public static string $invalidDataError = "Invalid data format! Some of the fields sent are impossible to coexist in a single request";
+        public static string $deviceTokenUploadSuccess = "Device token for user with this ID succeeded";
+        public static string $deviceTokenUploadFail = "Device token for user with this ID failed";
 
         public static string $userIdJwtKey = "userId";
 

@@ -30,6 +30,17 @@
             mysqli_close($this->connection);
         }
 
+        public function uploadDeviceToken(int $id, string $deviceToken) {
+            $this->connection->begin_transaction();
+            $stmt = $this->connection->prepare(
+                "INSERT IGNORE INTO device_tokens(id, device_token) VALUES(?, ?)");
+            $stmt->bind_param("is", $id, $deviceToken);
+            $insertSuccess = $stmt->execute();
+
+            $this->finishTransactionOnCond($insertSuccess);
+            return $insertSuccess;
+        }
+
         public function createUser(User $user, ?string $password) {
             $this->connection->begin_transaction();
             $stmt = $this->connection->prepare(
