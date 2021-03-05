@@ -22,13 +22,20 @@
 
         $chatroom->setId($chatroomId);
 
-        APIUtils::evaluateModelEditImageUpload(
+        if(APIUtils::evaluateModelEditImageUpload(
             $chatroom,
             $chatroomId,
             Constants::chatroomImagesDir($chatroomId),
             Constants::$chatrooms,
             $chatroom->isUpdateFormEmpty()
-        );
+        )) {
+            $db->sendNotificationToChatroom(
+                $chatroom->getId(),
+                Constants::$EDIT_CHATROOM_TYPE,
+                $chatroom
+            );
+            die;
+        }
 
         if($result = $db->updateChatroom($chatroom)) {
             $status = Constants::$ok;

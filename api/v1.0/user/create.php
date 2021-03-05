@@ -41,8 +41,8 @@
             $user->setId($id);
 
             // if facebook user authenticates here, send the token back but just don't use it and authenticate facebook user client-side
-            $jwt = JWTUtils::encodeJWT(JWTUtils::getPayload($id, time() + (8 * 60 * 60))); // encodes specific jwt w/ expiry time for access token
-            $refresh_jwt = JWTUtils::encodeJWT(JWTUtils::getPayload($id, time() + (24 * 60 * 60))); // encode refresh token w/ long expiry
+            $jwt = JWTUtils::encodeJWT(JWTUtils::getUserTokenPayload($id, time() + (8 * 60 * 60))); // encodes specific jwt w/ expiry time for access token
+            $refresh_jwt = JWTUtils::encodeJWT(JWTUtils::getUserTokenPayload($id, time() + (24 * 60 * 60))); // encode refresh token w/ long expiry
 
             $status = ImageUtils::uploadImageBasedOnHasImage($user, Constants::$userProfileImagesDir, Constants::$users);
 
@@ -51,7 +51,7 @@
             APIUtils::displayAPIResultAndDie(array(
                 Constants::$response=>$status,
                 Constants::$jwt=>$isFacebookUser ? Constants::$facebookUserCreated : $jwt,
-                Constants::$refreshJwt=>$isFacebookUser ? Constants::$facebookAccessGranted : $refresh_jwt), 201); // 201 - created; not the best API design... lol
+                Constants::$refreshJwt=>$isFacebookUser ? Constants::$facebookAccessGranted : $refresh_jwt), 201); // 201 - created
         } else {
             $status = Constants::$userNotCreated;
             $code = 406; // 406 - bad input

@@ -41,7 +41,7 @@
             $email = ConverterUtils::getFieldFromRequestBody(Constants::$email);
             $username = ConverterUtils::getFieldFromRequestBody(Constants::$username);
             $description = ConverterUtils::getFieldFromRequestBody(Constants::$description);
-            $chatroomId = ConverterUtils::getFieldIntValueOrNull(Constants::$chatroomId);
+            $chatroomId = ConverterUtils::getFieldIntValueFromRequestBodyOrNull(Constants::$chatroomId);
             $hasImage = ConverterUtils::getFieldFromRequestBody(Constants::$image) != null;
             $tags = ConverterUtils::getMappedTags();
 
@@ -85,7 +85,7 @@
         // this and getMessageCreate are the same method for now (semantic difference) but will be left
         // if the need arises for it to be changed in the future
         public static function getMessageUpdate(int $ownerId) {
-            $id = ConverterUtils::getFieldFromRequestBodyOrDie(Constants::$id);
+            $id = ConverterUtils::getFieldIntValueFromRequestBodyOrDie(Constants::$id);
             $message = ConverterUtils::getFieldFromRequestBody(Constants::$message);
 
             return new Message($id, $message, null, null, $ownerId);
@@ -104,7 +104,7 @@
 
         // TODO: No support added for chatroom id changing yet but it still exists as an opportunity in the model
         public static function getEventUpdate() {
-            $id = ConverterUtils::getFieldFromRequestBodyOrDie(Constants::$id);
+            $id = ConverterUtils::getFieldIntValueFromRequestBodyOrDie(Constants::$id);
             $name = ConverterUtils::getFieldFromRequestBody(Constants::$name);
             $description = ConverterUtils::getFieldFromRequestBody(Constants::$description);
             $hasImage = ConverterUtils::getFieldFromRequestBody(Constants::$image) != null;
@@ -115,7 +115,15 @@
             return new Event($id, $name, $description, $hasImage, null, $date, $lat, $long, null);
         }
 
-        public static function getFieldIntValueOrNull(string $field, array $body = null) {
+        public static function getFieldIntValueFromRequestBodyOrNull(string $field, array $body = null) {
+            if(($value = ConverterUtils::getFieldFromRequestBody($field, $body)) == null) {
+                APIUtils::displayAPIResultAndDie(array(Constants::$response=>Constants::$missingDataError), 400);
+            }
+
+            return intval($value);
+        }
+
+        public static function getFieldIntValueFromRequestBodyOrDie(string $field, array $body = null) {
             $value = ConverterUtils::getFieldFromRequestBody($field, $body);
             return $value == null ? null : intval($value);
         }

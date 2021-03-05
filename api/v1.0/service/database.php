@@ -79,12 +79,36 @@
             return mysqli_num_rows($result) > 0 ? "true" : "false"; // if more than one row found => user exists
         }
 
-        public function validateUser(string $email, string $password) {
+        private function getUserIdAndHashPasswordByEmail(string $email) {
             $stmt = $this->connection->prepare("SELECT id, password FROM users WHERE email = ?"); // get associated user by email
             $email = mysqli_real_escape_string($this->connection, $email);
             $stmt->bind_param("s", $email);
             $stmt->execute();
-            $result = $stmt->get_result();
+            return $stmt->get_result();
+        }
+
+
+        private function getUserUsername(int $id) {
+            return $this->executeSingleIdParamStatement($id, "SELECT username FROM users WHERE id = ?")
+                ->get_result()->fetch_assoc()[Constants::$username];
+        }
+
+        public function validateUserByEmail(string $email) {
+            $result = $this->getUserIdAndHashPasswordByEmail($email);
+            if(mysqli_num_rows($result) > 0 && ($rows = mysqli_fetch_all($result, MYSQLI_ASSOC))) {
+                if(count($rows) && $row = $rows[0]) {
+                    if($row[Constants::$password] == null) {
+                        return null;
+                    }
+                    return array(Constants::$id=>$row[Constants::$id], Constants::$password=>$row[Constants::$password]);
+                        // get first user (?) FIXME: Handle multiple accounts with unique email
+                }
+            }
+            return false;
+        }
+
+        public function validateUser(string $email, string $password) {
+            $result = $this->getUserIdAndHashPasswordByEmail($email);
 
             if(mysqli_num_rows($result) > 0 && ($rows = mysqli_fetch_all($result, MYSQLI_ASSOC))) {
                 $filteredRows = array_filter($rows, function (array $row) use ($password) {
@@ -136,10 +160,25 @@
             $shouldUpdateChatroomId = $leaveChatroomId != null || $joinChatroomId != null;
 
             if($shouldUpdateUser) {
-                // $user->escapeStringProperties($this->connection);
+                $originalUsername = $this->getUserUsername($user->getId()); // transaction context => old one still accessible
                 mysqli_query($this->connection, $user->getUpdateQuery($password));
                 // FIXME: Code dup
                 $userUpdateSuccess = mysqli_affected_rows($this->connection) > 0;
+
+                // change Firestore record username, if needed
+                if(!is_null($user->getName())) {
+                    $document = $this->firestore->collection(Constants::$locations)
+                        ->document($originalUsername);
+                    $docSnapshot = $document->snapshot();
+
+                    if($docSnapshot->exists()) {
+                        // doc exists and needs name change
+                        $this->firestore->collection(Constants::$locations)
+                            ->document($user->getName())
+                            ->create($docSnapshot->data());
+                        $document->delete();
+                    }
+                }
             }
 
             if($shouldUpdateChatroomId) {
@@ -155,8 +194,26 @@
                     $this->deleteUserChatroomId($user->getId(), $leaveChatroomId);
                     $userUpdateSuccess = $this->sendUserChatroomNotification($leaveChatroomId, $user,
                         Constants::$LEAVE_USER_TYPE, Constants::timelineUserLeaveMessage($user->getName()));
+
+                    $firestoreDocSnapshot = $this->firestore->collection(Constants::$locations)
+                        ->document($user->getName())->snapshot();
+                    if($firestoreDocSnapshot->exists()) {
+                        $this->removeFromArrayFieldOrDeleteDocByCountBoundary(
+                            $firestoreDocSnapshot,
+                            Constants::$chatroomId,
+                            Constants::$chatroomId, [$leaveChatroomId]
+                        );
+                        $eventIds = $this->getChatroomEventIds($leaveChatroomId);
+
+                        if(!is_null($eventIds)) {
+                            $this->removeFromArrayFieldOrDeleteDocByCountBoundary(
+                                $firestoreDocSnapshot,
+                                Constants::$eventIds,
+                                Constants::$eventIds, $eventIds, count($eventIds));
+                        }
+                    }
                 }
-            } else if($chatroomIds = $this->getUserChatroomsId($user->getId())) {
+            } else if($chatroomIds = $this->getUserChatroomIds($user->getId())) {
                 $this->sendBatchedNotificationToChatroomOnCond($userUpdateSuccess,
                     $chatroomIds,
                     Constants::$EDIT_USER_TYPE,
@@ -180,30 +237,62 @@
             return $updateSuccess;
         }
 
+        public function kickUserFromChatroom(int $ownerId, int $kickUserId) {
+            $this->connection->begin_transaction();
+            $ownerChatroomId = $this->getOwnerChatroomId($ownerId);
+            $userChatroomIds = $this->getUserChatroomIds($kickUserId);
+
+            if(!is_array($userChatroomIds) || !in_array($ownerChatroomId, $userChatroomIds)) {
+                $this->connection->rollback();
+                return false;
+            }
+
+            $updateSuccess = $this->updateUser(new User($kickUserId), null, $ownerChatroomId, null);
+
+            $this->finishTransactionOnCond($updateSuccess);
+            return $updateSuccess;
+        }
+
         public function deleteUser(int $id) {
             include_once "../utils/image_utils.php";
             $this->connection->begin_transaction();
 
-            if($chatroomIds = $this->getUserChatroomsId($id)) {
+            $deleteChatroom = false;
+            $leaveChatroom = false;
+            $ownerId = null;
+            // db checks prior to deletion (can't access later on, duh)
+            if($chatroomIds = $this->getUserChatroomIds($id)) {
                 if($ownerId = $this->getOwnerChatroomId($id)) {
+                    if(count($chatroomIds) > 1) { // has other chatrooms apart from his own
+                        $leaveChatroom = true;
+                    }
+
+                    $deleteChatroom = true;
+                } else {
+                    $leaveChatroom = true;
+                }
+            }
+
+            $username = $this->getUserUsername($id);
+
+            $stmt = $this->executeSingleIdParamStatement($id, "DELETE FROM users WHERE id = ?");
+            $deleteSuccess = $stmt->affected_rows > 0;
+
+            if($deleteSuccess) {
+                if($deleteChatroom) {
                     $this->fcm->sendMessageToChatroom(
                         $ownerId,
                         Constants::$DELETE_CHATROOM_TYPE,
                         new Chatroom($ownerId)
                     );
                     foreach($this->firestore->collection(Constants::$locations)
-                        ->where(Constants::$chatroomId, 'array-contains', $ownerId)
-                        ->documents()->rows() as $doc) {
-                        if(count($doc->data()[Constants::$chatroomId]) == 1) {
-                            $doc->reference()->delete();
-                        } else {
-                            $doc->reference()
-                                ->update(
-                                    array(Constants::$chatroomId=>array_diff($doc->data()[Constants::$chatroomId], array($ownerId)))
-                                );
-                        }
+                                ->where(Constants::$chatroomId, 'array-contains', $ownerId)
+                                ->documents()->rows() as $doc) {
+                        $this->removeFromArrayFieldOrDeleteDocByCountBoundary($doc, Constants::$chatroomId, Constants::$chatroomId, [$ownerId]);
                     }
-                } else {
+                }
+
+                if($leaveChatroom) {
                     $user = $this->getUser($id);
                     $this->sendUserChatroomBatchedNotification($chatroomIds,
                         $user,
@@ -211,19 +300,18 @@
                         Constants::timelineUserLeaveMessage($user->getName())
                     );
                 }
+
+                ImageUtils::deleteImageFromPath(
+                    $id,
+                    Constants::$userProfileImagesDir,
+                    Constants::$users,
+                    true
+                );
+
+                $this->firestore->collection(Constants::$locations)->document($username)
+                        ->delete();
             }
 
-            $stmt = $this->executeSingleIdParamStatement($id, "DELETE FROM users WHERE id = ?");
-
-            ImageUtils::deleteImageFromPath(
-                $id,
-                Constants::$userProfileImagesDir,
-                Constants::$users,
-                true
-            );
-            // FCM if user in chatroom => send notification
-
-            $deleteSuccess = $stmt->affected_rows > 0;
             $this->finishTransactionOnCond($deleteSuccess);
             return $deleteSuccess;
         }
@@ -234,7 +322,7 @@
 
             $this->connection->begin_transaction();
 
-            if(!($chatroomIds = $this->getUserChatroomsId($userId)) || !in_array($chatroomId, $chatroomIds)) {
+            if(!($chatroomIds = $this->getUserChatroomIds($userId)) || !in_array($chatroomId, $chatroomIds)) {
                 return false;
             }
 
@@ -360,6 +448,15 @@
             ImageUtils::deleteImageFromPath($chatroomId, Constants::chatroomImagesDir($chatroomId), Constants::$chatrooms);
 
             $deleteSuccess = $stmt->affected_rows > 0;
+            
+            if($deleteSuccess) {
+                foreach($this->firestore->collection(Constants::$locations)
+                            ->where(Constants::$chatroomId, 'array-contains', $chatroomId)
+                            ->documents()->rows() as $doc) {
+                    $this->removeFromArrayFieldOrDeleteDocByCountBoundary($doc, Constants::$chatroomId, Constants::$chatroomId, [$chatroomId]);
+                }
+            }
+
             // FCM - delete chatroom
             $this->sendNotificationToChatroomOnCond($deleteSuccess,
                 $chatroomId,
@@ -406,7 +503,7 @@
         }
 
         public function getChatrooms(int $userId, int $multiplier = 1, bool $fetchOwnChatrooms = false) {
-            if($fetchOwnChatrooms && !($chatroomIds = $this->getUserChatroomsId($userId))) {
+            if($fetchOwnChatrooms && !($chatroomIds = $this->getUserChatroomIds($userId))) {
                 return false;
             }
 
@@ -441,20 +538,46 @@
             return (empty($stmt->error)) ? array() : null; // want to show empty array for pagination end limit purposes
         }
 
-        public function getChatroomMessages(int $userId, int $chatroomId, int $multiplier = 1) {
+        public function getChatroomMessages(int $userId, int $chatroomId, ?string $query, ?int $messageId, ?int $multiplier = 1) {
             $this->connection->begin_transaction();
-            if(!($chatroomIds = $this->getUserChatroomsId($userId))) {
+            if(!($chatroomIds = $this->getUserChatroomIds($userId))) {
                 $this->connection->rollback();
                 return false;
             }
-            $multiplier = 20*($multiplier - 1);
+            $messagePageSearch = !is_null($messageId);
+
+            $page = null;
+            if($messagePageSearch && is_null($multiplier)) {
+                $stmt = $this->connection->prepare("SELECT COUNT(*) AS page_number 
+                        FROM messages WHERE create_time > (SELECT create_time FROM messages WHERE id = ? ORDER BY create_time DESC) 
+                        AND chatroom_sent_id = ? ORDER BY create_time DESC");
+                $stmt->bind_param("ii", $messageId, $chatroomId);
+                $stmt->execute();
+
+                $count = $stmt->get_result()->fetch_assoc()[Constants::$pageNumber];
+                $page = floor($count / 20);
+                $multiplier = 20 * $page;
+
+                // if count = 0 BUT the message ID is NOT the newest message for room (where no more messages is acceptable)
+                // => false message id sent
+                if($count == 0 && $messageId != $this->executeSingleIdParamStatement($chatroomId,
+                        "SELECT MAX(id) AS max_id FROM messages WHERE chatroom_sent_id = ?")->get_result()->fetch_assoc()[Constants::$maxId]) {
+                    $this->connection->rollback();
+                    return null;
+                }
+            } else $multiplier = 20*($multiplier - 1);
+
+            $querySearch = !is_null($query);
             $stmt = $this->connection->prepare(
-                "SELECT * FROM messages WHERE chatroom_sent_id = ?
-                    ORDER BY create_time DESC
+                "SELECT * FROM messages WHERE chatroom_sent_id = ?" . ($querySearch ? " AND INSTR(message, ?) > 0 " : " ") .
+                    "ORDER BY create_time DESC
                     LIMIT 20 OFFSET ?"
             );
 
-            $stmt->bind_param("ii", $chatroomId, $multiplier);
+            if($querySearch) {
+                $stmt->bind_param("isi", $chatroomId, $query, $multiplier);
+            } else $stmt->bind_param("ii", $chatroomId, $multiplier);
+
             $stmt->execute();
 
             $result = $stmt->get_result();
@@ -462,15 +585,28 @@
             if(mysqli_num_rows($result) > 0) {
                 $rows = mysqli_fetch_all($result, MYSQLI_ASSOC);
                 $this->connection->commit();
-                return array_map(function($row) {
-                    return new Message(
-                        $row[Constants::$id],
-                        $row[Constants::$message],
-                        $row[Constants::$createTime],
-                        $row[Constants::$chatroomSentId],
-                        $row[Constants::$userSentId],
-                    );
-                }, $rows);
+
+                if(!$messagePageSearch) {
+                    return array_map(function($row) {
+                        return new Message(
+                            $row[Constants::$id],
+                            $row[Constants::$message],
+                            $row[Constants::$createTime],
+                            $row[Constants::$chatroomSentId],
+                            $row[Constants::$userSentId],
+                        );
+                    }, $rows);
+                } else {
+                    return array(array_map(function($row) {
+                        return new Message(
+                            $row[Constants::$id],
+                            $row[Constants::$message],
+                            $row[Constants::$createTime],
+                            $row[Constants::$chatroomSentId],
+                            $row[Constants::$userSentId],
+                        );
+                    }, $rows), $page + 1);
+                }
             }
 
             $this->connection->rollback();
@@ -480,14 +616,14 @@
         public function createChatroomMessage(Message $message, bool $shouldFinishTransaction = true) {
             $this->connection->begin_transaction();
 
-            if($message->getUserSentId() != null && (!($chatroomIds = $this->getUserChatroomsId($message->getUserSentId())) ||
+            if($message->getUserSentId() != null && (!($chatroomIds = $this->getUserChatroomIds($message->getUserSentId())) ||
                     !in_array($message->getChatroomSentId(), $chatroomIds))) {
                 $this->connection->rollback();
                 return false; // users should only send messages in a their chatrooms from here (theirs) and nothing else
             }
 
             $stmt = $this->connection->prepare("INSERT INTO messages(id, message, create_time, chatroom_sent_id, user_sent_id) 
-                VALUES(?, ?, NOW(), ?, ?)");
+                VALUES(?, ?, CURRENT_TIMESTAMP(6), ?, ?)");
 
             // $message->escapeStringProperties($this->connection);
             $id = $message->getId();
@@ -521,6 +657,7 @@
                     . "/" . $messageId . ".jpg");
                 $stmt->bind_param("si", $messagePhotoUrl, $messageId);
 
+                $message->setMessage($messagePhotoUrl);
                 $insertSuccess = $stmt->execute();
             }
 
@@ -580,7 +717,7 @@
             $this->sendNotificationToChatroomOnCond($affectedRows,
                 $messageInfo[Constants::$chatroomSentId],
                 Constants::$DELETE_MESSAGE_TYPE,
-                new Message($messageId)
+                new Message($messageId, null, null, $messageInfo[Constants::$chatroomSentId], $userId)
             );
             $this->finishTransactionOnCond($affectedRows);
             return $affectedRows;
@@ -597,7 +734,7 @@
                 return false;
             }
 
-            // $message->escapeStringProperties($this->connection);
+            $message->setChatroomSentId($messageInfo[Constants::$chatroomSentId]);
             $updateSuccess = $this->connection->query($message->getUpdateQuery()); // TODO: Handle no update option in edit.php
             $this->sendNotificationToChatroomOnCond($updateSuccess,
                 $messageInfo[Constants::$chatroomSentId],
@@ -608,17 +745,53 @@
             return $updateSuccess;
         }
 
-        public function getChatroomEvents(int $userId) {
+        public function getChatroomEvent(int $userId, int $eventId) {
             $this->connection->begin_transaction();
 
-            $result = $this->executeSingleIdParamStatement($userId, "SELECT evnt.id, evnt.name, 
+            $stmt = $this->connection->prepare("SELECT evnt.id, evnt.name, 
                     evnt.description, evnt.latitude, evnt.longitude, evnt.has_image, evnt.start_date, evnt.date, evnt.chatroom_id
                  FROM events evnt
                 INNER JOIN chatrooms chrms ON chrms.id = evnt.chatroom_id
                 INNER JOIN user_chatrooms usr_chrms ON usr_chrms.chatroom_id = chrms.id 
-                    AND usr_chrms.user_id = ?")->get_result();
+                    AND usr_chrms.user_id = ? AND evnt.id = ?");
+            $stmt->bind_param("ii", $userId, $eventId);
+            $stmt->execute();
+            $result = $stmt->get_result();
 
-            if($result && mysqli_num_rows($result) > 0) {
+            if($result && mysqli_num_rows($result) == 1) {
+                $row = mysqli_fetch_assoc($result);
+                $this->connection->commit();
+
+                return new Event(
+                    $row[Constants::$id],
+                    $row[Constants::$name],
+                    $row[Constants::$description],
+                    $row[Constants::$hasImage],
+                    $row[Constants::$startDate],
+                    $row[Constants::$date],
+                    $row[Constants::$lat],
+                    $row[Constants::$long],
+                    $row[Constants::$chatroomId]
+                );
+            }
+
+            $this->connection->rollback();
+            return null;
+        }
+
+        public function getChatroomEvents(int $userId, int $chatroomId) {
+            $this->connection->begin_transaction();
+
+            $stmt = $this->connection->prepare("SELECT evnt.id, evnt.name, 
+                    evnt.description, evnt.latitude, evnt.longitude, evnt.has_image, evnt.start_date, evnt.date, evnt.chatroom_id
+                 FROM events evnt
+                INNER JOIN chatrooms chrms ON chrms.id = evnt.chatroom_id
+                INNER JOIN user_chatrooms usr_chrms ON usr_chrms.chatroom_id = chrms.id 
+                    AND usr_chrms.user_id = ? AND usr_chrms.chatroom_id = ?");
+            $stmt->bind_param("ii", $userId, $chatroomId);
+            $stmt->execute();
+
+            if(($result = $stmt->get_result()) && mysqli_num_rows($result) > 0) {
                 $rows = mysqli_fetch_all($result, MYSQLI_ASSOC);
                 $this->connection->commit();
 
@@ -639,6 +812,22 @@
 
             $this->connection->rollback();
             return (empty($stmt->error)) ? array() : null;
+        }
+
+        private function getChatroomEventIds(int $chatroomId) {
+            $result = $this->executeSingleIdParamStatement($chatroomId, "SELECT evnts.id
+                FROM events evnts
+                INNER JOIN chatrooms chrms ON chrms.id = evnts.chatroom_id AND chrms.id = ?
+            ")->get_result();
+
+            if($result && ($rows = mysqli_fetch_all($result, MYSQLI_ASSOC)) != null) {
+                return array_filter(array_map(function($row) {
+                    return array_key_exists(Constants::$id, $row) ?
+                        $row[Constants::$id] : false;
+                }, $rows));
+            }
+
+            return null;
         }
 
         // chatroom id is sent through query param
@@ -706,6 +895,12 @@
                 return null;
             }
 
+            foreach($this->firestore->collection(Constants::$locations)
+                        ->where(Constants::$eventIds, 'array-contains', $eventId)
+                        ->documents()->rows() as $doc) {
+                $this->removeFromArrayFieldOrDeleteDocByCountBoundary($doc, Constants::$eventIds, Constants::$eventIds, [$eventId]);
+            }
+
             $this->sendNotificationToChatroomOnCond($deleteSuccess,
                 $chatroomId,
                 Constants::$DELETE_EVENT_TYPE,
@@ -725,7 +920,7 @@
             }
 
             $preDeleteResult = $this->executeSingleIdParamStatement($chatroomId,
-                "SELECT id FROM events WHERE date < NOW() AND chatroom_id = ?")->get_result();
+                "SELECT id FROM events WHERE date < NOW(3) AND chatroom_id = ?")->get_result();
             if($preDeleteResult && ($rows = mysqli_fetch_all($preDeleteResult, MYSQLI_ASSOC))
                     && mysqli_num_rows($preDeleteResult) > 0) {
                 $eventIds = array_filter(array_map(function($row) {
@@ -738,13 +933,20 @@
             }
 
             $stmt = $this->executeSingleIdParamStatement($chatroomId,
-                "DELETE FROM events WHERE date < NOW() AND chatroom_id = ?");
+                "DELETE FROM events WHERE date < NOW(3) AND chatroom_id = ?");
 
             $deleteSuccess = $stmt->affected_rows > 0;
 
             if(!$deleteSuccess) {
                 $this->connection->rollback();
                 return null;
+            }
+
+            foreach($this->firestore->collection(Constants::$locations)
+                        ->where(Constants::$eventIds, 'array-contains', $eventIds)
+                        ->documents()->rows() as $doc) {
+                $this->removeFromArrayFieldOrDeleteDocByCountBoundary($doc, Constants::$eventIds,
+                    Constants::$eventIds, $eventIds, count($eventIds));
             }
 
             $this->sendNotificationToChatroomOnCond($deleteSuccess,
@@ -757,25 +959,15 @@
             return $deleteSuccess ? $eventIds : null;
         }
 
-        public function updateChatroomEvent(int $ownerId, Event $event) {
+        public function updateChatroomEvent(Event $event) {
             $this->connection->begin_transaction();
-            if(!($chatroomId = $this->getOwnerChatroomId($ownerId)) ||
-                    ($chatroomId !=
-                        $this->getOneColumnValueFromSingleRow(
-                            $this->executeSingleIdParamStatement($event->getId(), "SELECT chatroom_id FROM events WHERE id = ?")->get_result(),
-                            Constants::$chatroomId)
-                    )
-            ) {
-                $this->connection->rollback();
-                return false;
-            }
 
             // $event->escapeStringProperties($this->connection);
             $this->connection->query($event->getUpdateQuery());
             $eventUpdateSuccess = mysqli_affected_rows($this->connection) > 0;
 
             $this->sendNotificationToChatroomOnCond($eventUpdateSuccess,
-                $chatroomId,
+                $event->getChatroomId(),
                 Constants::$EDIT_EVENT_TYPE,
                 $event
             );
@@ -854,8 +1046,8 @@
             return empty($tags) ? null : $tags;
         }
 
-        // should be always called in transaction context for CRUD methods
-        private function getUserChatroomsId(int $userId) {
+        // should be always called in transaction context for CRUD methods OR only as a single query
+        function getUserChatroomIds(int $userId) {
             $result = $this->executeSingleIdParamStatement($userId,
                 "SELECT us_chrms.chatroom_id FROM user_chatrooms us_chrms WHERE user_id = ?")
                 ->get_result();
@@ -877,6 +1069,19 @@
                     AND us_chrms.user_id = ?")->get_result();
 
             return $this->getOneColumnValueFromSingleRow($result, Constants::$id);
+        }
+
+        function getEventChatroomIdByOwnerIdAndEvent(int $ownerId, Event $event) {
+            if(!($chatroomId = $this->getOwnerChatroomId($ownerId)) ||
+                ($chatroomId !=
+                    $this->getOneColumnValueFromSingleRow(
+                        $this->executeSingleIdParamStatement($event->getId(), "SELECT chatroom_id FROM events WHERE id = ?")->get_result(),
+                        Constants::$chatroomId
+                    ))
+            ) {
+                return false;
+            }
+            return $chatroomId;
         }
 
         private function getMessageOwnerIdAndChatroomId(int $messageId) {
@@ -1075,22 +1280,34 @@
 
         private function sendNotificationToChatroomOnCond(bool &$condition, int $chatroomId, string $notificationType, Model $message) {
             if($condition) {
-                $condition = $this->fcm->sendMessageToChatroom(
-                    $chatroomId,
+                $condition = $this->sendNotificationToChatroom($chatroomId, $notificationType, $message);
+            }
+        }
+
+        function sendNotificationToChatroom(int $chatroomId, string $notificationType, Model $message) {
+            return $this->fcm->sendMessageToChatroom(
+                $chatroomId,
+                $notificationType,
+                $message
+            );
+        }
+
+        private function sendBatchedNotificationToChatroomOnCond(bool &$condition, array $chatroomIds, string $notificationType, Model $message) {
+            if($condition) {
+                $condition = $this->sendBatchedNotificationToChatroom(
+                    $chatroomIds,
                     $notificationType,
                     $message
                 );
             }
         }
 
-        private function sendBatchedNotificationToChatroomOnCond(bool &$condition, array $chatroomIds, string $notificationType, Model $message) {
-            if($condition) {
-                $condition = $this->fcm->sendBatchedMessageToTopics(
-                    $chatroomIds,
-                    $notificationType,
-                    $message
-                );
-            }
+        function sendBatchedNotificationToChatroom(array $chatroomIds, string $notificationType, Model $message) {
+            return $this->fcm->sendBatchedMessageToTopics(
+                $chatroomIds,
+                $notificationType,
+                $message
+            );
         }
 
         private function sendUserChatroomNotification(int $currentUserChatroomId, User $user, string $type, string $chatMessage) {
@@ -1140,6 +1357,22 @@
                 if(!$this->isTagRowInvalid($row)) return true;
             }
             return false;
+        }
+
+        private function removeFromArrayFieldOrDeleteDocByCountBoundary(
+            \Google\Cloud\Firestore\DocumentSnapshot $doc, string $dataField,
+            string $arrayFieldPath, array $elementsToRemove, int $countBoundary = 1
+        ) {
+            if(count($doc->data()[$dataField]) == $countBoundary) {
+                $doc->reference()->delete();
+            } else {
+                $doc->reference()->update([
+                    [
+                        'path' => $arrayFieldPath,
+                        'value' => \Google\Cloud\Firestore\FieldValue::arrayRemove($elementsToRemove)
+                    ]
+                ]);
+            }
         }
     }
 ?>

@@ -68,19 +68,27 @@
             return str_replace('Bearer ', '', $headers['Authorization']);
         }
 
-        public static function handleMultiDbResultError($result, string $nullError, string $falseError,
-                                                        int $nullStatus, int $falseStatus) {
+        public static function handleMultiResultError($result, string $nullError, string $falseError,
+                                                      int $nullStatus, int $falseStatus, bool $displayRaw = false, bool $optionalError = false) {
             if(is_null($result)) {
                 $status = $nullError;
                 $code = $nullStatus;
-            } else {
+            } else if(!$optionalError) {
                 $status = $falseError;
                 $code = $falseStatus;
+            } else {
+                return;
             }
-            APIUtils::displayAPIResult(array(Constants::$response=>$status), $code);
+
+            if($displayRaw) {
+                http_response_code($code);
+                print $status;
+            } else APIUtils::displayAPIResult(array(Constants::$response=>$status), $code);
         }
 
         // Function should ONLY be called for models that use the `TagModel` and `ImageModel` trait
+        // returns TRUE if model has ONLY image to update
+        // false otherwise
         public static function evaluateModelEditImageUpload($model, int $id, string $dir, string $modelType,
                                                             bool $shouldNotUpdateModel, bool $hasTags = true) {
             require_once("../utils/image_utils.php");
@@ -88,12 +96,14 @@
             if($model->getHasImage()) {
                 ImageUtils::uploadImageToPath($id, $dir, $_POST[Constants::$image], $modelType);
 
-                // FIXME: Logic flow
                 if($shouldNotUpdateModel) {
-                    APIUtils::displayAPIResultAndDie(array(Constants::$response=>Constants::$ok), 200);
+                    APIUtils::displayAPIResult(array(Constants::$response=>Constants::$ok), 200);
+                    return true;
                 }
             } else if($shouldNotUpdateModel && (!$hasTags || !($model->getTags()))) {
                 APIUtils::displayAPIResultAndDie(array(Constants::$response=>Constants::$noCredentialsForUpdateError), 400);
             }
+
+            return false;
         }
     }

@@ -24,8 +24,9 @@
   <component name="ChangeListManager">
     <list default="true" id="1ba16d1b-5e7e-476a-9cc1-ac6a9edbf432" name="Default Changelist" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/api/v1.0/config/core.php" beforeDir="false" afterPath="$PROJECT_DIR$/api/v1.0/config/core.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/api/v1.0/consts/constants.php" beforeDir="false" afterPath="$PROJECT_DIR$/api/v1.0/consts/constants.php" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/api/v1.0/service/database.php" beforeDir="false" afterPath="$PROJECT_DIR$/api/v1.0/service/database.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/api/v1.0/utils/image_utils.php" beforeDir="false" afterPath="$PROJECT_DIR$/api/v1.0/utils/image_utils.php" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -40,6 +41,7 @@
     <option name="RECENT_TEMPLATES">
       <list>
         <option value="composer.json" />
+        <option value="HTML File" />
       </list>
     </option>
   </component>
@@ -96,6 +98,7 @@
       <path value="$PROJECT_DIR$/vendor/google/common-protos" />
       <path value="$PROJECT_DIR$/vendor/google/cloud-firestore" />
       <path value="$PROJECT_DIR$/vendor/brick/math" />
+      <path value="$PROJECT_DIR$/vendor/phpmailer/phpmailer" />
     </include_path>
   </component>
   <component name="ProjectId" id="1kY3RmCSKXW1hf6Dqve0q9b2Dds" />
@@ -105,15 +108,23 @@
   </component>
   <component name="PropertiesComponent">
     <property name="DatabaseDriversLRU" value="mysql" />
+    <property name="DefaultHtmlFileTemplate" value="HTML File" />
     <property name="RunOnceActivity.OpenProjectViewOnStart" value="true" />
     <property name="WebServerToolWindowFactoryState" value="false" />
     <property name="last_opened_file_path" value="$PROJECT_DIR$" />
+    <property name="node.js.detected.package.eslint" value="true" />
+    <property name="node.js.detected.package.tslint" value="true" />
+    <property name="node.js.path.for.package.eslint" value="project" />
+    <property name="node.js.path.for.package.tslint" value="project" />
+    <property name="node.js.selected.package.eslint" value="(autodetect)" />
+    <property name="node.js.selected.package.tslint" value="(autodetect)" />
     <property name="php.override.implement.member.chooser.php.doc" value="NONE" />
-    <property name="settings.editor.selected.configurable" value="preferences.pluginManager" />
+    <property name="settings.editor.selected.configurable" value="reference.settingsdialog.IDE.editor.colors.Color Scheme Font" />
     <property name="vue.rearranger.settings.migration" value="true" />
   </component>
   <component name="RecentsManager">
     <key name="MoveFile.RECENT_KEYS">
+      <recent name="C:\wamp64\www\Hobbyfi-API\api\v1.0\user" />
       <recent name="C:\wamp64\www\Hobbyfi-API\api\v1.0\chatrooms" />
       <recent name="C:\wamp64\www\Hobbyfi-API\api\v1.0\events" />
       <recent name="C:\wamp64\www\Hobbyfi-API\api\v1.0\keys" />
@@ -189,6 +200,23 @@
       <workItem from="1612034172585" duration="3092000" />
       <workItem from="1612388111161" duration="1175000" />
       <workItem from="1612467230857" duration="2254000" />
+      <workItem from="1612804009284" duration="6276000" />
+      <workItem from="1612859239633" duration="10887000" />
+      <workItem from="1612939379310" duration="31221000" />
+      <workItem from="1613024545588" duration="2346000" />
+      <workItem from="1613116940371" duration="5608000" />
+      <workItem from="1613304000683" duration="3075000" />
+      <workItem from="1613333883992" duration="914000" />
+      <workItem from="1613374595398" duration="7895000" />
+      <workItem from="1613461859957" duration="2773000" />
+      <workItem from="1613504965803" duration="4723000" />
+      <workItem from="1613819723634" duration="6935000" />
+      <workItem from="1613993086516" duration="11088000" />
+      <workItem from="1614099359682" duration="4290000" />
+      <workItem from="1614166809870" duration="14528000" />
+      <workItem from="1614605520641" duration="9596000" />
+      <workItem from="1614681143455" duration="7972000" />
+      <workItem from="1614969161774" duration="2732000" />
     </task>
     <servers />
   </component>
@@ -208,10 +236,6 @@
     <option name="oldMeFiltersMigrated" value="true" />
   </component>
   <component name="WindowStateProjectService">
-    <state x="336" y="361" key="#SQL_Dialects" timestamp="1605864058037">
-      <screen x="0" y="0" width="1920" height="1040" />
-    </state>
-    <state x="336" y="361" key="#SQL_Dialects/0.0.1920.1040@0.0.1920.1040" timestamp="1605864058037" />
     <state x="552" y="178" key="#com.intellij.execution.impl.EditConfigurationsDialog" timestamp="1606903905147">
       <screen x="0" y="0" width="1920" height="1040" />
     </state>
@@ -224,33 +248,33 @@
       <screen x="0" y="0" width="1920" height="1040" />
     </state>
     <state x="394" y="0" key="#com.intellij.refactoring.rename.AutomaticRenamingDialog/0.0.1920.1040@0.0.1920.1040" timestamp="1608382051183" />
-    <state x="751" y="243" key="NewPhpClassDialog" timestamp="1610231482886">
+    <state x="751" y="243" key="NewPhpClassDialog" timestamp="1612988329593">
       <screen x="0" y="0" width="1920" height="1040" />
     </state>
-    <state x="751" y="243" key="NewPhpClassDialog/0.0.1920.1040@0.0.1920.1040" timestamp="1610231482886" />
-    <state x="794" y="443" key="NewPhpFileDialog" timestamp="1610209978209">
+    <state x="751" y="243" key="NewPhpClassDialog/0.0.1920.1040@0.0.1920.1040" timestamp="1612988329593" />
+    <state x="794" y="443" key="NewPhpFileDialog" timestamp="1614606953529">
       <screen x="0" y="0" width="1920" height="1040" />
     </state>
-    <state x="794" y="443" key="NewPhpFileDialog/0.0.1920.1040@0.0.1920.1040" timestamp="1610209978209" />
-    <state x="756" y="201" width="998" height="709" key="SettingsEditor" timestamp="1611452095367">
+    <state x="794" y="443" key="NewPhpFileDialog/0.0.1920.1040@0.0.1920.1040" timestamp="1614606953529" />
+    <state x="779" y="288" width="998" height="709" key="SettingsEditor" timestamp="1612859521368">
       <screen x="0" y="0" width="1920" height="1040" />
     </state>
-    <state x="756" y="201" width="998" height="709" key="SettingsEditor/0.0.1920.1040@0.0.1920.1040" timestamp="1611452095367" />
+    <state x="779" y="288" width="998" height="709" key="SettingsEditor/0.0.1920.1040@0.0.1920.1040" timestamp="1612859521368" />
     <state width="498" height="446" key="SwitcherDM" timestamp="1608310622568">
       <screen x="0" y="0" width="1920" height="1040" />
     </state>
     <state width="498" height="446" key="SwitcherDM/0.0.1920.1040@0.0.1920.1040" timestamp="1608310622568" />
-    <state x="174" y="330" width="585" height="700" key="find.popup" timestamp="1612470397763">
+    <state x="1226" y="313" width="585" height="700" key="find.popup" timestamp="1614970066393">
       <screen x="0" y="0" width="1920" height="1040" />
     </state>
-    <state x="174" y="330" width="585" height="700" key="find.popup/0.0.1920.1040@0.0.1920.1040" timestamp="1612470397763" />
-    <state x="616" y="240" key="run.anything.popup" timestamp="1610232892796">
+    <state x="1226" y="313" width="585" height="700" key="find.popup/0.0.1920.1040@0.0.1920.1040" timestamp="1614970066393" />
+    <state x="616" y="240" key="run.anything.popup" timestamp="1612989384237">
       <screen x="0" y="0" width="1920" height="1040" />
     </state>
-    <state x="616" y="240" key="run.anything.popup/0.0.1920.1040@0.0.1920.1040" timestamp="1610232892796" />
-    <state x="623" y="225" width="672" height="160" key="search.everywhere.popup" timestamp="1610116865741">
+    <state x="616" y="240" key="run.anything.popup/0.0.1920.1040@0.0.1920.1040" timestamp="1612989384237" />
+    <state x="623" y="225" width="672" height="160" key="search.everywhere.popup" timestamp="1614697395534">
       <screen x="0" y="0" width="1920" height="1040" />
     </state>
-    <state x="623" y="225" width="672" height="160" key="search.everywhere.popup/0.0.1920.1040@0.0.1920.1040" timestamp="1610116865741" />
+    <state x="623" y="225" width="672" height="160" key="search.everywhere.popup/0.0.1920.1040@0.0.1920.1040" timestamp="1614697395534" />
   </component>
 </project>

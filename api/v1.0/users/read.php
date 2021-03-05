@@ -9,7 +9,7 @@
     /* @var $db */
 
     $token = APIUtils::getTokenFromHeadersOrDie();
-    $chatroomId = ConverterUtils::getFieldFromRequestBodyOrDie(Constants::$chatroomId, $_GET);
+    $chatroomId = ConverterUtils::getFieldIntValueFromRequestBodyOrDie(Constants::$chatroomId, $_GET);
 
     if($id = APIUtils::validateAuthorisedRequest($token)) {
         if(($users = $db->getChatroomUsers($id, $chatroomId)) || count($users) == 0) {
@@ -18,7 +18,7 @@
                 Constants::$data_list=>$users
             ));
         } else {
-            APIUtils::handleMultiDbResultError($id, Constants::$userNotFound, Constants::$userNoPermissions,
+            APIUtils::handleMultiResultError($id, Constants::$userNotFound, Constants::$userNoPermissions,
                 403, 404);
         }
     }

@@ -32,6 +32,7 @@
         public static string $startDate = "start_date";
 
         public static string $page = "page";
+        public static string $query = "query";
 
         public static string $response = "response";
         public static string $jwt = "jwt";
@@ -44,11 +45,14 @@
 
         public static string $facebookAccessGranted = "Access granted";
         public static string $facebookUserCreated = "Facebook user created";
+        public static string $facebookUserResetAttempt = "Can't reset password for a Facebook user";
+        public static string $facebookUserDisallowPasswordReset = "User with this ID exists but they cannot reset their password because they're a Facebook user";
 
         public static string $facebookAuthUserCreateError = "Missing or invalid Facebook access token to create Facebook user";
         public static string $expiredTokenError = "Expired refresh token. Reauthenticate";
         public static string $invalidTokenError = "Unauthorised access. Invalid token. Reauthenticate";
         public static string $internalServerError = "Internal server error";
+        public static string $internalServerErrorNotConfigured = "Server not configured properly! Please contact a developer";
         public static string $noAuthorizationHeaderError = "Missing Authorization. Reaffirm there's an Authorization header with a valid Bearer token present";
         public static string $missingTokenInfoError = "Missing token info";
         public static string $defaultTokenExpiredError = "Expired token. Get refresh token";
@@ -66,6 +70,12 @@
         public static string $data = "data";
         public static string $data_list = "data_list";
         public static string $locations = "locations";
+        public static string $token = "token";
+        public static string $newPassword = "newPassword";
+        public static string $newPasswordConfirm = "newPasswordConfirm";
+        public static string $pageNumber = "page_number";
+        public static string $messageId = "message_id";
+        public static string $maxId = "max_id";
 
         public static function userProfileImagesDir(int $userId) {
           return Constants::$userProfileImagesDir . "/" . $userId . ".jpg";
@@ -85,21 +95,28 @@
         }
 
         public static function getPhotoUrlForDir(string $dir) {
-            return (array_key_exists('HTTPS', $_SERVER) ? 'https://' : 'http://') . $_SERVER['SERVER_NAME'] . ':'
-                . $_SERVER['SERVER_PORT'] .'/Hobbyfi-API/uploads/' . $dir;
+            return Constants::getServerPath() . '/uploads/' . $dir;
         }
         // would've extracted these into a generator function if PHP hadn't been so goddamn fucking stupid
+
+        public static function getServerPath() {
+            return (array_key_exists('HTTPS', $_SERVER) ? 'https://' : 'http://') . $_SERVER['SERVER_NAME'] . ':'
+                . $_SERVER['SERVER_PORT'] .'/Hobbyfi-API';
+        }
 
         public static string $chatroomTopicPrefix = "chatroom_";
         public static string $type = "type";
 
         public static string $getId = "getId()";
 
+        public static string $kickFailedResponse = "Couldn't kick user with the given ID! Check if permissions for token are correct and user with this ID is in the Chatroom";
+
         public static string $userNotCreated = "User not created";
         public static string $userNotFound = "User/users not found";
         public static string $userNotUpdated = "User not updated. Username may be taken";
         public static string $userNotDeleted = "User not deleted";
         public static string $userNoPermissions = "Insufficient permissions to access information about this/these user/users or given chatroom doesn't exist";
+        public static string $userEmailNotFound = "User with this given e-mail was not found!";
 
         public static string $chatroomNotCreated = "Chatroom not created. User with this id might already own a chatroom or the chatroom's name might be taken";
         public static string $chatroomNotFound = "Chatroom/Chatrooms not found or user with this id is already in a chatroom and shouldn't be receiving rooms";
@@ -116,9 +133,11 @@
         public static string $messageNotDeletedPermission = "Message not deleted because user with this id does not have the right to delete it";
         public static string $messagesNoPermission = "Couldn't find messages because user with this id does not belong to a chatroom";
         public static string $messagesNotFound = "Couldn't fetch messages. Something's gone wrong";
+        public static string $messagePageWithIdNotFound = "Couldn't find page containing message with the given ID and given Chatroom ID";
 
         public static string $eventNotDeleted = "Event not deleted";
         public static string $noEventsToDelete = "Events not deleted. There are possibly no old events to delete";
+        public static string $eventNotFound = "Event not found. User may not be in the necessary chatroom and have permission to view it";
         public static string $eventsNotFound = "Events not found";
         public static string $eventNotCreated = "Event not created. Max limit of 250 events may have been reached";
         public static string $eventNotUpdated = "Event not updated";
@@ -164,6 +183,10 @@
                 $notificationType == Constants::$DELETE_EVENT_TYPE ||
                 $notificationType == Constants::$DELETE_EVENT_BATCH_TYPE;
         }
+
+        public static string $emailSentSuccess = "E-mail successfully sent for reset";
+        public static string $emailSentFail = "E-mail was NOT sent for reset";
+        public static string $emailNotMatching = "E-mail sent does NOT match with token's";
 
         public static function timelineUserJoinMessage($username) {
             return "$username has joined the room!";
