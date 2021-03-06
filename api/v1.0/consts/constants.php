@@ -62,8 +62,10 @@
         public static string $authenticationErrorInvalidCredentials = "Invalid credentials";
         public static string $imageUploadFailed = "Image upload failed";
         public static string $invalidDataError = "Invalid data format! Some of the fields sent are impossible to coexist in a single request";
-        public static string $deviceTokenUploadSuccess = "Device token for user with this ID succeeded";
-        public static string $deviceTokenUploadFail = "Device token for user with this ID failed";
+        public static string $deviceTokenUploadSuccess = "Device token upload for user with this ID succeeded";
+        public static string $deviceTokenUploadFail = "Device token upload for user with this ID failed";
+        public static string $deviceTokenDeleteSuccess = "Device token deletion for user with this ID succeeded";
+        public static string $deviceTokenDeleteFail = "Device token deletion for user with this ID failed";
 
         public static string $userIdJwtKey = "userId";
 
@@ -78,6 +80,10 @@
         public static string $pageNumber = "page_number";
         public static string $messageId = "message_id";
         public static string $maxId = "max_id";
+        public static string $idToToken = "id_to_device_token";
+
+        public static string $roomId = "room_id";
+        public static string $deviceToken = "device_token";
 
         public static function userProfileImagesDir(int $userId) {
           return Constants::$userProfileImagesDir . "/" . $userId . ".jpg";

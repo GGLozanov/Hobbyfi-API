@@ -8,13 +8,24 @@
     /* @var $db */
 
     $token = APIUtils::getTokenFromHeadersOrDie();
-    $deviceToken = ConverterUtils::getFieldFromRequestBodyOrDie(Constants::$token);
 
     if($id = APIUtils::validateAuthorisedRequest($token)) {
-        if($db->uploadDeviceToken($id, $deviceToken)) {
-            APIUtils::displayAPIResult(array(Constants::$deviceTokenUploadSuccess));
-        } else {
-            APIUtils::displayAPIResult(array(Constants::$deviceTokenUploadFail), 406);
+        if($_SERVER['REQUEST_METHOD'] == 'POST') {
+            $deviceToken = ConverterUtils::getFieldFromRequestBodyOrDie(Constants::$token);
+
+            if($db->uploadDeviceToken($id, $deviceToken)) {
+                APIUtils::displayAPIResult(array(Constants::$deviceTokenUploadSuccess));
+            } else {
+                APIUtils::displayAPIResult(array(Constants::$deviceTokenUploadFail), 406);
+            }
+        } else if ($_SERVER['REQUEST_METHOD'] == 'DELETE') {
+            $deviceToken = ConverterUtils::getFieldFromRequestBodyOrDie(Constants::$token, $_GET);
+
+            if($db->deleteDeviceToken($id, $deviceToken)) {
+                APIUtils::displayAPIResult(array(Constants::$deviceTokenDeleteSuccess));
+            } else {
+                APIUtils::displayAPIResult(array(Constants::$deviceTokenDeleteFail), 406);
+            }
         }
     }
 

@@ -26,7 +26,7 @@
                 $user->isUpdateFormEmpty() && $leaveChatroomId == null && $chatroomId == null
         )) {
             if($chatroomIds = $db->getUserChatroomIds($userId)) {
-                $db->sendBatchedNotificationToChatroom($chatroomIds,
+                $db->forwardBatchedMessageToSocketServer($chatroomIds,
                     Constants::$EDIT_USER_TYPE,
                     $user
                 ); // send batched chatroom update notifications if user is in ANY chatrooms
