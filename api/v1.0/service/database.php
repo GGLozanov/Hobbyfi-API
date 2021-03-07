@@ -1,5 +1,6 @@
 <?php
-    include_once "../consts/constants.php";
+    require_once("../consts/constants.php");
+    require_once("../forwarder/socket_server_forwarder.php");
     use Kreait\Firebase\Factory;
     use Google\Cloud\Firestore\FirestoreClient;
 
@@ -151,7 +152,8 @@
             return null;
         }
 
-        public function updateUser(User $user, ?string $password, ?int $leaveChatroomId = null, ?int $joinChatroomId = null) {
+        public function updateUser(User $user, ?string $password,
+                                   ?int $leaveChatroomId = null, ?int $joinChatroomId = null, string $authToken) {
             $this->connection->begin_transaction();
             $userUpdateSuccess = true;
             // FIXME: Pass in this as argument from edit.php
@@ -187,14 +189,12 @@
                     // send notification for joining
                     $this->insertUserChatroomId($user->getId(), $joinChatroomId);
                     $userUpdateSuccess = $this->forwardUserMessageToSocketServer($joinChatroomId, $user,
-                        Constants::$JOIN_USER_TYPE, $this->getIdAndDeviceTokenPairsForUsersInChatroom($joinChatroomId),
-                            Constants::timelineUserJoinMessage($user->getName()));
+                        Constants::$JOIN_USER_TYPE, Constants::timelineUserJoinMessage($user->getName()), $authToken);
                 } else if($leaveChatroomId != null) { // else get if they are currently in chatroom (or previous chatroom for user)
                     // send notification for edit/leave otherwise
                     $this->deleteUserChatroomId($user->getId(), $leaveChatroomId);
                     $userUpdateSuccess = $this->forwardUserMessageToSocketServer($leaveChatroomId, $user,
-                        Constants::$LEAVE_USER_TYPE, $this->getIdAndDeviceTokenPairsForUsersInChatroom($leaveChatroomId),
-                            Constants::timelineUserLeaveMessage($user->getName()));
+                        Constants::$LEAVE_USER_TYPE, Constants::timelineUserLeaveMessage($user->getName()), $authToken);
 
                     $firestoreDocSnapshot = $this->firestore->collection(Constants::$locations)
                         ->document($user->getName())->snapshot();
@@ -218,7 +218,8 @@
                 $this->forwardBatchedMessageToSocketServerOnCond($userUpdateSuccess,
                     $chatroomIds,
                     Constants::$EDIT_USER_TYPE,
-                    $user
+                    $user,
+                    $authToken
                 );
             }
 
@@ -238,7 +239,7 @@
             return $updateSuccess;
         }
 
-        public function kickUserFromChatroom(int $ownerId, int $kickUserId) {
+        public function kickUserFromChatroom(int $ownerId, int $kickUserId, string $authToken) {
             $this->connection->begin_transaction();
             $ownerChatroomId = $this->getOwnerChatroomId($ownerId);
             $userChatroomIds = $this->getUserChatroomIds($kickUserId);
@@ -248,13 +249,14 @@
                 return false;
             }
 
-            $updateSuccess = $this->updateUser(new User($kickUserId), null, $ownerChatroomId, null);
+            $updateSuccess = $this->updateUser(new User($kickUserId), null, $ownerChatroomId,
+                null, $authToken);
 
             $this->finishTransactionOnCond($updateSuccess);
             return $updateSuccess;
         }
 
-        public function deleteUser(int $id) {
+        public function deleteUser(int $id, string $authToken) {
             include_once "../utils/image_utils.php";
             $this->connection->begin_transaction();
 
@@ -281,10 +283,11 @@
 
             if($deleteSuccess) {
                 if($deleteChatroom) {
-                    $this->fcm->sendMessageToChatroom(
+                    $this->forwardMessageToSocketServer(
                         $ownerId,
                         Constants::$DELETE_CHATROOM_TYPE,
-                        new Chatroom($ownerId)
+                        new Chatroom($ownerId),
+                        $authToken
                     );
                     foreach($this->firestore->collection(Constants::$locations)
                                 ->where(Constants::$chatroomId, 'array-contains', $ownerId)
@@ -298,7 +301,8 @@
                     $this->forwardUserBatchedMessageToSocketServer($chatroomIds,
                         $user,
                         Constants::$LEAVE_USER_TYPE,
-                        Constants::timelineUserLeaveMessage($user->getName())
+                        Constants::timelineUserLeaveMessage($user->getName()),
+                        $authToken
                     );
                 }
 
@@ -398,7 +402,7 @@
             return null;
         }
 
-        public function updateChatroom(Chatroom $chatroom) {
+        public function updateChatroom(Chatroom $chatroom, string $authToken) {
             // Owner evaluation not needed for now due to being exposed in chatroom edit.php
             // which is why chatroomId is passed in
             $this->connection->begin_transaction();
@@ -429,14 +433,15 @@
             $this->forwardMessageToSocketServerOnCond($updateSuccess,
                 $chatroom->getId(),
                 Constants::$EDIT_CHATROOM_TYPE,
-                $chatroom
+                $chatroom,
+                $authToken
             );
 
             $this->finishTransactionOnCond($updateSuccess);
             return $updateSuccess;
         }
 
-        public function deleteChatroom(int $ownerId) {
+        public function deleteChatroom(int $ownerId, string $authToken) {
             include_once "../utils/image_utils.php";
 
             $this->connection->begin_transaction();
@@ -462,7 +467,8 @@
             $this->forwardMessageToSocketServerOnCond($deleteSuccess,
                 $chatroomId,
                 Constants::$DELETE_CHATROOM_TYPE,
-                new Chatroom($chatroomId)
+                new Chatroom($chatroomId),
+                $authToken
             );
             $this->finishTransactionOnCond($deleteSuccess);
             return $deleteSuccess;
@@ -614,7 +620,7 @@
             return (empty($stmt->error)) ? array() : null;
         }
 
-        public function createChatroomMessage(Message $message, bool $shouldFinishTransaction = true) {
+        public function createChatroomMessage(Message $message, string $authToken, bool $shouldFinishTransaction = true) {
             $this->connection->begin_transaction();
 
             if($message->getUserSentId() != null && (!($chatroomIds = $this->getUserChatroomIds($message->getUserSentId())) ||
@@ -648,7 +654,9 @@
                 $this->forwardMessageToSocketServerOnCond($insertSuccess,
                     $chatroomId,
                     Constants::$CREATE_MESSAGE_TYPE,
-                    $message);
+                    $message,
+                    $authToken
+                );
                 $this->finishTransactionOnCond($insertSuccess);
             } else {
                 // for now this means message img insert => replace message photo url with right one with latest insert id
@@ -666,13 +674,13 @@
         }
 
         // very bruh method
-        public function createChatroomImageMessage(Message $message) {
+        public function createChatroomImageMessage(Message $message, string $authToken) {
             require_once("../utils/image_utils.php");
 
             $base64Image = $message->getMessage();
             $chatroomId = $message->getChatroomSentId();
 
-            if(!($message = $this->createChatroomMessage($message, false))) {
+            if(!($message = $this->createChatroomMessage($message, $authToken, false))) {
                 $this->connection->rollback();
                 return null;
             }
@@ -681,11 +689,11 @@
                     $base64Image, Constants::$messages, false)) {
                 $this->connection->commit();
                 // no need for helper notification method here because this is in a "success create" context, per se
-//                $this->fcm->sendMessageToChatroom(
-//                    $chatroomId,
-//                    Constants::$CREATE_MESSAGE_TYPE,
-//                    $message
-//                );
+                $this->forwardMessageToSocketServer($chatroomId,
+                    Constants::$CREATE_MESSAGE_TYPE,
+                    $message,
+                    $authToken
+                );
                 return $message;
             }
 
@@ -693,7 +701,7 @@
             return null;
         }
 
-        public function deleteChatroomMessage(int $userId, int $messageId) {
+        public function deleteChatroomMessage(int $userId, int $messageId, string $authToken) {
             require_once("../utils/image_utils.php");
 
             $this->connection->begin_transaction();
@@ -718,13 +726,14 @@
             $this->forwardMessageToSocketServerOnCond($affectedRows,
                 $messageInfo[Constants::$chatroomSentId],
                 Constants::$DELETE_MESSAGE_TYPE,
-                new Message($messageId, null, null, $messageInfo[Constants::$chatroomSentId], $userId)
+                new Message($messageId, null, null, $messageInfo[Constants::$chatroomSentId], $userId),
+                $authToken
             );
             $this->finishTransactionOnCond($affectedRows);
             return $affectedRows;
         }
 
-        public function updateChatroomMessage(Message $message) {
+        public function updateChatroomMessage(Message $message, string $authToken) {
             // assert message owner & correct chatroom
             $this->connection->begin_transaction();
             $userSentMessageId = $message->getUserSentId();
@@ -740,7 +749,8 @@
             $this->forwardMessageToSocketServerOnCond($updateSuccess,
                 $messageInfo[Constants::$chatroomSentId],
                 Constants::$EDIT_MESSAGE_TYPE,
-                $message
+                $message,
+                $authToken
             );
             $this->finishTransactionOnCond($updateSuccess);
             return $updateSuccess;
@@ -832,7 +842,7 @@
         }
 
         // chatroom id is sent through query param
-        public function createChatroomEvent(int $ownerId, Event $event) {
+        public function createChatroomEvent(int $ownerId, Event $event, string $authToken) {
             $this->connection->begin_transaction();
 
             if(!($chatroomId = $this->getOwnerChatroomId($ownerId))) {
@@ -872,14 +882,15 @@
             $this->forwardMessageToSocketServerOnCond($eventCreateSuccess,
                 $chatroomId,
                 Constants::$CREATE_EVENT_TYPE,
-                $event
+                $event,
+                $authToken
             );
 
             $this->finishTransactionOnCond($eventCreateSuccess);
             return $eventId != null && $eventCreateSuccess ? $event : null;
         }
 
-        public function deleteChatroomEvent(int $ownerId, int $eventId) {
+        public function deleteChatroomEvent(int $ownerId, int $eventId, string $authToken) {
             $this->connection->begin_transaction();
 
             if(!($chatroomId = $this->getOwnerChatroomId($ownerId))) {
@@ -905,14 +916,15 @@
             $this->forwardMessageToSocketServerOnCond($deleteSuccess,
                 $chatroomId,
                 Constants::$DELETE_EVENT_TYPE,
-                new Event($eventId)
+                new Event($eventId),
+                $authToken
             );
             $this->finishTransactionOnCond($deleteSuccess);
 
             return $deleteSuccess ? $deleteSuccess : null;
         }
 
-        public function deleteOldChatroomEvents(int $ownerId) {
+        public function deleteOldChatroomEvents(int $ownerId, string $authToken) {
             $this->connection->begin_transaction();
 
             if(!($chatroomId = $this->getOwnerChatroomId($ownerId))) {
@@ -953,14 +965,15 @@
             $this->forwardMessageToSocketServerOnCond($deleteSuccess,
                 $chatroomId,
                 Constants::$DELETE_EVENT_BATCH_TYPE,
-                new Chatroom(null, null, null, null, null, $eventIds, null) // uh... don't ask
+                new Chatroom(null, null, null, null, null, $eventIds, null), // uh... don't ask
+                $authToken
             );
             $this->finishTransactionOnCond($deleteSuccess);
 
             return $deleteSuccess ? $eventIds : null;
         }
 
-        public function updateChatroomEvent(Event $event) {
+        public function updateChatroomEvent(Event $event, string $authToken) {
             $this->connection->begin_transaction();
 
             // $event->escapeStringProperties($this->connection);
@@ -970,7 +983,8 @@
             $this->forwardMessageToSocketServerOnCond($eventUpdateSuccess,
                 $event->getChatroomId(),
                 Constants::$EDIT_EVENT_TYPE,
-                $event
+                $event,
+                $authToken
             );
 
             $this->finishTransactionOnCond($eventUpdateSuccess);
@@ -1194,7 +1208,7 @@
 
         public function uploadDeviceToken(int $id, string $deviceToken) {
             $stmt = $this->connection->prepare(
-                "INSERT IGNORE INTO device_tokens(id, device_token) VALUES(?, ?)");
+                "INSERT IGNORE INTO device_tokens(user_id, device_token, last_update_time) VALUES(?, ?, NOW(6))");
             $stmt->bind_param("is", $id, $deviceToken);
 
             return $stmt->execute();
@@ -1225,16 +1239,56 @@
             return $this->extractDeviceTokenAndIdPairsFromJoinQuery($result, true);
         }
 
+        // FIXME: Unoptimised mappings and searches
         private function extractDeviceTokenAndIdPairsFromJoinQuery(mysqli_result $result, bool $groupedBySeparateChatroomIds = false) {
             if($result && ($rows = mysqli_fetch_all($result, MYSQLI_ASSOC)) != null) {
                 $idTokenMap = array();
+                $tokenMapIds = array();
+                
+                if($groupedBySeparateChatroomIds) {
+                    $tokenMapRoomIds = array();    
+                }
+                
+                $deviceTokenAndIdPairExtractor = function(array $row, array& $idTokenMap, array& $tokenMapIds) {
+                    if(!in_array($row[Constants::$userId], $tokenMapIds)) {
+                        $tokenMapIds[] = $row[Constants::$userId];
+                        $idTokenMap[] = array(
+                            Constants::$userId => $row[Constants::$userId],
+                            Constants::$deviceTokens => array($row[Constants::$deviceToken])
+                        );
+                    } else {
+                        $idTokenMap[array_search($row[Constants::$userId], $tokenMapIds)][Constants::$deviceTokens][] =
+                            $row[Constants::$deviceToken];
+                    }
+                };
+
+                $roomIdToDeviceTokenAndIdPairExtractor = function(array $row, array& $idTokenMap, array& $tokenMapIds, array& $tokenMapRoomIds)
+                            use ($deviceTokenAndIdPairExtractor) {
+                    if(!in_array($row[Constants::$chatroomId], $tokenMapRoomIds)) {
+                        $tokenMapIds[] = $row[Constants::$userId];
+                        $tokenMapRoomIds[] = $row[Constants::$chatroomId];
+                        $idTokenMap[] = array(Constants::$chatroomId => $row[Constants::$chatroomId],
+                            Constants::$idToToken => array(array(Constants::$userId => $row[Constants::$userId],
+                                Constants::$deviceTokens => array($row[Constants::$deviceToken])))
+                        );
+                    } else {
+                        $deviceTokenAndIdPairExtractor(
+                            $row,
+                            $idTokenMap[array_search($row[Constants::$chatroomId], $tokenMapIds)][Constants::$idToToken],
+                            $tokenMapIds
+                        );
+                    }
+                };
+
                 foreach($rows as $row) {
                     if(array_key_exists(Constants::$userId, $row) && array_key_exists(Constants::$deviceToken, $row)) {
                         if($groupedBySeparateChatroomIds) {
                             if(array_key_exists(Constants::$chatroomId, $row)) {
-                                $idTokenMap[$row[Constants::$chatroomId]][$row[Constants::$userId]][] = $row[Constants::$deviceToken];
+                                $roomIdToDeviceTokenAndIdPairExtractor($row, $idTokenMap, $tokenMapIds, $tokenMapRoomIds);
                             }
-                        } else $idTokenMap[$row[Constants::$userId]][] = $row[Constants::$deviceToken];
+                        } else {
+                            $deviceTokenAndIdPairExtractor($row, $idTokenMap,$tokenMapIds);
+                        }
                     }
                 }
                 return $idTokenMap;
@@ -1332,43 +1386,49 @@
         }
 
         /** forwarding message functions outlined below should ALWAYS be called from transaction context **/
-        
+
         private function forwardMessageToSocketServerOnCond(bool &$condition, int $chatroomId,
-                                                            string $notificationType, Model $message) {
+                                                            string $notificationType, Model $message, string $token) {
             if($condition) {
-                $condition = $this->forwardMessageToSocketServer($chatroomId,
-                    $this->getIdAndDeviceTokenPairsForUsersInChatroom($chatroomId), $notificationType, $message);
+                $condition = $this->forwardMessageToSocketServer($chatroomId, $notificationType, $message, $token) != false;
             }
         }
 
-        function forwardMessageToSocketServer(int $chatroomId, array $idToDeviceToken, string $notificationType, Model $message) {
-            return $this->forwarder->forwardRealtimeMessageToSocketServerWithRoomId($message, $chatroomId, $notificationType, $idToDeviceToken);
+        function forwardMessageToSocketServer(int $chatroomId,
+                                              string $notificationType, Model $message, string $token) {
+            return $this->forwarder->forwardRealtimeMessageToSocketServerWithRoomId($message, $chatroomId,
+                $notificationType, $this->getIdAndDeviceTokenPairsForUsersInChatroom($chatroomId), $token);
         }
 
-        private function forwardBatchedMessageToSocketServerOnCond(bool &$condition, array $chatroomIds, string $notificationType, Model $message) {
+        private function forwardBatchedMessageToSocketServerOnCond(bool &$condition, array $chatroomIds,
+                                                                    string $notificationType, Model $message, string $token) {
             if($condition) {
                 $condition = $this->forwardBatchedMessageToSocketServer(
                     $chatroomIds,
                     $notificationType,
-                    $message
-                );
+                    $message,
+                    $token
+                )  != false;
             }
         }
 
-        function forwardBatchedMessageToSocketServer(array $chatroomIds, string $notificationType, Model $message) {
+        function forwardBatchedMessageToSocketServer(array $chatroomIds, string $notificationType, Model $message, string $token) {
             return $this->forwarder->forwardRealtimeMessageToSecondaryServerWithRoomIdArray(
                 $message,
                 $chatroomIds,
                 $notificationType,
-                $this->getChatroomIdToIdAndDeviceTokenPairsForUsersInChatrooms($chatroomIds)
+                $this->getChatroomIdToIdAndDeviceTokenPairsForUsersInChatrooms($chatroomIds),
+                $token
             );
         }
 
-        private function forwardUserMessageToSocketServer(int $currentUserChatroomId, User $user, string $type, array $idToDeviceToken, string $chatMessage) {
+        private function forwardUserMessageToSocketServer(int $currentUserChatroomId, User $user,
+                                                          string $type, string $chatMessage, string $token) {
             $this->forwarder->forwardRealtimeMessageToSocketServerWithRoomId($user,
                 $currentUserChatroomId,
                 $type,
-                $idToDeviceToken
+                $this->getIdAndDeviceTokenPairsForUsersInChatroom($currentUserChatroomId),
+                $token
             );
 
             $messageCreated = $this->createChatroomMessage(new Message(
@@ -1382,11 +1442,12 @@
         }
 
         private function forwardUserBatchedMessageToSocketServer(array $chatroomIds, User $user, string $type,
-                                                                 string $chatMessage) {
+                                                                 string $chatMessage, string $token) {
             $this->forwarder->forwardRealtimeMessageToSecondaryServerWithRoomIdArray($user,
                 $chatroomIds,
                 $type,
-                $this->getChatroomIdToIdAndDeviceTokenPairsForUsersInChatrooms($chatroomIds)
+                $this->getChatroomIdToIdAndDeviceTokenPairsForUsersInChatrooms($chatroomIds),
+                $token
             );
 
             // BIG FIXME: Optimise sending of new message notifications to individual chatrooms too!

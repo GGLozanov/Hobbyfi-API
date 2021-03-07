@@ -12,7 +12,7 @@
     $token = APIUtils::getTokenFromHeadersOrDie();
 
     if($id = APIUtils::validateAuthorisedRequest($token)) {
-        if($db->deleteChatroom($id)) {
+        if($db->deleteChatroom($id, $token)) {
             $status = Constants::$ok;
             $code = 200;
         } else {

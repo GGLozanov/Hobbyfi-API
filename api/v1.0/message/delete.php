@@ -14,7 +14,7 @@
         $messageId = ConverterUtils::getFieldIntValueFromRequestBodyOrDie(Constants::$id, $_GET);
 
         // TODO: Extract into util method and fix code dup with other delete endpoints... zzzz
-        if($success = $db->deleteChatroomMessage($ownerId, $messageId)) {
+        if($success = $db->deleteChatroomMessage($ownerId, $messageId, $token)) {
             $status = Constants::$ok;
             $code = 200;
         } else {

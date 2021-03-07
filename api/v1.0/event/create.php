@@ -9,7 +9,7 @@
     if($id = APIUtils::validateAuthorisedRequest($token)) {
         $event = ConverterUtils::getEventCreate();
 
-        if($event = $db->createChatroomEvent($id, $event)) {
+        if($event = $db->createChatroomEvent($id, $event, $token)) {
 
             $status = ImageUtils::uploadImageBasedOnHasImage($event,
                 Constants::chatroomEventImagesDir($event->getId()), Constants::$events);

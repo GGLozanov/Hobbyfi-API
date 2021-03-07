@@ -24,15 +24,14 @@
             $event->isUpdateFormEmpty(),
             false
         )) {
-            $db->sendNotificationToChatroom(
-                $chatroomId,
+            $db->forwardMessageToSocketServer($chatroomId,
                 Constants::$EDIT_EVENT_TYPE,
-                $event
+                $event, $token
             );
             die;
         }
 
-        if($success = $db->updateChatroomEvent($event)) {
+        if($success = $db->updateChatroomEvent($event, $token)) {
             APIUtils::displayAPIResult(array(Constants::$response=>Constants::$ok), 200);
         } else {
             APIUtils::handleMultiResultError($success, Constants::$eventNotUpdated,

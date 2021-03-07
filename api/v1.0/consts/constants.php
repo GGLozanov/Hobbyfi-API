@@ -81,9 +81,12 @@
         public static string $messageId = "message_id";
         public static string $maxId = "max_id";
         public static string $idToToken = "id_to_device_token";
+        public static string $roomIdToIdAndDeviceToken = "room_id_to_id_and_device_token";
 
         public static string $roomId = "room_id";
         public static string $deviceToken = "device_token";
+        public static string $deviceTokens = "device_tokens";
+        public static string $invalidFCMToken = "Invalid FCM token sent";
 
         public static function userProfileImagesDir(int $userId) {
           return Constants::$userProfileImagesDir . "/" . $userId . ".jpg";

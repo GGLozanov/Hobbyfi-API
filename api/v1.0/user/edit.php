@@ -28,14 +28,15 @@
             if($chatroomIds = $db->getUserChatroomIds($userId)) {
                 $db->forwardBatchedMessageToSocketServer($chatroomIds,
                     Constants::$EDIT_USER_TYPE,
-                    $user
+                    $user,
+                    $token
                 ); // send batched chatroom update notifications if user is in ANY chatrooms
             }
             die;
         }
 
         if($db->updateUser($user,
-            $password != null ? password_hash($password, PASSWORD_DEFAULT) : null, $leaveChatroomId, $chatroomId
+            $password != null ? password_hash($password, PASSWORD_DEFAULT) : null, $leaveChatroomId, $chatroomId, $token
         )) {
             $status = Constants::$ok;
             $code = 200;

@@ -11,7 +11,7 @@
     $token = APIUtils::getTokenFromHeadersOrDie();
 
     if($ownerId = APIUtils::validateAuthorisedRequest($token)) {
-        if($deletedEventIds = $db->deleteOldChatroomEvents($ownerId)) {
+        if($deletedEventIds = $db->deleteOldChatroomEvents($ownerId, $token)) {
             APIUtils::displayAPIResult(array(Constants::$response=>Constants::$ok, Constants::$data_list=>$deletedEventIds));
         } else {
             APIUtils::handleMultiResultError($deletedEventIds, Constants::$noEventsToDelete, Constants::$eventDeleteNoPermission,

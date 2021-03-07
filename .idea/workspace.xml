@@ -23,12 +23,22 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="1ba16d1b-5e7e-476a-9cc1-ac6a9edbf432" name="Default Changelist" comment="">
-      <change afterPath="$PROJECT_DIR$/api/v1.0/forwarder/socketServer_forwarder.php" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/api/v1.0/chatroom/delete.php" beforeDir="false" afterPath="$PROJECT_DIR$/api/v1.0/chatroom/delete.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/api/v1.0/chatroom/edit.php" beforeDir="false" afterPath="$PROJECT_DIR$/api/v1.0/chatroom/edit.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/api/v1.0/chatroom/kick.php" beforeDir="false" afterPath="$PROJECT_DIR$/api/v1.0/chatroom/kick.php" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/api/v1.0/consts/constants.php" beforeDir="false" afterPath="$PROJECT_DIR$/api/v1.0/consts/constants.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/api/v1.0/fcm/fcm.php" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/api/v1.0/event/create.php" beforeDir="false" afterPath="$PROJECT_DIR$/api/v1.0/event/create.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/api/v1.0/event/delete.php" beforeDir="false" afterPath="$PROJECT_DIR$/api/v1.0/event/delete.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/api/v1.0/event/delete_old.php" beforeDir="false" afterPath="$PROJECT_DIR$/api/v1.0/event/delete_old.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/api/v1.0/event/edit.php" beforeDir="false" afterPath="$PROJECT_DIR$/api/v1.0/event/edit.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/api/v1.0/forwarder/socketServer_forwarder.php" beforeDir="false" afterPath="$PROJECT_DIR$/api/v1.0/forwarder/socket_server_forwarder.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/api/v1.0/message/create.php" beforeDir="false" afterPath="$PROJECT_DIR$/api/v1.0/message/create.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/api/v1.0/message/delete.php" beforeDir="false" afterPath="$PROJECT_DIR$/api/v1.0/message/delete.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/api/v1.0/message/edit.php" beforeDir="false" afterPath="$PROJECT_DIR$/api/v1.0/message/edit.php" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/api/v1.0/service/database.php" beforeDir="false" afterPath="$PROJECT_DIR$/api/v1.0/service/database.php" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/api/v1.0/token/fcm.php" beforeDir="false" afterPath="$PROJECT_DIR$/api/v1.0/token/fcm.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/api/v1.0/user/delete.php" beforeDir="false" afterPath="$PROJECT_DIR$/api/v1.0/user/delete.php" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/api/v1.0/user/edit.php" beforeDir="false" afterPath="$PROJECT_DIR$/api/v1.0/user/edit.php" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -121,6 +131,7 @@
     <property name="node.js.path.for.package.tslint" value="project" />
     <property name="node.js.selected.package.eslint" value="(autodetect)" />
     <property name="node.js.selected.package.tslint" value="(autodetect)" />
+    <property name="nodejs_package_manager_path" value="npm" />
     <property name="php.override.implement.member.chooser.php.doc" value="NONE" />
     <property name="settings.editor.selected.configurable" value="reference.settingsdialog.IDE.editor.colors.Color Scheme Font" />
     <property name="vue.rearranger.settings.migration" value="true" />
@@ -267,14 +278,14 @@
       <screen x="0" y="0" width="1920" height="1040" />
     </state>
     <state width="498" height="446" key="SwitcherDM/0.0.1920.1040@0.0.1920.1040" timestamp="1608310622568" />
-    <state x="1226" y="313" width="585" height="700" key="find.popup" timestamp="1615053824437">
+    <state x="1236" y="211" width="585" height="700" key="find.popup" timestamp="1615121200856">
       <screen x="0" y="0" width="1920" height="1040" />
     </state>
-    <state x="1226" y="313" width="585" height="700" key="find.popup/0.0.1920.1040@0.0.1920.1040" timestamp="1615053824437" />
-    <state x="616" y="240" key="run.anything.popup" timestamp="1615062538230">
+    <state x="1236" y="211" width="585" height="700" key="find.popup/0.0.1920.1040@0.0.1920.1040" timestamp="1615121200856" />
+    <state x="616" y="240" key="run.anything.popup" timestamp="1615117411678">
       <screen x="0" y="0" width="1920" height="1040" />
     </state>
-    <state x="616" y="240" key="run.anything.popup/0.0.1920.1040@0.0.1920.1040" timestamp="1615062538230" />
+    <state x="616" y="240" key="run.anything.popup/0.0.1920.1040@0.0.1920.1040" timestamp="1615117411678" />
     <state x="623" y="225" width="672" height="160" key="search.everywhere.popup" timestamp="1615054491395">
       <screen x="0" y="0" width="1920" height="1040" />
     </state>

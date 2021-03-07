@@ -15,8 +15,8 @@
         $message = ConverterUtils::getMessageCreate($ownerId, $chatroomId);
 
         if($message = (array_key_exists(Constants::$message, $_POST) ?
-                $db->createChatroomMessage($message)
-                    : $db->createChatroomImageMessage($message))) {
+                $db->createChatroomMessage($message, $token)
+                    : $db->createChatroomImageMessage($message, $token))) {
             APIUtils::displayAPIResult(array(Constants::$response=>Constants::$ok,
                 Constants::$id=>$message->getId(), Constants::$createTime=>$message->getCreateTime()));
         } else {

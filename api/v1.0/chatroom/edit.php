@@ -29,10 +29,10 @@
             Constants::$chatrooms,
             $chatroom->isUpdateFormEmpty()
         )) {
-            $db->sendNotificationToChatroom(
-                $chatroom->getId(),
+            $db->forwardMessageToSocketServer($chatroom->getId(),
                 Constants::$EDIT_CHATROOM_TYPE,
-                $chatroom
+                $chatroom,
+                $token
             );
             die;
         }

@@ -12,7 +12,7 @@
     $eventId = ConverterUtils::getFieldIntValueFromRequestBodyOrDie(Constants::$id, $_GET);
 
     if($ownerId = APIUtils::validateAuthorisedRequest($token)) {
-        if($success = $db->deleteChatroomEvent($ownerId, $eventId)) {
+        if($success = $db->deleteChatroomEvent($ownerId, $eventId, $token)) {
             APIUtils::displayAPIResult(array(Constants::$response=>Constants::$ok));
         } else {
             APIUtils::handleMultiResultError($success, Constants::$eventNotDeleted,
