@@ -22,7 +22,7 @@
             $urlEncodedData = http_build_query($fields);
 
             // TODO: change to different hosted URL
-            $curl = curl_init('http://localhost:3000/receive_server_message');
+            $curl = curl_init( 'https://hobbyfi-socketio.herokuapp.com/receive_server_message');
 
             curl_setopt($curl, CURLOPT_CUSTOMREQUEST, "POST");
             curl_setopt($curl, CURLOPT_POST, 1);
