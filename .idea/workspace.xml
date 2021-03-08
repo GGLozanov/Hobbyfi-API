@@ -22,10 +22,7 @@
     <select />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="1ba16d1b-5e7e-476a-9cc1-ac6a9edbf432" name="Default Changelist" comment="">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/api/v1.0/forwarder/socket_server_forwarder.php" beforeDir="false" afterPath="$PROJECT_DIR$/api/v1.0/forwarder/socket_server_forwarder.php" afterDir="false" />
-    </list>
+    <list default="true" id="1ba16d1b-5e7e-476a-9cc1-ac6a9edbf432" name="Default Changelist" comment="" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
