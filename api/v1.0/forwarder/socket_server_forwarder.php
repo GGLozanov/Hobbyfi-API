@@ -21,19 +21,20 @@
         private function sendForwardingRequestToSocketServer(array $fields, string $token) {
             $urlEncodedData = http_build_query($fields);
 
-            // TODO: change to different hosted URL
             $curl = curl_init( 'https://hobbyfi-socketio.herokuapp.com/receive_server_message');
 
             curl_setopt($curl, CURLOPT_CUSTOMREQUEST, "POST");
             curl_setopt($curl, CURLOPT_POST, 1);
-            curl_setopt($curl, CURLOPT_PORT, 3000);
+            curl_setopt($curl, CURLOPT_PORT, 443);
             curl_setopt($curl, CURLOPT_POSTFIELDS, $urlEncodedData);
             curl_setopt($curl, CURLOPT_RETURNTRANSFER, true);
+            curl_setopt($curl, CURLOPT_CONNECTTIMEOUT, 15);
             curl_setopt($curl, CURLOPT_HTTPHEADER, array(
                     'Content-Type: application/x-www-form-urlencoded',
                     'Accept: application/x-www-form-urlencoded',
                     'Content-Length: ' . strlen($urlEncodedData),
-                    'Authorization: ' . $token
+                    'Authorization: ' . $token,
+                    'Expect:'
                 )
             );
             curl_setopt($curl, CURLOPT_TIMEOUT, 10);
