@@ -1437,7 +1437,7 @@
                 null,
                 $currentUserChatroomId,
                 null
-            ));
+            ), $token);
             return isset($messageCreated);
         }
 

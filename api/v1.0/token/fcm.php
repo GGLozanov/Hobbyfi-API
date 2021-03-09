@@ -22,8 +22,12 @@
 
         try {
             $tokenAssoc = $messaging->validateRegistrationTokens(RegistrationTokens::fromValue(RegistrationToken::fromValue($deviceToken)));
-            return ($deleting ? ($tokenAssoc['valid'] == 1 && $tokenAssoc['unknown'] == 0) :
-                    ($tokenAssoc['valid'] == 0 && $tokenAssoc['unknown'] == 1)) && $tokenAssoc['invalid'] == 0;
+            $validCount = count($tokenAssoc['valid']);
+            $invalidCount = count($tokenAssoc['invalid']);
+            $unknownCount = count($tokenAssoc['unknown']);
+
+            return ($deleting ? ($validCount == 1 && $unknownCount == 0) :
+                    (($validCount == 0 && $unknownCount == 1) || $validCount == 1)) && $invalidCount == 0;
         } catch (\Kreait\Firebase\Exception\MessagingException $e) {
             return false;
         } catch (\Kreait\Firebase\Exception\FirebaseException $e) {
@@ -35,28 +39,28 @@
         if($_SERVER['REQUEST_METHOD'] == 'POST') {
             $deviceToken = ConverterUtils::getFieldFromRequestBodyOrDie(Constants::$token);
 
-            if(!validateFCMToken($token, false)) {
+            if(!validateFCMToken($deviceToken, false)) {
                 $db->closeConnection();
                 APIUtils::displayAPIResultAndDie(array(Constants::$invalidFCMToken), 400);
             }
 
             if($db->uploadDeviceToken($id, $deviceToken)) {
-                APIUtils::displayAPIResult(array(Constants::$deviceTokenUploadSuccess));
+                APIUtils::displayAPIResult(array(Constants::$response=>Constants::$deviceTokenUploadSuccess));
             } else {
-                APIUtils::displayAPIResult(array(Constants::$deviceTokenUploadFail), 406);
+                APIUtils::displayAPIResult(array(Constants::$response=>Constants::$deviceTokenUploadFail), 406);
             }
         } else if ($_SERVER['REQUEST_METHOD'] == 'DELETE') {
             $deviceToken = ConverterUtils::getFieldFromRequestBodyOrDie(Constants::$token, $_GET);
 
-            if(!validateFCMToken($token, true)) {
+            if(!validateFCMToken($deviceToken, true)) {
                 $db->closeConnection();
-                APIUtils::displayAPIResultAndDie(array(Constants::$invalidFCMToken), 400);
+                APIUtils::displayAPIResultAndDie(array(Constants::$response=>Constants::$invalidFCMToken), 400);
             }
 
             if($db->deleteDeviceToken($id, $deviceToken)) {
-                APIUtils::displayAPIResult(array(Constants::$deviceTokenDeleteSuccess));
+                APIUtils::displayAPIResult(array(Constants::$response=>Constants::$deviceTokenDeleteSuccess));
             } else {
-                APIUtils::displayAPIResult(array(Constants::$deviceTokenDeleteFail), 406);
+                APIUtils::displayAPIResult(array(Constants::$response=>Constants::$deviceTokenDeleteFail), 406);
             }
         }
     }
