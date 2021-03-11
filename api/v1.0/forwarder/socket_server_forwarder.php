@@ -3,17 +3,17 @@
 
     class SocketServerForwarder {
         function forwardRealtimeMessageToSocketServerWithRoomId(Model $model, int $roomId,
-                                                                string $type, array $idToDeviceToken, string $token) {
+                                                                string $type, ?array $idToDeviceToken, string $token) {
             $fields = $this->encodePartiallyMessageDataToJson($model, $type);
-            $fields[Constants::$idToToken] = $idToDeviceToken;
+            $fields[Constants::$idToToken] = $idToDeviceToken ?? '[]';
             $fields[Constants::$roomId] = $roomId; // some duplication with this data and the model is to be expected, but this is added for total clarity
             return $this->sendForwardingRequestToSocketServer($fields, $token);
         }
 
         function forwardRealtimeMessageToSecondaryServerWithRoomIdArray(Model $model, array $roomIds,
-                                                                        string $type, array $roomIdToIdAndDeviceToken, string $token) {
+                                                                        string $type, ?array $roomIdToIdAndDeviceToken, string $token) {
             $fields = $this->encodePartiallyMessageDataToJson($model, $type);
-            $fields[Constants::$roomIdToIdAndDeviceToken] = $roomIdToIdAndDeviceToken;
+            $fields[Constants::$roomIdToIdAndDeviceToken] = $roomIdToIdAndDeviceToken ?? '[]';
             $fields[Constants::$roomId] = $roomIds;
             return $this->sendForwardingRequestToSocketServer($fields, $token);
         }

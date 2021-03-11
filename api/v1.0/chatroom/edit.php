@@ -37,7 +37,7 @@
             die;
         }
 
-        if($result = $db->updateChatroom($chatroom)) {
+        if($result = $db->updateChatroom($chatroom, $token)) {
             $status = Constants::$ok;
             $code = 200;
         } else {
