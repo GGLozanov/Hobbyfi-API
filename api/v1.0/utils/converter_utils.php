@@ -116,16 +116,20 @@
         }
 
         public static function getFieldIntValueFromRequestBodyOrNull(string $field, array $body = null) {
-            if(($value = ConverterUtils::getFieldFromRequestBody($field, $body)) == null) {
-                APIUtils::displayAPIResultAndDie(array(Constants::$response=>Constants::$missingDataError), 400);
+            if(is_null(($value = ConverterUtils::getFieldFromRequestBody($field, $body)))) {
+                return null;
             }
 
             return intval($value);
         }
 
         public static function getFieldIntValueFromRequestBodyOrDie(string $field, array $body = null) {
-            $value = ConverterUtils::getFieldFromRequestBody($field, $body);
-            return $value == null ? null : intval($value);
+            $value = ConverterUtils::getFieldIntValueFromRequestBodyOrNull($field, $body);
+            if($value == null) {
+                APIUtils::displayAPIResultAndDie(array(Constants::$response=>Constants::$missingDataError), 400);
+            }
+
+            return $value;
         }
 
         private static function getMappedTags(?string $tagField = null, int $recDepth = 0) {

@@ -8,7 +8,7 @@
     /** @var $db */
 
     $token = APIUtils::getTokenFromHeadersOrDie();
-    $leaveChatroomId = ConverterUtils::getFieldFromRequestBody(Constants::$leaveChatroomId);
+    $leaveChatroomId = ConverterUtils::getFieldIntValueFromRequestBodyOrNull(Constants::$leaveChatroomId);
     $chatroomId = ConverterUtils::getFieldIntValueFromRequestBodyOrNull(Constants::$chatroomId);
 
     if(isset($leaveChatroomId) && isset($chatroomId)) {
