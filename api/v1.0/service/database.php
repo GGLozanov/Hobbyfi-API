@@ -126,7 +126,7 @@
         public function getUser(int $id) { // user already auth'd at this point due to token => get user by id
             $user_result = $this->executeSingleIdParamStatement($id, "SELECT
                 us.description, us.username, us.email, us.has_image,
-                us_tags.tag_name, tgs.colour, tgs.is_from_facebook, usr_chrms.chatroom_id
+                us_tags.tag_name, tgs.colour, tgs.is_from_facebook, usr_chrms.chatroom_id, usr_chrms.push_allowed
                 FROM users us
                 LEFT JOIN user_chatrooms usr_chrms ON usr_chrms.user_id = us.id
                 LEFT JOIN user_tags us_tags ON us.id = us_tags.user_id
@@ -145,8 +145,12 @@
                     $rows[0][Constants::$email], $rows[0][Constants::$username],
                     $rows[0][Constants::$description], $rows[0][Constants::$hasImage],
                     $chatroomIds,
-                    $tags
-                );
+                    $tags,
+                    array_filter(array_map(function($row) {
+                        return $row[Constants::$pushAllowed] ? $row[Constants::$chatroomId] : null;
+                        }, $rows)
+                    )
+                ); // not optimal; hack solution because 2 iterations over the rows are being done
             }
 
             return null;
@@ -256,6 +260,13 @@
             return $updateSuccess;
         }
 
+        public function toggleUserPushNotificationAllowForChatroom(int $id, int $chatroomId, bool $toggle) {
+            $stmt = $this->connection->prepare("UPDATE user_chatrooms SET push_allowed = ? WHERE user_id = ? AND chatroom_id = ?");
+            $stmt->bind_param("iii", $toggle, $id, $chatroomId);
+            $stmt->execute();
+            return mysqli_affected_rows($this->connection) > 0;
+        }
+
         public function deleteUser(int $id, string $authToken) {
             include_once "../utils/image_utils.php";
             $this->connection->begin_transaction();
@@ -333,7 +344,7 @@
 
             $stmt = $this->connection->prepare(
                 "SELECT us.id, us.description, us.username, us.email, us.has_image, 
-                us_tags.tag_name, tgs.colour, tgs.is_from_facebook, us_chrms.chatroom_id FROM users us
+                us_tags.tag_name, tgs.colour, tgs.is_from_facebook, us_chrms.chatroom_id, us_chrms.push_allowed FROM users us
                 INNER JOIN user_chatrooms us_chrms ON us_chrms.user_id = us.id
                 LEFT JOIN user_tags us_tags ON us_tags.user_id = us.id
                 LEFT JOIN tags tgs ON tgs.name LIKE us_tags.tag_name
@@ -348,10 +359,11 @@
 
                 $tags = null;
                 $chatroomIds = null;
-                $this->extractTagsAndUniqueNumericArrayFromJoinQuery($rows, Constants::$chatroomId,
-                    $tags, $chatroomIds, true, true);
+                $pushAllowedChatroomIds = null;
+                $this->extractTagsAndTwoUniqueNumericArrayFromJoinQuery($rows, Constants::$chatroomId, Constants::$pushAllowed,
+                    $tags, $chatroomIds, $pushAllowedChatroomIds, true, true, true);
 
-                return $this->extractUsersFromJoinQuery($rows, $tags, $chatroomIds);
+                return $this->extractUsersFromJoinQuery($rows, $tags, $chatroomIds, $pushAllowedChatroomIds);
             }
 
             $this->connection->rollback();
@@ -1173,8 +1185,8 @@
             }, array());
         }
 
-        private function extractUsersFromJoinQuery(array $rows, ?array $tags, ?array $chatroomIds) {
-            return array_reduce($rows, function($result, array $row) use ($chatroomIds, $tags) {
+        private function extractUsersFromJoinQuery(array $rows, ?array $tags, ?array $chatroomIds, ?array $allowedPushChatroomIds) {
+            return array_reduce($rows, function($result, array $row) use ($allowedPushChatroomIds, $chatroomIds, $tags) {
                 if(!ModelUtils::arrayContainsIdValue($result, $row[Constants::$id])) {
                     $result[] = new User(
                         $row[Constants::$id],
@@ -1185,7 +1197,9 @@
                         $chatroomIds != null ? (array_key_exists($row[Constants::$id], $chatroomIds) ?
                             $chatroomIds[$row[Constants::$id]] : null) : null,
                         $tags != null ? (array_key_exists($row[Constants::$id], $tags) ?
-                            $tags[$row[Constants::$id]] : null) : null
+                            $tags[$row[Constants::$id]] : null) : null,
+                        $allowedPushChatroomIds != null ? (array_key_exists($row[Constants::$id], $allowedPushChatroomIds) ?
+                            $allowedPushChatroomIds[$row[Constants::$id]] : null) : null
                     );
                 }
                 return $result;
@@ -1225,14 +1239,15 @@
 
         private function getIdAndDeviceTokenPairsForUsersInChatroom(int $chatroomId) {
             $result = $this->executeSingleIdParamStatement($chatroomId, "SELECT dvc_tokens.user_id, dvc_tokens.device_token FROM device_tokens dvc_tokens 
-                    INNER JOIN user_chatrooms usr_chrms ON usr_chrms.user_id = dvc_tokens.user_id AND usr_chrms.chatroom_id = ?")->get_result();
+                    INNER JOIN user_chatrooms usr_chrms ON usr_chrms.user_id = dvc_tokens.user_id 
+                        AND usr_chrms.chatroom_id = ? AND usr_chrms.push_allowed = 1")->get_result();
             return $this->extractDeviceTokenAndIdPairsFromJoinQuery($result);
         }
 
         private function getChatroomIdToIdAndDeviceTokenPairsForUsersInChatrooms(array $chatroomIds) {
             $stmt = $this->connection->prepare("SELECT usr_chrms.chatroom_id, dvc_tokens.user_id, dvc_tokens.device_token FROM device_tokens dvc_tokens 
                     INNER JOIN user_chatrooms usr_chrms ON usr_chrms.user_id = dvc_tokens.user_id 
-                        AND usr_chrms.chatroom_id IN(" . implode(", ", $chatroomIds) .")");
+                        AND usr_chrms.chatroom_id IN(" . implode(", ", $chatroomIds) .") AND usr_chrms.push_allowed = 1");
             $stmt->execute();
             $result = $stmt->get_result();
 
@@ -1333,6 +1348,34 @@
             return false;
         }
 
+        private function parseTagsArrayRow(array $row, array& $tags, bool $keyTagsByRowId) {
+            if(!$this->isTagRowInvalid($row)) {
+                $tag = new Tag($row[Constants::$tagName], $row[Constants::$colour], $row[Constants::$isFromFacebook]);
+                if($keyTagsByRowId) {
+                    if(!in_array($tag,
+                        (array_key_exists($row[Constants::$id], $tags)
+                            ? $tags[$row[Constants::$id]] : array()))) {
+                        $tags[$row[Constants::$id]][] = $tag;
+                    }
+                } else if(!in_array($tag, $tags))
+                    $tags[] = $tag;
+            }
+        }
+
+        private function parseUniqueNumericArrayRow(array $row, array& $numeric, string $column, bool $keyNumericByRowId) {
+            if($row[$column] != null) {
+                if($keyNumericByRowId) {
+                    if(!in_array($row[$column],
+                        (array_key_exists($row[Constants::$id], $numeric)
+                            ? $numeric[$row[Constants::$id]] : array()))) {
+                        $numeric[$row[Constants::$id]][] = $row[$column];
+                    }
+                } else if(!in_array($row[$column], $numeric)) {
+                    $numeric[] = $row[$column];
+                }
+            }
+        }
+
         private function extractTagsAndUniqueNumericArrayFromJoinQuery(array $rows, string $column,
                                                                        ?array& $tags, ?array& $numeric,
                                                                        bool $keyTagsByRowId = false, bool $keyNumericByRowId = false) {
@@ -1350,30 +1393,46 @@
             if($parseTags || $parseNumericRow) {
                 foreach($rows as $row) {
                     if($parseTags) {
-                        if(!$this->isTagRowInvalid($row)) {
-                            $tag = new Tag($row[Constants::$tagName], $row[Constants::$colour], $row[Constants::$isFromFacebook]);
-                            if($keyTagsByRowId) {
-                                if(!in_array($tag,
-                                    (array_key_exists($row[Constants::$id], $tags)
-                                        ? $tags[$row[Constants::$id]] : array()))) {
-                                    $tags[$row[Constants::$id]][] = $tag;
-                                }
-                            } else if(!in_array($tag, $tags))
-                                $tags[] = $tag;
-                        }
+                        $this->parseTagsArrayRow($row, $tags, $keyTagsByRowId);
                     }
                     if($parseNumericRow) {
-                        if($row[$column] != null) {
-                            if($keyNumericByRowId) {
-                                if(!in_array($row[$column],
-                                    (array_key_exists($row[Constants::$id], $numeric)
-                                        ? $numeric[$row[Constants::$id]] : array()))) {
-                                    $numeric[$row[Constants::$id]][] = $row[$column];
-                                }
-                            } else if(!in_array($row[$column], $numeric)) {
-                                $numeric[] = $row[$column];
-                            }
-                        }
+                        $this->parseUniqueNumericArrayRow($row, $numeric, $column, $keyNumericByRowId);
+                    }
+                }
+                if($parseTags && !$keyTagsByRowId) $tags = array_values(array_unique($tags, SORT_REGULAR));
+            }
+        }
+
+        private function extractTagsAndTwoUniqueNumericArrayFromJoinQuery(array $rows, string $columnOne, string $columnTwo,
+                                                                       ?array& $tags, ?array& $numericOne, ?array& $numericTwo,
+                                                                       bool $keyTagsByRowId = false, bool $keyNumericOneByRowId = false,
+                                                                          bool $keyNumericTwoByRowId = false) {
+            $parseTags = $this->validateAllRowTags($rows);
+            $parseNumericRowOne = $this->validateAllRowColumns($rows, $columnOne);
+            $parseNumericRowTwo = $this->validateAllRowColumns($rows, $columnTwo);
+
+            if($parseTags) {
+                $tags = array();
+            }
+
+            if($parseNumericRowOne) {
+                $numericOne = array();
+            }
+
+            if($parseNumericRowTwo) {
+                $numericTwo = array();
+            }
+
+            if($parseTags || $parseNumericRowOne) {
+                foreach($rows as $row) {
+                    if($parseTags) {
+                        $this->parseTagsArrayRow($row, $tags, $keyTagsByRowId);
+                    }
+                    if($parseNumericRowOne) {
+                        $this->parseUniqueNumericArrayRow($row, $numeric, $columnOne, $keyNumericOneByRowId);
+                    }
+                    if($parseNumericRowTwo) {
+                        $this->parseUniqueNumericArrayRow($row, $numeric, $columnTwo, $keyNumericTwoByRowId);
                     }
                 }
                 if($parseTags && !$keyTagsByRowId) $tags = array_values(array_unique($tags, SORT_REGULAR));
@@ -1458,7 +1517,7 @@
                     null,
                     $chatroomId,
                     null
-                ));
+                ), $token);
             }
             return !empty($chatroomMessages);
         }

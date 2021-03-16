@@ -16,7 +16,10 @@
         public static string $userId = "user_id";
         public static string $leaveChatroomId = "leave_chatroom_id";
         public static string $chatroomId = "chatroom_id";
+        public static string $pushAllowed = "push_allowed";
         public static string $chatroomIds = "chatroom_ids";
+        public static string $toggle = "toggle";
+        public static string $allowedPushChatroomIds = "allowed_push_chatroom_ids";
         public static string $photoUrl = "photo_url";
         public static string $hasImage = "has_image";
         public static string $ownerId = "owner_id";
@@ -155,6 +158,10 @@
         public static string $eventCreateNoPermission = "Insufficient permissions to create this event";
         public static string $eventUpdateNoPermission = "Insufficient permissions to update this event";
         public static string $eventDeleteNoPermission = "Insufficient permissions to delete this/these event/events";
+
+        public static string $invalidToggleRange = "Toggle parameter must be between 0 and 1 only";
+        public static string $pushUserNotificationAllowUpdateSuccess = "Push notification toggle for user with this ID in this chatroom was successful";
+        public static string $pushUserNotificationAllowUpdateFail = "Push notification toggle for user with this ID in this chatroom failed";
 
         // TODO: Other models CRUD error strings
         public static string $userTagsTable = "user_tags";

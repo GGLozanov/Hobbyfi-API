@@ -14,6 +14,7 @@
         private ?string $email;
 
         private ?array $chatroomIds;
+        private ?array $allowedPushChatroomIds;
 
         public function __construct(
                 int $id = null, 
@@ -21,7 +22,7 @@
                 string $username = null, 
                 string $description = null, bool $hasImage = null,
                 array $chatroomIds = null,
-                array $tags = null) {
+                array $tags = null, array $allowedPushChatroomIds = null) {
             $this->id = $id;
             $this->email = $email;
             $this->name = $username;
@@ -29,6 +30,7 @@
             $this->hasImage = $hasImage;
             $this->chatroomIds = $chatroomIds;
             $this->tags = $tags;
+            $this->allowedPushChatroomIds = $allowedPushChatroomIds;
         }
 
         public function getUpdateQuery(string $userPassword = null) {
@@ -90,7 +92,8 @@
                 Constants::$photoUrl=>$this->hasImage ?
                     Constants::getPhotoUrlForDir(Constants::userProfileImagesDir($this->id))
                     : null,
-                Constants::$tags=>$this->getTags()
+                Constants::$tags=>$this->getTags(),
+                Constants::$allowed
             ];
         }
     }
