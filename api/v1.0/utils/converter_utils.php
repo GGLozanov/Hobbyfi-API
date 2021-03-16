@@ -125,7 +125,7 @@
 
         public static function getFieldIntValueFromRequestBodyOrDie(string $field, array $body = null) {
             $value = ConverterUtils::getFieldIntValueFromRequestBodyOrNull($field, $body);
-            if($value == null) {
+            if(is_null($value)) {
                 APIUtils::displayAPIResultAndDie(array(Constants::$response=>Constants::$missingDataError), 400);
             }
 

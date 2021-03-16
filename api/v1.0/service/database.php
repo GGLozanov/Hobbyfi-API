@@ -139,17 +139,16 @@
 
                 $tags = null;
                 $chatroomIds = null;
-                $this->extractTagsAndUniqueNumericArrayFromJoinQuery($rows, Constants::$chatroomId, $tags, $chatroomIds);
+                $allowedPushChatroomIds = null;
+                $this->extractTagsAndTwoUniqueNumericArrayWithPredicatesFromJoinQuery($rows, Constants::$chatroomId, Constants::$chatroomId, Constants::$pushAllowed,
+                    $tags, $chatroomIds, $allowedPushChatroomIds);
 
                 return new User($id,
                     $rows[0][Constants::$email], $rows[0][Constants::$username],
                     $rows[0][Constants::$description], $rows[0][Constants::$hasImage],
                     $chatroomIds,
                     $tags,
-                    array_filter(array_map(function($row) {
-                        return $row[Constants::$pushAllowed] ? $row[Constants::$chatroomId] : null;
-                        }, $rows)
-                    )
+                    $allowedPushChatroomIds
                 ); // not optimal; hack solution because 2 iterations over the rows are being done
             }
 
@@ -360,7 +359,7 @@
                 $tags = null;
                 $chatroomIds = null;
                 $pushAllowedChatroomIds = null;
-                $this->extractTagsAndTwoUniqueNumericArrayFromJoinQuery($rows, Constants::$chatroomId, Constants::$pushAllowed,
+                $this->extractTagsAndTwoUniqueNumericArrayWithPredicatesFromJoinQuery($rows, Constants::$chatroomId, Constants::$chatroomId, Constants::$pushAllowed,
                     $tags, $chatroomIds, $pushAllowedChatroomIds, true, true, true);
 
                 return $this->extractUsersFromJoinQuery($rows, $tags, $chatroomIds, $pushAllowedChatroomIds);
@@ -1376,6 +1375,20 @@
             }
         }
 
+        private function parseUniqueNumericArrayRowWithPredicate(array $row, array& $numeric, string $column, string $columnPredicate, bool $keyNumericByRowId) {
+            if($row[$column] != null) {
+                if($keyNumericByRowId) {
+                    if(!in_array($row[$column],
+                        (array_key_exists($row[Constants::$id], $numeric)
+                            ? $numeric[$row[Constants::$id]] : array())) && $row[$columnPredicate]) {
+                        $numeric[$row[Constants::$id]][] = $row[$column];
+                    }
+                } else if(!in_array($row[$column], $numeric) && $row[$columnPredicate]) {
+                    $numeric[] = $row[$column];
+                }
+            }
+        }
+
         private function extractTagsAndUniqueNumericArrayFromJoinQuery(array $rows, string $column,
                                                                        ?array& $tags, ?array& $numeric,
                                                                        bool $keyTagsByRowId = false, bool $keyNumericByRowId = false) {
@@ -1403,13 +1416,16 @@
             }
         }
 
-        private function extractTagsAndTwoUniqueNumericArrayFromJoinQuery(array $rows, string $columnOne, string $columnTwo,
-                                                                       ?array& $tags, ?array& $numericOne, ?array& $numericTwo,
-                                                                       bool $keyTagsByRowId = false, bool $keyNumericOneByRowId = false,
-                                                                          bool $keyNumericTwoByRowId = false) {
+        // might be the worst method I've written in my life
+        private function extractTagsAndTwoUniqueNumericArrayWithPredicatesFromJoinQuery(array $rows, string $columnOne, string $columnTwo,
+                                                                                        string $columnPredicate,
+                                                                                        ?array& $tags, ?array& $numericOne, ?array& $numericTwo,
+                                                                                        bool $keyTagsByRowId = false, bool $keyNumericOneByRowId = false,
+                                                                                        bool $keyAssocByRowId = false) {
             $parseTags = $this->validateAllRowTags($rows);
             $parseNumericRowOne = $this->validateAllRowColumns($rows, $columnOne);
-            $parseNumericRowTwo = $this->validateAllRowColumns($rows, $columnTwo);
+            $parseAssocRow = $this->validateAllRowColumns($rows, $columnTwo) &&
+                $this->validateAllRowColumns($rows, $columnPredicate);
 
             if($parseTags) {
                 $tags = array();
@@ -1419,20 +1435,20 @@
                 $numericOne = array();
             }
 
-            if($parseNumericRowTwo) {
+            if($parseAssocRow) {
                 $numericTwo = array();
             }
 
-            if($parseTags || $parseNumericRowOne) {
+            if($parseTags || $parseNumericRowOne || $parseAssocRow) {
                 foreach($rows as $row) {
                     if($parseTags) {
                         $this->parseTagsArrayRow($row, $tags, $keyTagsByRowId);
                     }
                     if($parseNumericRowOne) {
-                        $this->parseUniqueNumericArrayRow($row, $numeric, $columnOne, $keyNumericOneByRowId);
+                        $this->parseUniqueNumericArrayRow($row, $numericOne, $columnOne, $keyNumericOneByRowId);
                     }
-                    if($parseNumericRowTwo) {
-                        $this->parseUniqueNumericArrayRow($row, $numeric, $columnTwo, $keyNumericTwoByRowId);
+                    if($parseAssocRow) {
+                        $this->parseUniqueNumericArrayRowWithPredicate($row, $numericTwo, $columnTwo, $columnPredicate, $keyAssocByRowId);
                     }
                 }
                 if($parseTags && !$keyTagsByRowId) $tags = array_values(array_unique($tags, SORT_REGULAR));

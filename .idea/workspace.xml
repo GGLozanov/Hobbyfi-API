@@ -23,13 +23,10 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="1ba16d1b-5e7e-476a-9cc1-ac6a9edbf432" name="Default Changelist" comment="">
-      <change afterPath="$PROJECT_DIR$/api/v1.0/user/toggle_push.php" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/api/v1.0/consts/constants.php" beforeDir="false" afterPath="$PROJECT_DIR$/api/v1.0/consts/constants.php" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/api/v1.0/models/user.php" beforeDir="false" afterPath="$PROJECT_DIR$/api/v1.0/models/user.php" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/api/v1.0/service/database.php" beforeDir="false" afterPath="$PROJECT_DIR$/api/v1.0/service/database.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/api/v1.0/user/confirm_reset.php" beforeDir="false" afterPath="$PROJECT_DIR$/api/v1.0/user/confirm_reset.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/api/v1.0/user/reset_password.php" beforeDir="false" afterPath="$PROJECT_DIR$/api/v1.0/user/reset_password.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/api/v1.0/user/toggle_push.php" beforeDir="false" afterPath="$PROJECT_DIR$/api/v1.0/user/toggle_push.php" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -224,7 +221,8 @@
       <workItem from="1615397876266" duration="6372000" />
       <workItem from="1615479687521" duration="1837000" />
       <workItem from="1615711828542" duration="4178000" />
-      <workItem from="1615840629769" duration="9754000" />
+      <workItem from="1615840629769" duration="10715000" />
+      <workItem from="1615911224583" duration="3666000" />
     </task>
     <servers />
   </component>

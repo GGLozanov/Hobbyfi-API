@@ -93,7 +93,7 @@
                     Constants::getPhotoUrlForDir(Constants::userProfileImagesDir($this->id))
                     : null,
                 Constants::$tags=>$this->getTags(),
-                Constants::$allowed
+                Constants::$allowedPushChatroomIds=>$this->allowedPushChatroomIds
             ];
         }
     }

@@ -11,8 +11,9 @@
     $chatroomId = ConverterUtils::getFieldIntValueFromRequestBodyOrDie(Constants::$chatroomId);
     $toggle = ConverterUtils::getFieldIntValueFromRequestBodyOrDie(Constants::$toggle);
 
-    if($toggle != 0 || $toggle != 1) {
-        APIUtils::displayAPIResult(array(Constants::$response=>Constants::$invalidToggleRange), 400);
+    if($toggle != 0 && $toggle != 1) {
+        $db->closeConnection();
+        APIUtils::displayAPIResultAndDie(array(Constants::$response=>Constants::$invalidToggleRange), 400);
     }
 
     if($id = APIUtils::validateAuthorisedRequest($token)) {
