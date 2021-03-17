@@ -187,15 +187,24 @@
 
             if($shouldUpdateChatroomId) {
                 $user = $this->getUser($user->getId());
+                $chatroomIds = $user->getChatroomIds();
 
                 if($joinChatroomId != null) { // if user has updated chatroom id by joining
                     // send notification for joining
                     $this->insertUserChatroomId($user->getId(), $joinChatroomId);
+
+                    array_push($chatroomIds, $joinChatroomId);
+                    $user->setChatroomIds($chatroomIds);
+
                     $userUpdateSuccess = $this->forwardUserMessageToSocketServer($joinChatroomId, $user,
                         Constants::$JOIN_USER_TYPE, Constants::timelineUserJoinMessage($user->getName()), $authToken);
                 } else if($leaveChatroomId != null) { // else get if they are currently in chatroom (or previous chatroom for user)
                     // send notification for edit/leave otherwise
                     $this->deleteUserChatroomId($user->getId(), $leaveChatroomId);
+
+                    unset($chatroomIds[array_search($leaveChatroomId, $chatroomIds)]);
+                    $user->setChatroomIds(array_values($chatroomIds));
+
                     $userUpdateSuccess = $this->forwardUserMessageToSocketServer($leaveChatroomId, $user,
                         Constants::$LEAVE_USER_TYPE, Constants::timelineUserLeaveMessage($user->getName()), $authToken);
 
