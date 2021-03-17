@@ -402,7 +402,7 @@
             $chatroomCreateSuccess = $insertSuccess && $tagsInsertSuccess;
 
             if($chatroomCreateSuccess) {
-                $userUpdateStmt = $this->connection->prepare("INSERT INTO user_chatrooms VALUES(?, ?)");
+                $userUpdateStmt = $this->connection->prepare("INSERT INTO user_chatrooms VALUES(?, ?, 0)");
                 $userUpdateStmt->bind_param("ii", $ownerId, $chatroomId);
 
                 $chatroomCreateSuccess |= $userUpdateStmt->execute();
@@ -1142,17 +1142,18 @@
 
         private function getUserChatroomIdsInsertQuery(int $userId, array $chatroomIds) {
             $dataArray = array_map(function($chatroomId) use ($userId) {
-                return "($userId, $chatroomId)";
+                return "($userId, $chatroomId, 0)";
             }, $chatroomIds);
 
-            $sql = "INSERT IGNORE INTO user_chatrooms(" . Constants::$userId . ", " . Constants::$chatroomId . ") VALUES "; // IGNORE ignores duplicate key errors and doesn't insert same ids
+            $sql = "INSERT IGNORE INTO user_chatrooms(" . Constants::$userId . ", " . Constants::$chatroomId . ", "
+                . Constants::$pushAllowed . ") VALUES "; // IGNORE ignores duplicate key errors and doesn't insert same ids
             $sql .= implode(',', $dataArray);
 
             return $sql;
         }
 
         private function insertUserChatroomId(int $userId, int $chatroomId) {
-            $stmt = $this->connection->prepare("INSERT INTO user_chatrooms VALUES(?, ?)");
+            $stmt = $this->connection->prepare("INSERT INTO user_chatrooms VALUES(?, ?, 0)");
             $stmt->bind_param("ii", $userId, $chatroomId);
             return $stmt->execute();
         }
