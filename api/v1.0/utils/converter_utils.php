@@ -132,6 +132,30 @@
             return $value;
         }
 
+        public static function getDecodedNoAssocArrayFromRequestBodyOrDie(string $field, array $body = null) {
+            $jsonData = ConverterUtils::getFieldFromRequestBodyOrDie($field, $body);
+
+            if(is_array($jsonData)) {
+                return $jsonData;
+            }
+
+            try {
+                return json_decode($jsonData, false, 512, JSON_THROW_ON_ERROR);
+            } catch (Exception $e) {
+                APIUtils::displayAPIResultAndDie(array(Constants::$response=>Constants::$invalidDataError), 400);
+            }
+            return null;
+        }
+
+        public static function simpleFileGetContentsWithDieHandle(string $filename) {
+            $result = file_get_contents($filename);
+
+            if(!$result) {
+                APIUtils::displayAPIResultAndDie(array(Constants::$response=>Constants::$internalServerErrorNotConfigured), 500);
+            }
+            return $result;
+        }
+
         private static function getMappedTags(?string $tagField = null, int $recDepth = 0) {
             if($tagField == null)
                 $tagField = Constants::$tags;

@@ -1228,6 +1228,14 @@
             return $chatrooms == false ? array() : $chatrooms;
         }
 
+        public function removeFailedDeviceTokens(array $deviceTokens) {
+            $filterCondition = (count($deviceTokens) ? "device_token IN('" . implode("', '",
+                    array_map(function($deviceToken) { return $this->connection->real_escape_string($deviceToken); }, $deviceTokens)) . "')" : 0);
+            $stmt = $this->connection->prepare("DELETE FROM device_tokens WHERE " . $filterCondition);
+            $stmt->execute();
+
+            return $stmt->affected_rows > 0;
+        }
 
         public function uploadDeviceToken(int $id, string $deviceToken) {
             $stmt = $this->connection->prepare(
