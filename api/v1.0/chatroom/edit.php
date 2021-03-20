@@ -21,20 +21,8 @@
         }
 
         $chatroom->setId($chatroomId);
-
-        if(APIUtils::evaluateModelEditImageUpload(
-            $chatroom,
-            $chatroomId,
-            Constants::chatroomImagesDir($chatroomId),
-            Constants::$chatrooms,
-            $chatroom->isUpdateFormEmpty()
-        )) {
-            $db->forwardMessageToSocketServer($chatroom->getId(),
-                Constants::$EDIT_CHATROOM_TYPE,
-                $chatroom,
-                $token
-            );
-            die;
+        if($chatroom->isUpdateFormEmpty()) {
+            APIUtils::displayAPIResultAndDie(array(Constants::$response=>Constants::$noCredentialsForUpdateError), 400);
         }
 
         if($result = $db->updateChatroom($chatroom, $token)) {

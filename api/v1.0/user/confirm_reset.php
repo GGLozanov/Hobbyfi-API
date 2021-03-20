@@ -8,7 +8,9 @@
     /* @var $db */
 
     $token = ConverterUtils::getFieldFromRequestBodyOrDie(Constants::$token, $_GET);
-    $email = urldecode(ConverterUtils::getFieldFromRequestBodyOrDie(Constants::$email, $_GET));
+    $email = urldecode(ConverterUtils::getFieldFromRequestBodyWithCustomPredicateOrDie(Constants::$email, function($value) {
+        return filter_var($value, FILTER_VALIDATE_EMAIL);
+    }, $_GET));
 
     $idAndHash = $db->validateUserByEmail($email);
 

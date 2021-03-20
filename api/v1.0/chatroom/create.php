@@ -21,13 +21,13 @@
                 }
             }
 
-            $status = ImageUtils::uploadImageBasedOnHasImage($chatroom,
-                Constants::chatroomImagesDir($id), Constants::$chatrooms);
+//            $status = ImageUtils::uploadImageBasedOnHasImage($chatroom,
+//                Constants::chatroomImagesDir($id), Constants::$chatrooms);
 
             $db->closeConnection(); // make sure to close the connection after that (don't allow too many auths in one instance of the web service)
 
             APIUtils::displayAPIResultAndDie(array(
-                Constants::$response=>$status,
+                Constants::$response=>Constants::$ok,
                 Constants::$id=>$id
             )); // no need to return chatroom if client already has it; can be read & fetched in read endpoint
         } else {

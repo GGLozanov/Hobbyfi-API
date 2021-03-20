@@ -54,12 +54,10 @@
             return $deletionSuccess;
         }
 
-        public static function uploadImageBasedOnHasImage(Model $model, string $dir, string $modelTableName) {
-            if($model->getHasImage()) {
-                if(!ImageUtils::uploadImageToPath($model->getId(), $dir,
+        public static function uploadImageWithResponseReturn(int $id, string $dir, string $modelTableName) {
+            if(!ImageUtils::uploadImageToPath($id, $dir,
                     $_POST[Constants::$image], $modelTableName)) {
-                    return Constants::$imageUploadFailed;
-                }
+                return Constants::$imageUploadFailed;
             }
             return Constants::$ok;
         }

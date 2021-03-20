@@ -65,6 +65,7 @@
         public static string $authenticationErrorInvalidCredentials = "Invalid credentials";
         public static string $imageUploadFailed = "Image upload failed";
         public static string $invalidDataError = "Invalid data format! Some of the fields sent are impossible to coexist in a single request";
+        public static string $invalidTypeError = "Invalid type sent for image uploading. Allowed are 'chatrooms', 'chatroom_edit', 'users', 'user_edit', 'events', and 'event_edit'";
         public static string $deviceTokenUploadSuccess = "Device token upload for user with this ID succeeded";
         public static string $deviceTokenUploadFail = "Device token upload for user with this ID failed";
         public static string $deviceTokensDeleteSuccess = "Failed device tokens deletion succeeded";

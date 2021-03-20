@@ -8,7 +8,9 @@
     require "../config/core.php";
     /** @var $db */
 
-    $email = ConverterUtils::getFieldFromRequestBodyOrDie(Constants::$email, $_GET);
+    $email = ConverterUtils::getFieldFromRequestBodyWithCustomPredicateOrDie(Constants::$email, function($value) {
+        return filter_var($value, FILTER_VALIDATE_EMAIL);
+    }, $_GET);
     $password = ConverterUtils::getFieldFromRequestBodyOrDie(Constants::$password, $_GET);
     // password is transmitted as plain-text over client; usage of TLS/HTTPS in future (HTTPS already set up)
         // for securing client-server communication and avoiding MiTM
