@@ -32,12 +32,6 @@
         $code = 409; // 409 - conflict; resource already exists
     } else {
         if($id = $db->createUser($user, $password)) {
-            if($tags = $user->getTags()) {
-                if(!$db->updateModelTags(Constants::$userTagsTable, Constants::$userId, $id, $tags)) {
-                    $db->closeConnection();
-                    APIUtils::displayAPIResultAndDie(array(Constants::$response=>Constants::$tagsUploadFailed), 406);
-                }
-            }
             $user->setId($id);
 
             // if facebook user authenticates here, send the token back but just don't use it and authenticate facebook user client-side

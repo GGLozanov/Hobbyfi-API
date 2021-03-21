@@ -124,7 +124,7 @@
         }
 
         public function getUser(int $id) { // user already auth'd at this point due to token => get user by id
-            $user_result = $this->executeSingleIdParamStatement($id, "SELECT
+            $userStmt = $this->executeSingleIdParamStatement($id, "SELECT
                 us.description, us.username, us.email, us.has_image,
                 us_tags.tag_name, tgs.colour, tgs.is_from_facebook, usr_chrms.chatroom_id, usr_chrms.push_allowed
                 FROM users us
@@ -132,10 +132,12 @@
                 LEFT JOIN user_tags us_tags ON us.id = us_tags.user_id
                 LEFT JOIN tags tgs ON tgs.name LIKE us_tags.tag_name
                 WHERE id = ?"
-            )->get_result();
+            );
 
-            if(mysqli_num_rows($user_result) > 0) {
-                $rows = mysqli_fetch_all($user_result, MYSQLI_ASSOC); // fetch the resulting rows in the form of a map (associative array)
+            $userResult = $userStmt->get_result();
+
+            if(mysqli_num_rows($userResult) > 0) {
+                $rows = mysqli_fetch_all($userResult, MYSQLI_ASSOC); // fetch the resulting rows in the form of a map (associative array)
 
                 $tags = null;
                 $chatroomIds = null;
@@ -187,7 +189,7 @@
 
             if($shouldUpdateChatroomId) {
                 $user = $this->getUser($user->getId());
-                $chatroomIds = $user->getChatroomIds();
+                $chatroomIds = $user->getChatroomIds() ?: [];
 
                 if($joinChatroomId != null) { // if user has updated chatroom id by joining
                     // send notification for joining
@@ -295,7 +297,7 @@
                 }
             }
 
-            $username = $this->getUserUsername($id);
+            $user = $this->getUser($id);
 
             $stmt = $this->executeSingleIdParamStatement($id, "DELETE FROM users WHERE id = ?");
             $deleteSuccess = $stmt->affected_rows > 0;
@@ -316,7 +318,6 @@
                 }
 
                 if($leaveChatroom) {
-                    $user = $this->getUser($id);
                     $this->forwardUserBatchedMessageToSocketServer($chatroomIds,
                         $user,
                         Constants::$LEAVE_USER_TYPE,
@@ -332,7 +333,7 @@
                     true
                 );
 
-                $this->firestore->collection(Constants::$locations)->document($username)
+                $this->firestore->collection(Constants::$locations)->document($user->getName())
                         ->delete();
             }
 

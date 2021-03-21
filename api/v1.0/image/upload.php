@@ -20,6 +20,7 @@
             APIUtils::displayAPIResultAndDie(array(Constants::$response=>Constants::$invalidTypeError), 400);
         }
 
+        $chatroomId = null;
         if(strcmp($type, Constants::$EDIT_EVENT_TYPE) == 0) {
             $chatroomId = ConverterUtils::getFieldIntValueFromRequestBodyOrDie(Constants::$chatroomId);
         }
