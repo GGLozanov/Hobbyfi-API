@@ -85,25 +85,4 @@
                 print $status;
             } else APIUtils::displayAPIResult(array(Constants::$response=>$status), $code);
         }
-
-        // Function should ONLY be called for models that use the `TagModel` and `ImageModel` trait
-        // returns TRUE if model has ONLY image to update
-        // false otherwise
-        public static function evaluateModelEditImageUpload($model, int $id, string $dir, string $modelType,
-                                                            bool $shouldNotUpdateModel, bool $hasTags = true) {
-            require_once("../utils/image_utils.php");
-
-            if($model->getHasImage()) {
-                ImageUtils::uploadImageToPath($id, $dir, $_POST[Constants::$image], $modelType);
-
-                if($shouldNotUpdateModel) {
-                    APIUtils::displayAPIResult(array(Constants::$response=>Constants::$ok), 200);
-                    return true;
-                }
-            } else if($shouldNotUpdateModel && (!$hasTags || !($model->getTags()))) {
-                APIUtils::displayAPIResultAndDie(array(Constants::$response=>Constants::$noCredentialsForUpdateError), 400);
-            }
-
-            return false;
-        }
     }

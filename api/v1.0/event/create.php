@@ -9,15 +9,15 @@
     if($id = APIUtils::validateAuthorisedRequest($token)) {
         $event = ConverterUtils::getEventCreate();
 
-        if($event = $db->createChatroomEvent($id, $event)) {
+        if($event = $db->createChatroomEvent($id, $event, $token)) {
 
-            $status = ImageUtils::uploadImageBasedOnHasImage($event,
-                Constants::chatroomEventImagesDir($event->getId()), Constants::$events);
+//            $status = ImageUtils::uploadImageBasedOnHasImage($event,
+//                Constants::chatroomEventImagesDir($event->getId()), Constants::$events);
             
             $db->closeConnection();
 
             APIUtils::displayAPIResultAndDie(array(
-                Constants::$response=>$status,
+                Constants::$response=>Constants::$ok,
                 Constants::$id=>$event->getId(),
                 Constants::$startDate=>$event->getStartDate()
             ));

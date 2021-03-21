@@ -21,23 +21,11 @@
         }
 
         $chatroom->setId($chatroomId);
-
-        if(APIUtils::evaluateModelEditImageUpload(
-            $chatroom,
-            $chatroomId,
-            Constants::chatroomImagesDir($chatroomId),
-            Constants::$chatrooms,
-            $chatroom->isUpdateFormEmpty()
-        )) {
-            $db->sendNotificationToChatroom(
-                $chatroom->getId(),
-                Constants::$EDIT_CHATROOM_TYPE,
-                $chatroom
-            );
-            die;
+        if($chatroom->isUpdateFormEmpty()) {
+            APIUtils::displayAPIResultAndDie(array(Constants::$response=>Constants::$noCredentialsForUpdateError), 400);
         }
 
-        if($result = $db->updateChatroom($chatroom)) {
+        if($result = $db->updateChatroom($chatroom, $token)) {
             $status = Constants::$ok;
             $code = 200;
         } else {

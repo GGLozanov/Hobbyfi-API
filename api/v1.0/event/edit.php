@@ -15,24 +15,12 @@
         }
 
         $event->setChatroomId($chatroomId);
-
-        if(APIUtils::evaluateModelEditImageUpload(
-            $event,
-            $event->getId(),
-            Constants::chatroomEventImagesDir($event->getId()),
-            Constants::$events,
-            $event->isUpdateFormEmpty(),
-            false
-        )) {
-            $db->sendNotificationToChatroom(
-                $chatroomId,
-                Constants::$EDIT_EVENT_TYPE,
-                $event
-            );
-            die;
+        if($event->isUpdateFormEmpty()) {
+            $db->closeConnection();
+            APIUtils::displayAPIResultAndDie(array(Constants::$response=>Constants::$noCredentialsForUpdateError), 400);
         }
 
-        if($success = $db->updateChatroomEvent($event)) {
+        if($success = $db->updateChatroomEvent($event, $token)) {
             APIUtils::displayAPIResult(array(Constants::$response=>Constants::$ok), 200);
         } else {
             APIUtils::handleMultiResultError($success, Constants::$eventNotUpdated,

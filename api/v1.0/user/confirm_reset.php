@@ -8,7 +8,9 @@
     /* @var $db */
 
     $token = ConverterUtils::getFieldFromRequestBodyOrDie(Constants::$token, $_GET);
-    $email = urldecode(ConverterUtils::getFieldFromRequestBodyOrDie(Constants::$email, $_GET));
+    $email = urldecode(ConverterUtils::getFieldFromRequestBodyWithCustomPredicateOrDie(Constants::$email, function($value) {
+        return filter_var($value, FILTER_VALIDATE_EMAIL);
+    }, $_GET));
 
     $idAndHash = $db->validateUserByEmail($email);
 
@@ -23,7 +25,8 @@
 
         $newPassword = ConverterUtils::getFieldFromRequestBodyOrDie(Constants::$newPassword);
         if(!is_null($newPassword)) {
-            if($db->updateUser(new User($id), password_hash($newPassword, PASSWORD_DEFAULT))) { // empty placeholder user to trigger only update for password w/ id
+            if($db->updateUser(new User($id), password_hash($newPassword, PASSWORD_DEFAULT),
+                    null, null, $token)) { // empty placeholder user to trigger only update for password w/ id
                 header("Location: " . Constants::getServerPath() . "/static/password_reset_success.html");
                 exit();
             } else {

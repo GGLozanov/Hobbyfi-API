@@ -12,7 +12,7 @@
     if($ownerId = APIUtils::validateAuthorisedRequest($token)) {
         $message = ConverterUtils::getMessageUpdate($ownerId);
         
-        if($db->updateChatroomMessage($message)) {
+        if($db->updateChatroomMessage($message, $token)) {
             APIUtils::displayAPIResult(array(Constants::$response=>Constants::$ok));
         } else {
             APIUtils::displayAPIResult(array(Constants::$response=>Constants::$messageNotUpdated), 406);

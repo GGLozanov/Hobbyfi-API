@@ -8,7 +8,7 @@
     /** @var $db */
 
     $token = APIUtils::getTokenFromHeadersOrDie();
-    $leaveChatroomId = ConverterUtils::getFieldFromRequestBody(Constants::$leaveChatroomId);
+    $leaveChatroomId = ConverterUtils::getFieldIntValueFromRequestBodyOrNull(Constants::$leaveChatroomId);
     $chatroomId = ConverterUtils::getFieldIntValueFromRequestBodyOrNull(Constants::$chatroomId);
 
     if(isset($leaveChatroomId) && isset($chatroomId)) {
@@ -17,25 +17,11 @@
 
     if($userId = APIUtils::validateAuthorisedRequest($token)) {
         $user = ConverterUtils::getUserUpdate($userId);
-        if(APIUtils::evaluateModelEditImageUpload(
-            $user,
-            $userId,
-            Constants::$userProfileImagesDir,
-            Constants::$users,
-            ($password = ConverterUtils::getFieldFromRequestBody(Constants::$password)) == null &&
-                $user->isUpdateFormEmpty() && $leaveChatroomId == null && $chatroomId == null
-        )) {
-            if($chatroomIds = $db->getUserChatroomIds($userId)) {
-                $db->sendBatchedNotificationToChatroom($chatroomIds,
-                    Constants::$EDIT_USER_TYPE,
-                    $user
-                ); // send batched chatroom update notifications if user is in ANY chatrooms
-            }
-            die;
-        }
+
+        $password = ConverterUtils::getFieldFromRequestBody(Constants::$password);
 
         if($db->updateUser($user,
-            $password != null ? password_hash($password, PASSWORD_DEFAULT) : null, $leaveChatroomId, $chatroomId
+            $password != null ? password_hash($password, PASSWORD_DEFAULT) : null, $leaveChatroomId, $chatroomId, $token
         )) {
             $status = Constants::$ok;
             $code = 200;

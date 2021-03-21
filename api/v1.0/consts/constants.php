@@ -16,7 +16,10 @@
         public static string $userId = "user_id";
         public static string $leaveChatroomId = "leave_chatroom_id";
         public static string $chatroomId = "chatroom_id";
+        public static string $pushAllowed = "push_allowed";
         public static string $chatroomIds = "chatroom_ids";
+        public static string $toggle = "toggle";
+        public static string $allowedPushChatroomIds = "allowed_push_chatroom_ids";
         public static string $photoUrl = "photo_url";
         public static string $hasImage = "has_image";
         public static string $ownerId = "owner_id";
@@ -62,6 +65,13 @@
         public static string $authenticationErrorInvalidCredentials = "Invalid credentials";
         public static string $imageUploadFailed = "Image upload failed";
         public static string $invalidDataError = "Invalid data format! Some of the fields sent are impossible to coexist in a single request";
+        public static string $invalidTypeError = "Invalid type sent for image uploading. Allowed are 'chatrooms', 'chatroom_edit', 'users', 'user_edit', 'events', and 'event_edit'";
+        public static string $deviceTokenUploadSuccess = "Device token upload for user with this ID succeeded";
+        public static string $deviceTokenUploadFail = "Device token upload for user with this ID failed";
+        public static string $deviceTokensDeleteSuccess = "Failed device tokens deletion succeeded";
+        public static string $deviceTokensDeleteFail = "Failed device tokens deletion failed";
+        public static string $deviceTokenDeleteSuccess = "Device token deletion for user with this ID succeeded";
+        public static string $deviceTokenDeleteFail = "Device token deletion for user with this ID failed";
 
         public static string $userIdJwtKey = "userId";
 
@@ -76,6 +86,13 @@
         public static string $pageNumber = "page_number";
         public static string $messageId = "message_id";
         public static string $maxId = "max_id";
+        public static string $idToToken = "id_to_device_token";
+        public static string $roomIdToIdAndDeviceToken = "room_id_to_id_and_device_token";
+
+        public static string $roomId = "room_id";
+        public static string $deviceToken = "device_token";
+        public static string $deviceTokens = "device_tokens";
+        public static string $invalidFCMToken = "Invalid FCM token sent";
 
         public static function userProfileImagesDir(int $userId) {
           return Constants::$userProfileImagesDir . "/" . $userId . ".jpg";
@@ -144,6 +161,10 @@
         public static string $eventCreateNoPermission = "Insufficient permissions to create this event";
         public static string $eventUpdateNoPermission = "Insufficient permissions to update this event";
         public static string $eventDeleteNoPermission = "Insufficient permissions to delete this/these event/events";
+
+        public static string $invalidToggleRange = "Toggle parameter must be between 0 and 1 only";
+        public static string $pushUserNotificationAllowUpdateSuccess = "Push notification toggle for user with this ID in this chatroom was successful";
+        public static string $pushUserNotificationAllowUpdateFail = "Push notification toggle for user with this ID in this chatroom failed";
 
         // TODO: Other models CRUD error strings
         public static string $userTagsTable = "user_tags";

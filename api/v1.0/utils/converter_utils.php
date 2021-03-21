@@ -27,45 +27,65 @@
             return $value;
         }
 
+        public static function getFieldFromRequestBodyWithCustomPredicateOrDie(string $field, $filterPredicate, array $body = null) {
+            $value = ConverterUtils::getFieldFromRequestBodyOrDie($field, $body);
+
+            if($filterPredicate($value)) {
+                return $value;
+            } else APIUtils::displayAPIResultAndDie(array(Constants::$response=>Constants::$invalidDataError), 400);
+            die;
+        }
+
+        public static function getFieldFromRequestBodyWithCustomPredicateOrNull(string $field, $filterPredicate, array $body = null) {
+            $value = ConverterUtils::getFieldFromRequestBody($field, $body);
+
+            if($filterPredicate($value)) {
+                return $value;
+            }
+            return null;
+        }
+
         public static function getUserCreate() {
             $username = ConverterUtils::getFieldFromRequestBodyOrDie(Constants::$username);
-            $email = ConverterUtils::getFieldFromRequestBody(Constants::$email);
+            $email = ConverterUtils::getFieldFromRequestBodyWithCustomPredicateOrDie(Constants::$email, function($value) {
+                return filter_var($value, FILTER_VALIDATE_EMAIL);
+            });
             $description = ConverterUtils::getFieldFromRequestBody(Constants::$description);
-            $hasImage = ConverterUtils::getFieldFromRequestBody(Constants::$image) != null;
+            // $hasImage = ConverterUtils::getFieldFromRequestBody(Constants::$image) != null;
             $tags = ConverterUtils::getMappedTags(Constants::$tagsCreate);
 
-            return new User(null, $email, $username, $description, $hasImage, null, $tags);
+            return new User(null, $email, $username, $description, false, null, $tags);
         }
 
         public static function getUserUpdate(int $userId) {
-            $email = ConverterUtils::getFieldFromRequestBody(Constants::$email);
+            $email = ConverterUtils::getFieldFromRequestBodyWithCustomPredicateOrNull(Constants::$email, function($value) {
+                return filter_var($value, FILTER_VALIDATE_EMAIL);
+            });
             $username = ConverterUtils::getFieldFromRequestBody(Constants::$username);
             $description = ConverterUtils::getFieldFromRequestBody(Constants::$description);
             $chatroomId = ConverterUtils::getFieldIntValueFromRequestBodyOrNull(Constants::$chatroomId);
-            $hasImage = ConverterUtils::getFieldFromRequestBody(Constants::$image) != null;
             $tags = ConverterUtils::getMappedTags();
 
-            return new User($userId, $email, $username, $description, $hasImage,
+            return new User($userId, $email, $username, $description, false,
                 $chatroomId != null ? array($chatroomId) : null, $tags);
         }
 
         public static function getChatroomCreate(int $ownerId) {
             $name = ConverterUtils::getFieldFromRequestBodyOrDie(Constants::$name);
             $description = ConverterUtils::getFieldFromRequestBody(Constants::$description);
-            $hasImage = ConverterUtils::getFieldFromRequestBody(Constants::$image) != null;
             $tags = ConverterUtils::getMappedTags(Constants::$tagsCreate);
 
-            return new Chatroom(null, $name, $description, $hasImage, $ownerId, null, $tags);
+            return new Chatroom(null, $name, $description, false, $ownerId, null, $tags);
         }
 
         public static function getChatroomUpdate(int $ownerId) {
             $name = ConverterUtils::getFieldFromRequestBody(Constants::$name);
             $description = ConverterUtils::getFieldFromRequestBody(Constants::$description);
-            $hasImage = ConverterUtils::getFieldFromRequestBody(Constants::$image) != null;
             $tags = ConverterUtils::getMappedTags();
 
             // ID is added later on in update query
-            return new Chatroom(null, $name, $description, $hasImage, $ownerId, null, $tags);
+            return new Chatroom(null, $name, $description, false,
+                $ownerId, null, $tags);
         }
 
         public static function getMessageCreate(int $ownerId, int $chatroomId) {
@@ -116,16 +136,44 @@
         }
 
         public static function getFieldIntValueFromRequestBodyOrNull(string $field, array $body = null) {
-            if(($value = ConverterUtils::getFieldFromRequestBody($field, $body)) == null) {
-                APIUtils::displayAPIResultAndDie(array(Constants::$response=>Constants::$missingDataError), 400);
+            if(is_null(($value = ConverterUtils::getFieldFromRequestBody($field, $body)))) {
+                return null;
             }
 
             return intval($value);
         }
 
         public static function getFieldIntValueFromRequestBodyOrDie(string $field, array $body = null) {
-            $value = ConverterUtils::getFieldFromRequestBody($field, $body);
-            return $value == null ? null : intval($value);
+            $value = ConverterUtils::getFieldIntValueFromRequestBodyOrNull($field, $body);
+            if(is_null($value)) {
+                APIUtils::displayAPIResultAndDie(array(Constants::$response=>Constants::$missingDataError), 400);
+            }
+
+            return $value;
+        }
+
+        public static function getDecodedNoAssocArrayFromRequestBodyOrDie(string $field, array $body = null) {
+            $jsonData = ConverterUtils::getFieldFromRequestBodyOrDie($field, $body);
+
+            if(is_array($jsonData)) {
+                return $jsonData;
+            }
+
+            try {
+                return json_decode($jsonData, false, 512, JSON_THROW_ON_ERROR);
+            } catch (Exception $e) {
+                APIUtils::displayAPIResultAndDie(array(Constants::$response=>Constants::$invalidDataError), 400);
+            }
+            return null;
+        }
+
+        public static function simpleFileGetContentsWithDieHandle(string $filename) {
+            $result = file_get_contents($filename);
+
+            if(!$result) {
+                APIUtils::displayAPIResultAndDie(array(Constants::$response=>Constants::$internalServerErrorNotConfigured), 500);
+            }
+            return $result;
         }
 
         private static function getMappedTags(?string $tagField = null, int $recDepth = 0) {
