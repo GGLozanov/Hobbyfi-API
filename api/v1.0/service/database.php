@@ -665,11 +665,11 @@
             $messageId = mysqli_insert_id($this->connection);
             $message->setId($messageId);
 
-            // kinda dumb but workaround for now to get create time needed for create response
-            $message->setCreateTime($this->executeSingleIdParamStatement($messageId,
+            // kinda dumb but workaround for now to get create time needed for create response (error suppression because even though it works, it shows a weird notice)
+            @($message->setCreateTime($this->executeSingleIdParamStatement($messageId,
                 "SELECT create_time FROM messages WHERE id = ?")
                 ->get_result()
-                ->fetch_assoc()[Constants::$createTime]);
+                ->fetch_assoc()[Constants::$createTime]));
 
             if($shouldFinishTransaction) {
                 $this->forwardMessageToSocketServerOnCond($insertSuccess,
