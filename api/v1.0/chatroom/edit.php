@@ -21,7 +21,7 @@
         }
 
         $chatroom->setId($chatroomId);
-        if($chatroom->isUpdateFormEmpty()) {
+        if($chatroom->isUpdateFormEmpty() && is_null($chatroom->getTags())) {
             APIUtils::displayAPIResultAndDie(array(Constants::$response=>Constants::$noCredentialsForUpdateError), 400);
         }
 
