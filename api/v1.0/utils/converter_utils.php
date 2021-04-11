@@ -94,8 +94,7 @@
             // chatroom sent id garnered from db method
             return new Message(
                 null,
-                !is_null($message) ? $message :
-                    ConverterUtils::getFieldFromRequestBodyOrDie(Constants::$image),
+                $message,
                 null,
                 $chatroomId,
                 $ownerId
@@ -114,12 +113,12 @@
         public static function getEventCreate() {
             $name = ConverterUtils::getFieldFromRequestBodyOrDie(Constants::$name);
             $description = ConverterUtils::getFieldFromRequestBody(Constants::$description);
-            $hasImage = ConverterUtils::getFieldFromRequestBody(Constants::$image) != null;
+            // $hasImage = ConverterUtils::getFieldFromRequestBody(Constants::$image) != null;
             $date = ConverterUtils::getFieldFromRequestBodyOrDie(Constants::$date);
             $lat = ConverterUtils::getFieldFromRequestBodyOrDie(Constants::$lat);
             $long = ConverterUtils::getFieldFromRequestBodyOrDie(Constants::$long);
 
-            return new Event(null, $name, $description, $hasImage, null, $date, $lat, $long, null);
+            return new Event(null, $name, $description, false, null, $date, $lat, $long, null);
         }
 
         // TODO: No support added for chatroom id changing yet but it still exists as an opportunity in the model
@@ -127,12 +126,12 @@
             $id = ConverterUtils::getFieldIntValueFromRequestBodyOrDie(Constants::$id);
             $name = ConverterUtils::getFieldFromRequestBody(Constants::$name);
             $description = ConverterUtils::getFieldFromRequestBody(Constants::$description);
-            $hasImage = ConverterUtils::getFieldFromRequestBody(Constants::$image) != null;
+            // $hasImage = ConverterUtils::getFieldFromRequestBody(Constants::$image) != null;
             $date = ConverterUtils::getFieldFromRequestBody(Constants::$date);
             $lat = ConverterUtils::getFieldFromRequestBody(Constants::$lat);
             $long = ConverterUtils::getFieldFromRequestBody(Constants::$long);
             
-            return new Event($id, $name, $description, $hasImage, null, $date, $lat, $long, null);
+            return new Event($id, $name, $description, false, null, $date, $lat, $long, null);
         }
 
         public static function getFieldIntValueFromRequestBodyOrNull(string $field, array $body = null) {
@@ -194,6 +193,38 @@
                 $tags = TagUtils::extractTagsFromSingleJson($encodedTags);
             }
             return $tags;
+        }
+
+        public static function getFieldFromRequestBodyWithBase64CheckOrNull(string $field, array $body = null) {
+            if(($value = ConverterUtils::getFieldFromRequestBody($field, $body))) {
+                return null;
+            }
+
+            return ConverterUtils::isBase64($value) ? $value : null;
+        }
+
+        public static function getFieldFromRequestBodyWithBase64CheckOrDie(string $field, array $body = null) {
+            $value = ConverterUtils::getFieldFromRequestBodyOrDie($field, $body);
+
+            if(!ConverterUtils::isBase64($value)) {
+                APIUtils::displayAPIResultAndDie(array(Constants::$response=>Constants::$invalidImageEncodingError), 400);
+            }
+
+            return $value;
+        }
+
+        public static function isBase64($s) {
+            // Check if there are valid base64 characters
+            if (!preg_match('/^[a-zA-Z0-9\/\r\n+]*={0,2}$/', $s)) return false;
+
+            // Decode the string in strict mode and check the results
+            $decoded = base64_decode($s, true);
+            if(false === $decoded) return false;
+
+            // Encode the string again
+            // if(base64_encode($decoded) != $s) return false;
+
+            return true;
         }
     }
 ?>

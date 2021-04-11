@@ -12,7 +12,7 @@
     if($userId = APIUtils::validateAuthorisedRequest($token)) {
         $type = ConverterUtils::getFieldFromRequestBodyOrDie(Constants::$type);
         $modelId = ConverterUtils::getFieldIntValueFromRequestBodyOrDie(Constants::$id);
-        $image = ConverterUtils::getFieldFromRequestBodyOrDie(Constants::$image);
+        $image = ConverterUtils::getFieldFromRequestBodyWithBase64CheckOrDie(Constants::$image);
 
         if($type != Constants::$chatrooms && $type != Constants::$users
             && $type != Constants::$events && $type != Constants::$EDIT_EVENT_TYPE &&

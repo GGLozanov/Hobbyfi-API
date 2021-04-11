@@ -682,11 +682,12 @@
                 // for now this means message img insert => replace message photo url with right one with latest insert id
                 // FOR THIS TABLE (very bruh but such is life...)
                 $stmt = $this->connection->prepare("UPDATE messages SET message = ? WHERE id = ?");
-                $messagePhotoUrl = Constants::getPhotoUrlForDir(Constants::chatroomMessageImagesDir($chatroomId)
+                $messageWithPhotoUrl = ($message->getMessage() == null ? ''
+                        : ($message->getMessage() . ' ')) . Constants::getPhotoUrlForDir(Constants::chatroomMessageImagesDir($chatroomId)
                     . "/" . $messageId . ".jpg");
-                $stmt->bind_param("si", $messagePhotoUrl, $messageId);
+                $stmt->bind_param("si", $messageWithPhotoUrl, $messageId);
 
-                $message->setMessage($messagePhotoUrl);
+                $message->setMessage($messageWithPhotoUrl);
                 $insertSuccess = $stmt->execute();
             }
 
@@ -694,11 +695,14 @@
         }
 
         // very bruh method
-        public function createChatroomImageMessage(Message $message, string $authToken) {
+        public function createChatroomImageMessage(Message $message, string $base64Image, string $authToken) {
             require_once("../utils/image_utils.php");
 
-            $base64Image = $message->getMessage();
             $chatroomId = $message->getChatroomSentId();
+
+            if($message->getMessage() == null) {
+                $message->setMessage(""); // gets updated
+            }
 
             if(!($message = $this->createChatroomMessage($message, $authToken, false))) {
                 $this->connection->rollback();
@@ -774,6 +778,22 @@
             );
             $this->finishTransactionOnCond($updateSuccess);
             return $updateSuccess;
+        }
+
+        public function isChatroomMessageNotSolelyImage(int $messageId) {
+            $results = $this->executeSingleIdParamStatement($messageId,
+                "SELECT message, chatroom_sent_id FROM messages WHERE id = ?")->get_result();
+
+            if($results->num_rows > 0 && ($row = $results->fetch_assoc())) {
+                $supposedMessageImageUrl = Constants::getPhotoUrlForDir(
+                    Constants::chatroomMessageImagesDir($row[Constants::$chatroomSentId])
+                    . "/" . $messageId . ".jpg");
+                if(strcmp($row[Constants::$message], $supposedMessageImageUrl) == 0) return false;
+                else return strstr($row[Constants::$message], $supposedMessageImageUrl) ? $supposedMessageImageUrl : true;
+                    // check if message with image contained or just pure message
+            }
+
+            return null;
         }
 
         public function getChatroomEvent(int $userId, int $eventId) {

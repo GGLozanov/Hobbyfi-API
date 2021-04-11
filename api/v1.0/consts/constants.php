@@ -65,6 +65,7 @@
         public static string $authenticationErrorInvalidCredentials = "Invalid credentials";
         public static string $imageUploadFailed = "Image upload failed";
         public static string $invalidDataError = "Invalid data format! Some of the fields sent are impossible to coexist in a single request";
+        public static string $invalidImageEncodingError = "Invalid encoding for form field `image`! Images MUST be in Base64 format";
         public static string $invalidTypeError = "Invalid type sent for image uploading. Allowed are 'chatrooms', 'chatroom_edit', 'users', 'user_edit', 'events', and 'event_edit'";
         public static string $deviceTokenUploadSuccess = "Device token upload for user with this ID succeeded";
         public static string $deviceTokenUploadFail = "Device token upload for user with this ID failed";
@@ -72,6 +73,7 @@
         public static string $deviceTokensDeleteFail = "Failed device tokens deletion failed";
         public static string $deviceTokenDeleteSuccess = "Device token deletion for user with this ID succeeded";
         public static string $deviceTokenDeleteFail = "Device token deletion for user with this ID failed";
+        public static string $disallowedModificationOfImageMessages = "Purely image messages CANNOT be modified";
 
         public static string $userIdJwtKey = "userId";
 
