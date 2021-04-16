@@ -32,7 +32,7 @@
             )); // no need to return chatroom if client already has it; can be read & fetched in read endpoint
         } else {
             APIUtils::handleMultiResultError($id,
-                Constants::$chatroomNotCreated, Constants::$userAlreadyInChatroom, 406, 403);
+                Constants::$chatroomNotCreated, Constants::$chatroomMaxSize, 406, 429);
         }
     }
 

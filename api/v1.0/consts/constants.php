@@ -144,7 +144,7 @@
         public static string $chatroomReadNoPermissions = "Insufficient permissions to read any chatrooms joined. Make sure user with this id has chatrooms joined";
         public static string $chatroomNotDeleted = "Chatroom not deleted. User with this id may not be the owner of their chatroom";
 
-        public static string $userAlreadyInChatroom = "User already is an owner or part of a chatroom";
+        public static string $chatroomMaxSize = "Chatroom ownership amount (100) exceeded!";
         public static string $messageNotCreated = "Message not created. Bad input";
         public static string $messageNoChatroom = "Message not created. User with this id is not in the chatroom attempted to create the message in";
         public static string $messageNotUpdated = "Message not updated. User with this id may not have the right to update the message or the message may be a timeline";

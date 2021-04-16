@@ -13,9 +13,10 @@
 
     $token = APIUtils::getTokenFromHeadersOrDie();
     $kickUserId = ConverterUtils::getFieldIntValueFromRequestBodyOrDie(Constants::$userId);
+    $chatroomId = ConverterUtils::getFieldIntValueFromRequestBodyOrDie(Constants::$id);
 
     if($id = APIUtils::validateAuthorisedRequest($token)) {
-        if($db->kickUserFromChatroom($id, $kickUserId, $token)) {
+        if($db->kickUserFromChatroom($id, $chatroomId, $kickUserId, $token)) {
             APIUtils::displayAPIResult(array(Constants::$response=>Constants::$ok));
         } else {
             APIUtils::displayAPIResult(array(Constants::$response=>Constants::$kickFailedResponse), 406);

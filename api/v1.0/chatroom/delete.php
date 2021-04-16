@@ -10,9 +10,10 @@
     /* @var $db */
 
     $token = APIUtils::getTokenFromHeadersOrDie();
+    $chatroomId = ConverterUtils::getFieldIntValueFromRequestBodyOrDie(Constants::$id);
 
     if($id = APIUtils::validateAuthorisedRequest($token)) {
-        if($db->deleteChatroom($id, $token)) {
+        if($db->deleteChatroom($id, $chatroomId, $token)) {
             $status = Constants::$ok;
             $code = 200;
         } else {

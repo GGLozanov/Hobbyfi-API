@@ -78,13 +78,13 @@
             return new Chatroom(null, $name, $description, false, $ownerId, null, $tags);
         }
 
-        public static function getChatroomUpdate(int $ownerId) {
+        public static function getChatroomUpdate(int $id, int $ownerId) {
             $name = ConverterUtils::getFieldFromRequestBody(Constants::$name);
             $description = ConverterUtils::getFieldFromRequestBody(Constants::$description);
             $tags = ConverterUtils::getMappedTags();
 
             // ID is added later on in update query
-            return new Chatroom(null, $name, $description, false,
+            return new Chatroom($id, $name, $description, false,
                 $ownerId, null, $tags);
         }
 
@@ -110,7 +110,7 @@
             return new Message($id, $message, null, null, $ownerId);
         }
 
-        public static function getEventCreate() {
+        public static function getEventCreate(int $chatroomId) {
             $name = ConverterUtils::getFieldFromRequestBodyOrDie(Constants::$name);
             $description = ConverterUtils::getFieldFromRequestBody(Constants::$description);
             // $hasImage = ConverterUtils::getFieldFromRequestBody(Constants::$image) != null;
@@ -118,7 +118,7 @@
             $lat = ConverterUtils::getFieldFromRequestBodyOrDie(Constants::$lat);
             $long = ConverterUtils::getFieldFromRequestBodyOrDie(Constants::$long);
 
-            return new Event(null, $name, $description, false, null, $date, $lat, $long, null);
+            return new Event(null, $name, $description, false, null, $date, $lat, $long, $chatroomId);
         }
 
         // TODO: No support added for chatroom id changing yet but it still exists as an opportunity in the model

@@ -252,17 +252,16 @@
             return $updateSuccess;
         }
 
-        public function kickUserFromChatroom(int $ownerId, int $kickUserId, string $authToken) {
+        public function kickUserFromChatroom(int $ownerId, int $chatroomKickId, int $kickUserId, string $authToken) {
             $this->connection->begin_transaction();
-            $ownerChatroomId = $this->getOwnerChatroomId($ownerId);
-            $userChatroomIds = $this->getUserChatroomIds($kickUserId);
+            $ownerChatroomIds = $this->getOwnerChatroomIds($ownerId);
 
-            if(!is_array($userChatroomIds) || !in_array($ownerChatroomId, $userChatroomIds)) {
+            if(!is_array($ownerChatroomIds) || !in_array($chatroomKickId, $ownerChatroomIds)) {
                 $this->connection->rollback();
                 return false;
             }
 
-            $updateSuccess = $this->updateUser(new User($kickUserId), null, $ownerChatroomId,
+            $updateSuccess = $this->updateUser(new User($kickUserId), null, $chatroomKickId,
                 null, $authToken);
 
             $this->finishTransactionOnCond($updateSuccess);
@@ -280,17 +279,17 @@
             include_once "../utils/image_utils.php";
             $this->connection->begin_transaction();
 
-            $deleteChatroom = false;
+            $deleteChatrooms = false;
             $leaveChatroom = false;
-            $ownerId = null;
+            $ownChatroomIds = null;
             // db checks prior to deletion (can't access later on, duh)
             if($chatroomIds = $this->getUserChatroomIds($id)) {
-                if($ownerId = $this->getOwnerChatroomId($id)) {
+                if($ownChatroomIds = $this->getOwnerChatroomIds($id)) {
                     if(count($chatroomIds) > 1) { // has other chatrooms apart from his own
                         $leaveChatroom = true;
                     }
 
-                    $deleteChatroom = true;
+                    $deleteChatrooms = true;
                 } else {
                     $leaveChatroom = true;
                 }
@@ -302,17 +301,18 @@
             $deleteSuccess = $stmt->affected_rows > 0;
 
             if($deleteSuccess) {
-                if($deleteChatroom) {
-                    $this->forwardMessageToSocketServer(
-                        $ownerId,
+                if($deleteChatrooms) {
+                    $this->forwardBatchedMessageToSocketServer(
+                        $ownChatroomIds,
                         Constants::$DELETE_CHATROOM_TYPE,
-                        new Chatroom($ownerId),
+                        new Chatroom(-1), // payload doesn't matter, dest. matters
                         $authToken
                     );
+
                     foreach($this->firestore->collection(Constants::$locations)
-                                ->where(Constants::$chatroomId, 'array-contains', $ownerId)
+                                ->where(Constants::$chatroomId, 'array-contains', $ownChatroomIds)
                                 ->documents()->rows() as $doc) {
-                        $this->removeFromArrayFieldOrDeleteDocByCountBoundary($doc, Constants::$chatroomId, Constants::$chatroomId, [$ownerId]);
+                        $this->removeFromArrayFieldOrDeleteDocByCountBoundary($doc, Constants::$chatroomId, Constants::$chatroomId, [$ownChatroomIds]);
                     }
                 }
 
@@ -381,7 +381,8 @@
         public function createChatroom(Chatroom $chatroom) {
             $this->connection->begin_transaction();
 
-            if($this->getOwnerChatroomId($chatroom->getOwnerId())) {
+            // server-side check that should be lifted to db-trigger
+            if(count($this->getOwnerChatroomIds($chatroom->getOwnerId())) > 100) {
                 $this->connection->rollback();
                 return false;
             }
@@ -427,6 +428,10 @@
             // which is why chatroomId is passed in
             $this->connection->begin_transaction();
 
+            if(!in_array($chatroom->getId(), $this->getOwnerChatroomIds($chatroom->getOwnerId()))) {
+                return null;
+            }
+
             $chatroomUpdateSuccess = true;
             $shouldUpdateChatroom = !$chatroom->isUpdateFormEmpty();
             if($shouldUpdateChatroom) {
@@ -461,11 +466,11 @@
             return $updateSuccess;
         }
 
-        public function deleteChatroom(int $ownerId, string $authToken) {
+        public function deleteChatroom(int $ownerId, int $chatroomId, string $authToken) {
             include_once "../utils/image_utils.php";
 
             $this->connection->begin_transaction();
-            if(!($chatroomId = $this->getOwnerChatroomId($ownerId))) {
+            if(!in_array($chatroomId, $this->getOwnerChatroomIds($ownerId))) {
                 return false;
             }
 
@@ -732,7 +737,7 @@
             // assert message owner OR chatroom owner
             if((!($messageInfo = $this->getMessageOwnerIdAndChatroomId($messageId)) ||
                     $userId != (is_null($messageInfo[Constants::$userSentId]) ? $userId : $messageInfo[Constants::$userSentId]))
-                        && !($chatroomId = $this->getOwnerChatroomId($userId))) {
+                        && !(in_array($messageInfo[Constants::$chatroomSentId], $this->getOwnerChatroomIds($userId)))) {
                 $this->connection->rollback();
                 return null;
             }
@@ -885,7 +890,7 @@
         public function createChatroomEvent(int $ownerId, Event $event, string $authToken) {
             $this->connection->begin_transaction();
 
-            if(!($chatroomId = $this->getOwnerChatroomId($ownerId))) {
+            if(!in_array($event->getChatroomId(), $this->getOwnerChatroomIds($ownerId))) {
                 $this->connection->rollback();
                 return false;
             }
@@ -901,6 +906,7 @@
             $hasImage = $event->getHasImage();
             $latitude = $event->getLat();
             $longitude = $event->getLong();
+            $chatroomId = $event->getChatroomId();
 
             $stmt->bind_param("isssiddi", $id, $name, $description,
                 $date, $hasImage, $latitude, $longitude, $chatroomId);
@@ -917,7 +923,6 @@
             $event->setStartDate($this->executeSingleIdParamStatement($event->getId(),
                 "SELECT start_date FROM events WHERE id = ?"
                 )->get_result()->fetch_assoc()[Constants::$startDate]);
-            $event->setChatroomId($chatroomId);
 
             $this->forwardMessageToSocketServerOnCond($eventCreateSuccess,
                 $chatroomId,
@@ -933,7 +938,8 @@
         public function deleteChatroomEvent(int $ownerId, int $eventId, string $authToken) {
             $this->connection->begin_transaction();
 
-            if(!($chatroomId = $this->getOwnerChatroomId($ownerId))) {
+            if(!($chatroomId = $this->getEventChatroomId($eventId)) ||
+                    !(in_array($chatroomId, $this->getOwnerChatroomIds($ownerId)))) {
                 $this->connection->rollback();
                 return false;
             }
@@ -964,10 +970,10 @@
             return $deleteSuccess ? $deleteSuccess : null;
         }
 
-        public function deleteOldChatroomEvents(int $ownerId, string $authToken) {
+        public function deleteOldChatroomEvents(int $ownerId, int $chatroomId, string $authToken) {
             $this->connection->begin_transaction();
 
-            if(!($chatroomId = $this->getOwnerChatroomId($ownerId))) {
+            if(!in_array($chatroomId, $this->getOwnerChatroomIds($ownerId))) {
                 $this->connection->rollback();
                 return false;
             }
@@ -1118,25 +1124,34 @@
         }
 
         // should be always called in transaction context for CRUD methods, otherwise not
-        function getOwnerChatroomId(int $userId) {
+        function getOwnerChatroomIds(int $userId) {
             $result = $this->executeSingleIdParamStatement($userId, "SELECT chrms.id FROM chatrooms chrms
                 INNER JOIN user_chatrooms us_chrms ON chrms.owner_id = us_chrms.user_id AND chrms.id = us_chrms.chatroom_id 
                     AND us_chrms.user_id = ?")->get_result();
 
-            return $this->getOneColumnValueFromSingleRow($result, Constants::$id);
+            if($result && ($rows = mysqli_fetch_all($result, MYSQLI_ASSOC)) != null) {
+                return array_filter(array_map(function($row) {
+                    return array_key_exists(Constants::$id, $row) ?
+                        $row[Constants::$id] : false;
+                }, $rows)) ?: array();
+            }
+            return array();
         }
 
         function getEventChatroomIdByOwnerIdAndEvent(int $ownerId, Event $event) {
-            if(!($chatroomId = $this->getOwnerChatroomId($ownerId)) ||
-                ($chatroomId !=
-                    $this->getOneColumnValueFromSingleRow(
-                        $this->executeSingleIdParamStatement($event->getId(), "SELECT chatroom_id FROM events WHERE id = ?")->get_result(),
-                        Constants::$chatroomId
-                    ))
-            ) {
+            $chatroomId = $this->getEventChatroomId($event->getId());
+
+            if(!in_array($chatroomId, $this->getOwnerChatroomIds($ownerId))) {
                 return false;
             }
+
             return $chatroomId;
+        }
+
+        private function getEventChatroomId(int $eventId) {
+            $result = $this->executeSingleIdParamStatement($eventId, "SELECT chatroom_id FROM events WHERE id = ?")
+                ->get_result();
+            return $this->getOneColumnValueFromSingleRow($result, Constants::$chatroomId);
         }
 
         private function getMessageOwnerIdAndChatroomId(int $messageId) {

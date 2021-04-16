@@ -9,9 +9,10 @@
     /** @var $db **/
 
     $token = APIUtils::getTokenFromHeadersOrDie();
+    $chatroomId = ConverterUtils::getFieldIntValueFromRequestBodyOrDie(Constants::$chatroomId);
 
     if($ownerId = APIUtils::validateAuthorisedRequest($token)) {
-        if($deletedEventIds = $db->deleteOldChatroomEvents($ownerId, $token)) {
+        if($deletedEventIds = $db->deleteOldChatroomEvents($ownerId, $chatroomId, $token)) {
             APIUtils::displayAPIResult(array(Constants::$response=>Constants::$ok, Constants::$data_list=>$deletedEventIds));
         } else {
             APIUtils::handleMultiResultError($deletedEventIds, Constants::$noEventsToDelete, Constants::$eventDeleteNoPermission,

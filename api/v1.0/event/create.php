@@ -5,9 +5,10 @@
     /** @var $db **/
 
     $token = APIUtils::getTokenFromHeadersOrDie();
+    $chatroomId = ConverterUtils::getFieldIntValueFromRequestBodyOrDie(Constants::$chatroomId);
 
     if($id = APIUtils::validateAuthorisedRequest($token)) {
-        $event = ConverterUtils::getEventCreate();
+        $event = ConverterUtils::getEventCreate($chatroomId);
 
         if($event = $db->createChatroomEvent($id, $event, $token)) {
 
