@@ -63,9 +63,9 @@
             return $userCreateSuccess ? $userId : null;
         }
 
-        public function userExistsOrPasswordTaken(string $username, ?string $email,  $password) { // user exists if username or password are taken
-            $stmt = $this->connection->prepare("SELECT username FROM users WHERE username = ? OR email = ? OR password = ?");
-            $stmt->bind_param("sss", $username, $email, $password);
+        public function userExistsOrPasswordTaken(string $username, ?string $email) { // user exists if username or password are taken
+            $stmt = $this->connection->prepare("SELECT username FROM users WHERE username = ? OR email = ?");
+            $stmt->bind_param("ss", $username, $email);
             $stmt->execute();
 
             return mysqli_num_rows($stmt->get_result()) > 0; // if more than one row found => user exists

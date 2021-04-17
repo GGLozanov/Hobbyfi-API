@@ -27,7 +27,7 @@
         $user->setId($userId);
     }
 
-    if($db->userExistsOrPasswordTaken($user->getName(), $user->getEmail(), $password)) {
+    if($db->userExistsOrPasswordTaken($user->getName(), $user->getEmail())) {
         $status = Constants::$userExists; // user w/ same username or password exists
         $code = 409; // 409 - conflict; resource already exists
     } else {

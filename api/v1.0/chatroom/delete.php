@@ -10,7 +10,7 @@
     /* @var $db */
 
     $token = APIUtils::getTokenFromHeadersOrDie();
-    $chatroomId = ConverterUtils::getFieldIntValueFromRequestBodyOrDie(Constants::$id);
+    $chatroomId = ConverterUtils::getFieldIntValueFromRequestBodyOrDie(Constants::$id, $_GET);
 
     if($id = APIUtils::validateAuthorisedRequest($token)) {
         if($db->deleteChatroom($id, $chatroomId, $token)) {

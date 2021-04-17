@@ -9,7 +9,7 @@
     /** @var $db **/
 
     $token = APIUtils::getTokenFromHeadersOrDie();
-    $chatroomId = ConverterUtils::getFieldIntValueFromRequestBodyOrDie(Constants::$chatroomId);
+    $chatroomId = ConverterUtils::getFieldIntValueFromRequestBodyOrDie(Constants::$chatroomId, $_GET);
 
     if($ownerId = APIUtils::validateAuthorisedRequest($token)) {
         if($deletedEventIds = $db->deleteOldChatroomEvents($ownerId, $chatroomId, $token)) {
