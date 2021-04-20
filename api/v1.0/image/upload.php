@@ -4,7 +4,7 @@
     header("Content-Type: application/x-www-form-urlencoded; charset=UTF-8");
 
     require "../init.php";
-    require "../utils/image_utils.php";
+    require_once("../utils/image_utils.php");
     /** @var $db */
 
     $token = APIUtils::getTokenFromHeadersOrDie();
@@ -29,7 +29,7 @@
         switch($type) {
             case Constants::$EDIT_CHATROOM_TYPE:
             case Constants::$chatrooms:
-                $uploadPath = Constants::chatroomImagesDir($modelId);
+                $uploadPath = ImageUtils::getBucketLocationForChatroom($modelId);
                 $uploadType = Constants::$chatrooms;
                 $afterEdit = function() use($db, $modelId, $userId, $token) {
                     $db->forwardMessageToSocketServer($modelId,
@@ -41,7 +41,7 @@
                 break;
             case Constants::$EDIT_USER_TYPE:
             case Constants::$users:
-                $uploadPath = Constants::$userProfileImagesDir;
+                $uploadPath = ImageUtils::getBucketLocationForUser();
                 $uploadType = Constants::$users;
                 $afterEdit = function() use($db, $modelId, $token) {
                     if($chatroomIds = $db->getUserChatroomIds($modelId)) {
@@ -55,7 +55,7 @@
                 break;
             case Constants::$EDIT_EVENT_TYPE:
             case Constants::$events:
-                $uploadPath = Constants::chatroomEventImagesDir($modelId);
+                $uploadPath = ImageUtils::getBucketLocationForChatroomEvent();
                 $uploadType = Constants::$events;
                 $afterEdit = function() use($db, $modelId, $token, $userId, $chatroomId) {
                     $db->forwardMessageToSocketServer($chatroomId,

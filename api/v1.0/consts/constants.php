@@ -77,8 +77,6 @@
 
         public static string $userIdJwtKey = "userId";
 
-        public static string $userProfileImagesDir = "user_pfps";
-        public static string $chatroomImagesDir = "chatroom_imgs_";
         public static string $data = "data";
         public static string $data_list = "data_list";
         public static string $locations = "locations";
@@ -95,28 +93,6 @@
         public static string $deviceToken = "device_token";
         public static string $deviceTokens = "device_tokens";
         public static string $invalidFCMToken = "Invalid FCM token sent";
-
-        public static function userProfileImagesDir(int $userId) {
-          return Constants::$userProfileImagesDir . "/" . $userId . ".jpg";
-        }
-
-        public static function chatroomImagesDir(int $chatroomId) {
-            return Constants::$chatroomImagesDir . $chatroomId;
-        }
-
-        // TODO: Have different dir schema for messages
-        public static function chatroomMessageImagesDir(int $chatroomId) {
-            return Constants::chatroomImagesDir($chatroomId) . '/messages';
-        }
-
-        public static function chatroomEventImagesDir(int $eventId) {
-            return '/events_imgs_' . $eventId;
-        }
-
-        public static function getPhotoUrlForDir(string $dir) {
-            return Constants::getServerPath() . '/uploads/' . $dir;
-        }
-        // would've extracted these into a generator function if PHP hadn't been so goddamn fucking stupid
 
         public static function getServerPath() {
             return (array_key_exists('HTTPS', $_SERVER) ? 'https://' : 'http://') . $_SERVER['SERVER_NAME'] . ':'

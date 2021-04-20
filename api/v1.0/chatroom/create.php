@@ -5,8 +5,8 @@
 
     require "../init.php";
     require "../config/core.php";
-    require "../utils/image_utils.php";
-    /* @var $db */
+require_once("../utils/image_utils.php");
+/* @var $db */
 
     $token = APIUtils::getTokenFromHeadersOrDie();
 

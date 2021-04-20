@@ -4,7 +4,7 @@
     header("Content-Type: application/x-www-form-urlencoded; charset=UTF-8");
 
     require "../init.php";
-    require "../utils/image_utils.php";
+    require_once("../utils/image_utils.php");
     /** @var $db */
 
     $token = APIUtils::getTokenFromHeadersOrDie();

@@ -3,6 +3,7 @@
     require_once("id_model.php");
     require_once("expanded_model.php");
     require_once("image_model.php");
+    require_once("../utils/image_utils.php");
 
     class Event extends Model implements JsonSerializable {
         use \IdModel;
@@ -100,9 +101,8 @@
                 Constants::$id=>$this->id,
                 Constants::$name=>$this->name,
                 Constants::$description=>$this->description,
-                Constants::$photoUrl=>$this->hasImage ?
-                    Constants::getServerPath() . '/uploads' . Constants::chatroomEventImagesDir($this->id)
-                        . "/" . $this->id . ".jpg"
+                Constants::$photoUrl=>$this->hasImage ? ImageUtils::getPublicContentDownloadUrl(
+                    ImageUtils::getBucketLocationForChatroomEvent(), $this->id)
                     : null,
                 Constants::$startDate=>$this->startDate,
                 Constants::$date=>$this->date,

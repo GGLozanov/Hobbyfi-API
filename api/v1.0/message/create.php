@@ -1,6 +1,6 @@
 <?php
     require "../init.php";
-    require "../utils/image_utils.php";
+    require_once("../utils/image_utils.php");
 
     header("Access-Control-Allow-Origin: *");
     header("Access-Control-Allow-Methods: POST");

@@ -8,6 +8,7 @@
         "grpc/grpc": "^v1.27.0",
         "google/protobuf": "^v3.3.0",
         "google/cloud-firestore": "^1.19",
-        "phpmailer/phpmailer": "^6.2"
+        "phpmailer/phpmailer": "^6.2",
+      "ext-pthreads": "*"
     }
 }

@@ -327,8 +327,9 @@
 
                 ImageUtils::deleteImageFromPath(
                     $id,
-                    Constants::$userProfileImagesDir,
+                    ImageUtils::getBucketLocationForUser(),
                     Constants::$users,
+                    false,
                     true
                 );
 
@@ -476,7 +477,12 @@
 
             $stmt = $this->executeSingleIdParamStatement($chatroomId, "DELETE FROM chatrooms WHERE id = ?");
 
-            ImageUtils::deleteImageFromPath($chatroomId, Constants::chatroomImagesDir($chatroomId), Constants::$chatrooms);
+            ImageUtils::deleteImageFromPath(
+                $chatroomId, 
+                ImageUtils::getBucketLocationForChatroom($chatroomId),
+                Constants::$chatrooms,
+                true
+            );
 
             $deleteSuccess = $stmt->affected_rows > 0;
             
@@ -683,17 +689,6 @@
                     $authToken
                 );
                 $this->finishTransactionOnCond($insertSuccess);
-            } else {
-                // for now this means message img insert => replace message photo url with right one with latest insert id
-                // FOR THIS TABLE (very bruh but such is life...)
-                $stmt = $this->connection->prepare("UPDATE messages SET message = ? WHERE id = ?");
-                $messageWithPhotoUrl = ($message->getMessage() == null ? ''
-                        : ($message->getMessage() . ' ')) . Constants::getPhotoUrlForDir(Constants::chatroomMessageImagesDir($chatroomId)
-                    . "/" . $messageId . ".jpg");
-                $stmt->bind_param("si", $messageWithPhotoUrl, $messageId);
-
-                $message->setMessage($messageWithPhotoUrl);
-                $insertSuccess = $stmt->execute();
             }
 
             return $insertSuccess ? $message : null;
@@ -714,16 +709,27 @@
                 return null;
             }
 
-            if(ImageUtils::uploadImageToPath($message->getId(), Constants::chatroomMessageImagesDir($chatroomId),
-                    $base64Image, Constants::$messages, false)) {
-                $this->connection->commit();
-                // no need for helper notification method here because this is in a "success create" context, per se
-                $this->forwardMessageToSocketServer($chatroomId,
+            if(($object = ImageUtils::uploadImageToPath($message->getId(), ImageUtils::getBucketLocationForChatroomMessage($chatroomId),
+                    $base64Image, Constants::$messages, false))) {
+                // for now this means message img insert => replace message photo url with right one with latest insert id
+                // FOR THIS TABLE (very bruh but such is life...)
+                $messageId = $message->getId();
+                $messageAsPhotoUrl = ImageUtils::getPublicContentDownloadUrl(
+                    ImageUtils::getBucketLocationForChatroomMessage($chatroomId), $messageId);
+
+                $stmt = $this->connection->prepare("UPDATE messages SET message = ? WHERE id = ?");
+                $stmt->bind_param("si", $messageAsPhotoUrl, $messageId);
+
+                $message->setMessage($messageAsPhotoUrl);
+                $insertSuccess = $stmt->execute();
+
+                $this->forwardMessageToSocketServerOnCond($insertSuccess, $chatroomId,
                     Constants::$CREATE_MESSAGE_TYPE,
                     $message,
                     $authToken
                 );
-                return $message;
+                $this->finishTransactionOnCond($insertSuccess);
+                return $insertSuccess ? $message : null;
             }
 
             $this->connection->rollback();
@@ -746,9 +752,8 @@
 
             ImageUtils::deleteImageFromPath(
                 $messageId,
-                Constants::chatroomMessageImagesDir($messageInfo[Constants::$chatroomSentId]) . "/" . $messageId,
+                ImageUtils::getBucketLocationForChatroomMessage($messageInfo[Constants::$chatroomSentId]),
                 Constants::$messages,
-                true
             );
 
             $affectedRows = $stmt->affected_rows > 0;

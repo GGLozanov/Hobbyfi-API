@@ -4,7 +4,7 @@
 
     require "../init.php"; // set up dependency for this script to init php script
     require "../config/core.php";
-    require "../utils/image_utils.php";
+    require_once("../utils/image_utils.php");
     /** @var $db */
 
     // allow facebook access token to be sent in authorization header and handled here to see whether

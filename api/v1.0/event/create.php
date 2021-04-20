@@ -1,6 +1,6 @@
 <?php
     require "../init.php";
-    require "../utils/image_utils.php";
+    require_once("../utils/image_utils.php");
 
     /** @var $db **/
 
