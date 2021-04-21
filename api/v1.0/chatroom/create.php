@@ -32,7 +32,7 @@ require_once("../utils/image_utils.php");
             )); // no need to return chatroom if client already has it; can be read & fetched in read endpoint
         } else {
             APIUtils::handleMultiResultError($id,
-                Constants::$chatroomNotCreated, Constants::$chatroomMaxSize, 406, 429);
+                Constants::$chatroomNotCreated, Constants::$chatroomMaxSize, 429, 429);
         }
     }
 

@@ -166,11 +166,14 @@
             return null;
         }
 
-        public static function simpleFileGetContentsWithDieHandle(string $filename) {
-            $result = file_get_contents($filename);
+        public static function simpleFileGetContentsWithEnvVarFallbackAndDieHandle(string $fileDir, string $envVarName) {
+            $result = file_get_contents($fileDir);
 
             if(!$result) {
-                APIUtils::displayAPIResultAndDie(array(Constants::$response=>Constants::$internalServerErrorNotConfigured), 500);
+                if(!isset($_ENV[$envVarName])) {
+                    APIUtils::displayAPIResultAndDie(array(Constants::$response=>Constants::$internalServerErrorNotConfigured), 500);
+                }
+                return $_ENV[$envVarName];
             }
             return $result;
         }

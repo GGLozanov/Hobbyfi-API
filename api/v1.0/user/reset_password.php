@@ -43,7 +43,8 @@ use PHPMailer\PHPMailer\SMTP;
 
         $mailer->Host = 'smtp.gmail.com';
         $mailer->Username = "katapultman150@gmail.com";
-        $mailer->Password = file_get_contents("../keys/pwd.txt");
+        $mailer->Password = ConverterUtils::simpleFileGetContentsWithEnvVarFallbackAndDieHandle(
+            "../keys/pwd.txt", "pwd");
         $mailer->SMTPAuth = true;
         $mailer->Port = 25;
         $mailer->IsHTML(true);

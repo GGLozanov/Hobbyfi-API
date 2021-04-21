@@ -12,8 +12,10 @@
             return false;
         }
 
-        $serverUsername = ConverterUtils::simpleFileGetContentsWithDieHandle('../keys/socket_server_username.txt');
-        $serverPassword = ConverterUtils::simpleFileGetContentsWithDieHandle('../keys/socket_server_password.txt');
+        $serverUsername = ConverterUtils::simpleFileGetContentsWithEnvVarFallbackAndDieHandle(
+            '../keys/socket_server_username.txt', 'socket_server_username');
+        $serverPassword = ConverterUtils::simpleFileGetContentsWithEnvVarFallbackAndDieHandle(
+            '../keys/socket_server_password.txt', 'socket_server_pwd');
 
         if(strcmp($username, $serverUsername) != 0 || strcmp($password, $serverPassword) != 0) {
             return false;

@@ -5,23 +5,30 @@
     use Google\Cloud\Firestore\FirestoreClient;
 
     class Database {
-        private string $host = "127.0.0.1"; // to be changed if hosted on server
-        private string $user_name = "root";
-        private string $user_password = "";
-        private string $db_name = "hobbyfi_db";
+        private string $host;
+        private string $user_name;
+        private string $user_password;
+        private string $db_name;
+
         private mysqli $connection;
         private FirestoreClient $firestore;
         private SocketServerForwarder $forwarder;
 
         function __construct() {
+            $this->host = $_ENV["db_host"] ? $_ENV["db_host"] : "127.0.0.1";
+            $this->user_name = $_ENV["db_username"] ? $_ENV["db_username"] : "root";
+            $this->user_password = $_ENV["db_password"] ? $_ENV["db_password"] : "";
+            $this->db_name =  $_ENV["db_username"] ? $_ENV["db_username"] : "hobbyfi_db";
             $this->connection = mysqli_connect(
                 $this->host,
                  $this->user_name,
                  $this->user_password,
-                  $this->db_name, "3308"
+                  $this->db_name, $_ENV["db_port"] ? $_ENV["db_port"] : "3308"
             );
             $this->firestore = (new Factory)->withServiceAccount(
-                __DIR__ . '/../keys/hobbyfi-firebase-adminsdk-o1f83-e1d558ffae.json'
+                $_ENV['hobbyfi_firebase_adminsdk_service_acc'] ?
+                    $_ENV['hobbyfi_firebase_adminsdk_service_acc'] :
+                    (__DIR__ . '/../keys/hobbyfi-firebase-adminsdk-o1f83-e1d558ffae.json')
             )->createFirestore()->database();
             $this->forwarder = new SocketServerForwarder();
         }
@@ -714,7 +721,7 @@
                 // for now this means message img insert => replace message photo url with right one with latest insert id
                 // FOR THIS TABLE (very bruh but such is life...)
                 $messageId = $message->getId();
-                $messageAsPhotoUrl = ImageUtils::getPublicContentDownloadUrl(
+                $messageAsPhotoUrl = $message->getMessage() . " " . ImageUtils::getPublicContentDownloadUrl(
                     ImageUtils::getBucketLocationForChatroomMessage($chatroomId), $messageId);
 
                 $stmt = $this->connection->prepare("UPDATE messages SET message = ? WHERE id = ?");
@@ -795,9 +802,8 @@
                 "SELECT message, chatroom_sent_id FROM messages WHERE id = ?")->get_result();
 
             if($results->num_rows > 0 && ($row = $results->fetch_assoc())) {
-                $supposedMessageImageUrl = Constants::getPhotoUrlForDir(
-                    Constants::chatroomMessageImagesDir($row[Constants::$chatroomSentId])
-                    . "/" . $messageId . ".jpg");
+                $supposedMessageImageUrl = ImageUtils::getPublicContentDownloadUrl(
+                    ImageUtils::getBucketLocationForChatroomMessage($row[Constants::$chatroomSentId]), $messageId);
                 if(strcmp($row[Constants::$message], $supposedMessageImageUrl) == 0) return false;
                 else return strstr($row[Constants::$message], $supposedMessageImageUrl) ? $supposedMessageImageUrl : true;
                     // check if message with image contained or just pure message

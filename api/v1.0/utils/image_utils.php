@@ -17,7 +17,9 @@ class ImageUtils {
         private static function getStorage() {
             if (!isset(self::$storage)) {
                 self::$storage = (new Factory)->withServiceAccount(
-                    __DIR__ . '/../keys/hobbyfi-firebase-adminsdk-o1f83-e1d558ffae.json'
+                   $_ENV['hobbyfi_firebase_adminsdk_service_acc'] ?
+                            $_ENV['hobbyfi_firebase_adminsdk_service_acc'] :
+                       (__DIR__ . '/../keys/hobbyfi-firebase-adminsdk-o1f83-e1d558ffae.json')
                 )->createStorage();
             }
 

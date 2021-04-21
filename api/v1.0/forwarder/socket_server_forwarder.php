@@ -22,11 +22,12 @@
             $urlEncodedData = http_build_query($fields);
 
             // Don't forget CURLOPT_PORT switch when changing from http to https (lol envvar, what is this?)
-            $curl = curl_init( 'http://localhost:3000/receive_server_message');
+            $curl = curl_init(ConverterUtils::simpleFileGetContentsWithEnvVarFallbackAndDieHandle('../keys/socket_server.txt'),
+                'socket_server_url');
 
             curl_setopt($curl, CURLOPT_CUSTOMREQUEST, "POST");
             curl_setopt($curl, CURLOPT_POST, 1);
-            curl_setopt($curl, CURLOPT_PORT, 3000);
+            curl_setopt($curl, CURLOPT_PORT, $_ENV['socket_server_url'] ? 443 : 3000); // https/http
             curl_setopt($curl, CURLOPT_POSTFIELDS, $urlEncodedData);
             curl_setopt($curl, CURLOPT_RETURNTRANSFER, true);
             curl_setopt($curl, CURLOPT_CONNECTTIMEOUT, 15);
