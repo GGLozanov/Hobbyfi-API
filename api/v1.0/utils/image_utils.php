@@ -17,7 +17,7 @@ class ImageUtils {
         private static function getStorage() {
             if (!isset(self::$storage)) {
                 self::$storage = (new Factory)->withServiceAccount(
-                   $_ENV['hobbyfi_firebase_adminsdk_service_acc'] ?
+                    array_key_exists('hobbyfi_firebase_adminsdk_service_acc', $_ENV) ?
                             $_ENV['hobbyfi_firebase_adminsdk_service_acc'] :
                        (__DIR__ . '/../keys/hobbyfi-firebase-adminsdk-o1f83-e1d558ffae.json')
                 )->createStorage();
@@ -114,11 +114,12 @@ class ImageUtils {
 
             try {
                 // fopen('data://text/plain;base64,' . $data,'r')
-                return $bucket->upload(base64_decode($data), [
+                $decoded = base64_decode($data);
+                return $bucket->upload($decoded, [
                     'name' => $dir . $title . ".jpg",
                     'metadata' => [
                         'metadata' => [
-                            'firebaseStorageDownloadTokens' => uniqid()
+                            'firebaseStorageDownloadTokens' => uniqid(),
                         ]
                     ]
                 ]);

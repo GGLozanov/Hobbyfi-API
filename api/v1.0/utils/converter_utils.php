@@ -170,7 +170,7 @@
             $result = file_get_contents($fileDir);
 
             if(!$result) {
-                if(!isset($_ENV[$envVarName])) {
+                if(!array_key_exists($envVarName, $_ENV)) {
                     APIUtils::displayAPIResultAndDie(array(Constants::$response=>Constants::$internalServerErrorNotConfigured), 500);
                 }
                 return $_ENV[$envVarName];

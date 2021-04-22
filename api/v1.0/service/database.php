@@ -15,18 +15,18 @@
         private SocketServerForwarder $forwarder;
 
         function __construct() {
-            $this->host = $_ENV["db_host"] ? $_ENV["db_host"] : "127.0.0.1";
-            $this->user_name = $_ENV["db_username"] ? $_ENV["db_username"] : "root";
-            $this->user_password = $_ENV["db_password"] ? $_ENV["db_password"] : "";
-            $this->db_name =  $_ENV["db_username"] ? $_ENV["db_username"] : "hobbyfi_db";
+            $this->host = array_key_exists("db_host", $_ENV) ? $_ENV["db_host"] : "127.0.0.1";
+            $this->user_name = array_key_exists("db_username", $_ENV) ? $_ENV["db_username"] : "root";
+            $this->user_password = array_key_exists("db_password", $_ENV) ? $_ENV["db_password"] : "";
+            $this->db_name =  array_key_exists("db_username", $_ENV) ? $_ENV["db_username"] : "hobbyfi_db";
             $this->connection = mysqli_connect(
                 $this->host,
                  $this->user_name,
                  $this->user_password,
-                  $this->db_name, $_ENV["db_port"] ? $_ENV["db_port"] : "3308"
+                  $this->db_name, array_key_exists("db_port", $_ENV) ? $_ENV["db_port"] : "3308"
             );
             $this->firestore = (new Factory)->withServiceAccount(
-                $_ENV['hobbyfi_firebase_adminsdk_service_acc'] ?
+                array_key_exists('hobbyfi_firebase_adminsdk_service_acc', $_ENV) ?
                     $_ENV['hobbyfi_firebase_adminsdk_service_acc'] :
                     (__DIR__ . '/../keys/hobbyfi-firebase-adminsdk-o1f83-e1d558ffae.json')
             )->createFirestore()->database();

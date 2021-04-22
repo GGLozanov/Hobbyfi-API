@@ -15,7 +15,7 @@
     function validateFCMToken(string $deviceToken, bool $deleting) {
         // TODO: Extract into singleton
         $factory = (new Factory)->withServiceAccount(
-            $_ENV['hobbyfi_firebase_adminsdk_service_acc'] ?
+            array_key_exists('hobbyfi_firebase_adminsdk_service_acc', $_ENV) ?
                 $_ENV['hobbyfi_firebase_adminsdk_service_acc'] :
                 (__DIR__ . '/../keys/hobbyfi-firebase-adminsdk-o1f83-e1d558ffae.json')
         );
