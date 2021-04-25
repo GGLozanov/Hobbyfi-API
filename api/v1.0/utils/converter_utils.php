@@ -178,6 +178,18 @@
             return $result;
         }
 
+        public static function simpleFileGetContentsWithEnvVarFallback(string $fileDir, string $envVarName) {
+            $result = file_get_contents($fileDir);
+
+            if(!$result) {
+                if(!array_key_exists($envVarName, $_ENV)) {
+                    return null;
+                }
+                return $_ENV[$envVarName];
+            }
+            return $result;
+        }
+
         private static function getMappedTags(?string $tagField = null, int $recDepth = 0) {
             if($tagField == null)
                 $tagField = Constants::$tags;
