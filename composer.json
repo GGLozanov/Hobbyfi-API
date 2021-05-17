@@ -1,0 +1,14 @@
+{
+    "require": {
+        "firebase/php-jwt": "^5.2",
+        "facebook/graph-sdk": "^5.7",
+        "php-http/curl-client": "^1.7",
+        "guzzlehttp/psr7": "^1.7",
+        "kreait/firebase-php": "^5.14",
+        "grpc/grpc": "^v1.27.0",
+        "google/protobuf": "^v3.3.0",
+        "google/cloud-firestore": "^1.19",
+        "phpmailer/phpmailer": "^6.2",
+      "ext-gd": "*"
+    }
+}
