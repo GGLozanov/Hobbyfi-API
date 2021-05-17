@@ -90,7 +90,8 @@
                 Constants::$description=>$this->description,
                 Constants::$chatroomIds=>$this->chatroomIds,
                 Constants::$photoUrl=>$this->hasImage ?
-                    Constants::getPhotoUrlForDir(Constants::userProfileImagesDir($this->id))
+                    ImageUtils::getPublicContentDownloadUrl(
+                        ImageUtils::getBucketLocationForUser(), $this->id)
                     : null,
                 Constants::$tags=>$this->getTags(),
                 Constants::$allowedPushChatroomIds=>$this->allowedPushChatroomIds

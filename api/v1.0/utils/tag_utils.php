@@ -27,9 +27,9 @@
             }, json_decode($tags[0], true)));
         }
 
-        public static function mapTag(array $tagArray) {
-            if(!array_key_exists(Constants::$name, $tagArray)
-                || !array_key_exists(Constants::$colour, $tagArray) || !array_key_exists(Constants::$isFromFacebook, $tagArray)) {
+        public static function mapTag(?array $tagArray) {
+            if(is_null($tagArray) || !array_key_exists(Constants::$name, $tagArray)
+                    || !array_key_exists(Constants::$colour, $tagArray) || !array_key_exists(Constants::$isFromFacebook, $tagArray)) {
                 return null;
             }
 

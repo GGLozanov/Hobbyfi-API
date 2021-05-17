@@ -75,8 +75,8 @@
         public function withPhotoUrlAsMessage() {
             return new Message(
                 $this->id,
-                Constants::getPhotoUrlForDir(Constants::chatroomMessageImagesDir($this->chatroomSentId)
-                    . "/" . $this->id . "jpg"),
+                ImageUtils::getPublicContentDownloadUrl(
+                    ImageUtils::getBucketLocationForChatroomMessage($this->chatroomSentId), $this->id),
                 $this->createTime,
                 $this->chatroomSentId,
                 $this->userSentId

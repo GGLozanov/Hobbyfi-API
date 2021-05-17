@@ -5,7 +5,7 @@
 
     require "../init.php";
     require "../config/core.php";
-    require "../utils/image_utils.php";
+    require_once("../utils/image_utils.php");
 
     /**
      * @var $db
@@ -13,9 +13,10 @@
 
     $token = APIUtils::getTokenFromHeadersOrDie();
     $kickUserId = ConverterUtils::getFieldIntValueFromRequestBodyOrDie(Constants::$userId);
+    $chatroomId = ConverterUtils::getFieldIntValueFromRequestBodyOrDie(Constants::$id);
 
     if($id = APIUtils::validateAuthorisedRequest($token)) {
-        if($db->kickUserFromChatroom($id, $kickUserId, $token)) {
+        if($db->kickUserFromChatroom($id, $chatroomId, $kickUserId, $token)) {
             APIUtils::displayAPIResult(array(Constants::$response=>Constants::$ok));
         } else {
             APIUtils::displayAPIResult(array(Constants::$response=>Constants::$kickFailedResponse), 406);

@@ -5,8 +5,8 @@
 
     require "../init.php";
     require "../config/core.php";
-    require "../utils/image_utils.php";
-    /* @var $db */
+require_once("../utils/image_utils.php");
+/* @var $db */
 
     $token = APIUtils::getTokenFromHeadersOrDie();
 
@@ -32,7 +32,7 @@
             )); // no need to return chatroom if client already has it; can be read & fetched in read endpoint
         } else {
             APIUtils::handleMultiResultError($id,
-                Constants::$chatroomNotCreated, Constants::$userAlreadyInChatroom, 406, 403);
+                Constants::$chatroomNotCreated, Constants::$chatroomMaxSize, 429, 429);
         }
     }
 

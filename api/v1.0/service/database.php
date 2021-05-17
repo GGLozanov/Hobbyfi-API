@@ -5,23 +5,41 @@
     use Google\Cloud\Firestore\FirestoreClient;
 
     class Database {
-        private string $host = "127.0.0.1"; // to be changed if hosted on server
-        private string $user_name = "root";
-        private string $user_password = "";
-        private string $db_name = "hobbyfi_db";
+        private string $host;
+        private string $user_name;
+        private string $user_password;
+        private string $db_name;
+
         private mysqli $connection;
         private FirestoreClient $firestore;
         private SocketServerForwarder $forwarder;
 
         function __construct() {
+            $this->host = ConverterUtils::simpleFileGetContentsWithEnvVarFallbackAndDieHandle(
+                __DIR__ . "/../keys/db_host.txt",
+                "db_host");
+            $this->user_name = ConverterUtils::simpleFileGetContentsWithEnvVarFallbackAndDieHandle(
+                __DIR__ . "/../keys/db_username.txt",
+                "db_username");
+            $this->user_password = file_exists("../keys/db_password.txt") ? (ConverterUtils::simpleFileGetContentsWithEnvVarFallback(
+                __DIR__ . "/../keys/db_password.txt",
+                "db_password") ?: "") : "";
+            $this->db_name =  ConverterUtils::simpleFileGetContentsWithEnvVarFallbackAndDieHandle(
+                __DIR__ . "/../keys/db_name.txt",
+                "db_name");
             $this->connection = mysqli_connect(
                 $this->host,
                  $this->user_name,
                  $this->user_password,
-                  $this->db_name, "3308"
+                  $this->db_name, ConverterUtils::simpleFileGetContentsWithEnvVarFallbackAndDieHandle(
+                    __DIR__ . "/../keys/db_port.txt",
+                    "db_port")
             );
+
             $this->firestore = (new Factory)->withServiceAccount(
-                __DIR__ . '/../keys/hobbyfi-firebase-adminsdk-o1f83-e1d558ffae.json'
+                array_key_exists('hobbyfi_firebase_adminsdk_service_acc', $_ENV) ?
+                    $_ENV['hobbyfi_firebase_adminsdk_service_acc'] :
+                    (__DIR__ . '/../keys/hobbyfi-firebase-adminsdk-o1f83-e1d558ffae.json')
             )->createFirestore()->database();
             $this->forwarder = new SocketServerForwarder();
         }
@@ -63,10 +81,9 @@
             return $userCreateSuccess ? $userId : null;
         }
 
-        public function userExistsOrPasswordTaken(string $username, $password) { // user exists if username or password are taken
-            $stmt = $this->connection->prepare("SELECT username FROM users WHERE username = ? OR password = ?");
-            $username = mysqli_escape_string($this->connection, $username);
-            $stmt->bind_param("ss", $username, $password);
+        public function userExistsOrPasswordTaken(string $username, ?string $email) { // user exists if username or password are taken
+            $stmt = $this->connection->prepare("SELECT username FROM users WHERE username = ? OR email = ?");
+            $stmt->bind_param("ss", $username, $email);
             $stmt->execute();
 
             return mysqli_num_rows($stmt->get_result()) > 0; // if more than one row found => user exists
@@ -253,17 +270,16 @@
             return $updateSuccess;
         }
 
-        public function kickUserFromChatroom(int $ownerId, int $kickUserId, string $authToken) {
+        public function kickUserFromChatroom(int $ownerId, int $chatroomKickId, int $kickUserId, string $authToken) {
             $this->connection->begin_transaction();
-            $ownerChatroomId = $this->getOwnerChatroomId($ownerId);
-            $userChatroomIds = $this->getUserChatroomIds($kickUserId);
+            $ownerChatroomIds = $this->getOwnerChatroomIds($ownerId);
 
-            if(!is_array($userChatroomIds) || !in_array($ownerChatroomId, $userChatroomIds)) {
+            if(!is_array($ownerChatroomIds) || !in_array($chatroomKickId, $ownerChatroomIds)) {
                 $this->connection->rollback();
                 return false;
             }
 
-            $updateSuccess = $this->updateUser(new User($kickUserId), null, $ownerChatroomId,
+            $updateSuccess = $this->updateUser(new User($kickUserId), null, $chatroomKickId,
                 null, $authToken);
 
             $this->finishTransactionOnCond($updateSuccess);
@@ -281,17 +297,17 @@
             include_once "../utils/image_utils.php";
             $this->connection->begin_transaction();
 
-            $deleteChatroom = false;
+            $deleteChatrooms = false;
             $leaveChatroom = false;
-            $ownerId = null;
+            $ownChatroomIds = null;
             // db checks prior to deletion (can't access later on, duh)
             if($chatroomIds = $this->getUserChatroomIds($id)) {
-                if($ownerId = $this->getOwnerChatroomId($id)) {
+                if($ownChatroomIds = $this->getOwnerChatroomIds($id)) {
                     if(count($chatroomIds) > 1) { // has other chatrooms apart from his own
                         $leaveChatroom = true;
                     }
 
-                    $deleteChatroom = true;
+                    $deleteChatrooms = true;
                 } else {
                     $leaveChatroom = true;
                 }
@@ -303,17 +319,18 @@
             $deleteSuccess = $stmt->affected_rows > 0;
 
             if($deleteSuccess) {
-                if($deleteChatroom) {
-                    $this->forwardMessageToSocketServer(
-                        $ownerId,
+                if($deleteChatrooms) {
+                    $this->forwardBatchedMessageToSocketServer(
+                        $ownChatroomIds,
                         Constants::$DELETE_CHATROOM_TYPE,
-                        new Chatroom($ownerId),
+                        new Chatroom(-1), // payload doesn't matter, dest. matters
                         $authToken
                     );
+
                     foreach($this->firestore->collection(Constants::$locations)
-                                ->where(Constants::$chatroomId, 'array-contains', $ownerId)
+                                ->where(Constants::$chatroomId, 'array-contains', $ownChatroomIds)
                                 ->documents()->rows() as $doc) {
-                        $this->removeFromArrayFieldOrDeleteDocByCountBoundary($doc, Constants::$chatroomId, Constants::$chatroomId, [$ownerId]);
+                        $this->removeFromArrayFieldOrDeleteDocByCountBoundary($doc, Constants::$chatroomId, Constants::$chatroomId, [$ownChatroomIds]);
                     }
                 }
 
@@ -328,8 +345,9 @@
 
                 ImageUtils::deleteImageFromPath(
                     $id,
-                    Constants::$userProfileImagesDir,
+                    ImageUtils::getBucketLocationForUser(),
                     Constants::$users,
+                    false,
                     true
                 );
 
@@ -382,7 +400,8 @@
         public function createChatroom(Chatroom $chatroom) {
             $this->connection->begin_transaction();
 
-            if($this->getOwnerChatroomId($chatroom->getOwnerId())) {
+            // server-side check that should be lifted to db-trigger
+            if(count($this->getOwnerChatroomIds($chatroom->getOwnerId())) > 100) {
                 $this->connection->rollback();
                 return false;
             }
@@ -428,6 +447,10 @@
             // which is why chatroomId is passed in
             $this->connection->begin_transaction();
 
+            if(!in_array($chatroom->getId(), $this->getOwnerChatroomIds($chatroom->getOwnerId()))) {
+                return null;
+            }
+
             $chatroomUpdateSuccess = true;
             $shouldUpdateChatroom = !$chatroom->isUpdateFormEmpty();
             if($shouldUpdateChatroom) {
@@ -462,17 +485,22 @@
             return $updateSuccess;
         }
 
-        public function deleteChatroom(int $ownerId, string $authToken) {
+        public function deleteChatroom(int $ownerId, int $chatroomId, string $authToken) {
             include_once "../utils/image_utils.php";
 
             $this->connection->begin_transaction();
-            if(!($chatroomId = $this->getOwnerChatroomId($ownerId))) {
+            if(!in_array($chatroomId, $this->getOwnerChatroomIds($ownerId))) {
                 return false;
             }
 
             $stmt = $this->executeSingleIdParamStatement($chatroomId, "DELETE FROM chatrooms WHERE id = ?");
 
-            ImageUtils::deleteImageFromPath($chatroomId, Constants::chatroomImagesDir($chatroomId), Constants::$chatrooms);
+            ImageUtils::deleteImageFromPath(
+                $chatroomId, 
+                ImageUtils::getBucketLocationForChatroom($chatroomId),
+                Constants::$chatrooms,
+                true
+            );
 
             $deleteSuccess = $stmt->affected_rows > 0;
             
@@ -665,11 +693,11 @@
             $messageId = mysqli_insert_id($this->connection);
             $message->setId($messageId);
 
-            // kinda dumb but workaround for now to get create time needed for create response
-            $message->setCreateTime($this->executeSingleIdParamStatement($messageId,
+            // kinda dumb but workaround for now to get create time needed for create response (error suppression because even though it works, it shows a weird notice)
+            @($message->setCreateTime($this->executeSingleIdParamStatement($messageId,
                 "SELECT create_time FROM messages WHERE id = ?")
                 ->get_result()
-                ->fetch_assoc()[Constants::$createTime]);
+                ->fetch_assoc()[Constants::$createTime]));
 
             if($shouldFinishTransaction) {
                 $this->forwardMessageToSocketServerOnCond($insertSuccess,
@@ -679,43 +707,47 @@
                     $authToken
                 );
                 $this->finishTransactionOnCond($insertSuccess);
-            } else {
-                // for now this means message img insert => replace message photo url with right one with latest insert id
-                // FOR THIS TABLE (very bruh but such is life...)
-                $stmt = $this->connection->prepare("UPDATE messages SET message = ? WHERE id = ?");
-                $messagePhotoUrl = Constants::getPhotoUrlForDir(Constants::chatroomMessageImagesDir($chatroomId)
-                    . "/" . $messageId . ".jpg");
-                $stmt->bind_param("si", $messagePhotoUrl, $messageId);
-
-                $message->setMessage($messagePhotoUrl);
-                $insertSuccess = $stmt->execute();
             }
 
             return $insertSuccess ? $message : null;
         }
 
         // very bruh method
-        public function createChatroomImageMessage(Message $message, string $authToken) {
+        public function createChatroomImageMessage(Message $message, string $base64Image, string $authToken) {
             require_once("../utils/image_utils.php");
 
-            $base64Image = $message->getMessage();
             $chatroomId = $message->getChatroomSentId();
+
+            if($message->getMessage() == null) {
+                $message->setMessage(""); // gets updated
+            }
 
             if(!($message = $this->createChatroomMessage($message, $authToken, false))) {
                 $this->connection->rollback();
                 return null;
             }
 
-            if(ImageUtils::uploadImageToPath($message->getId(), Constants::chatroomMessageImagesDir($chatroomId),
-                    $base64Image, Constants::$messages, false)) {
-                $this->connection->commit();
-                // no need for helper notification method here because this is in a "success create" context, per se
-                $this->forwardMessageToSocketServer($chatroomId,
+            if(($object = ImageUtils::uploadImageToPath($message->getId(), ImageUtils::getBucketLocationForChatroomMessage($chatroomId),
+                    $base64Image, Constants::$messages, false))) {
+                // for now this means message img insert => replace message photo url with right one with latest insert id
+                // FOR THIS TABLE (very bruh but such is life...)
+                $messageId = $message->getId();
+                $messageAsPhotoUrl = $message->getMessage() . " " . ImageUtils::getPublicContentDownloadUrl(
+                    ImageUtils::getBucketLocationForChatroomMessage($chatroomId), $messageId);
+
+                $stmt = $this->connection->prepare("UPDATE messages SET message = ? WHERE id = ?");
+                $stmt->bind_param("si", $messageAsPhotoUrl, $messageId);
+
+                $message->setMessage($messageAsPhotoUrl);
+                $insertSuccess = $stmt->execute();
+
+                $this->forwardMessageToSocketServerOnCond($insertSuccess, $chatroomId,
                     Constants::$CREATE_MESSAGE_TYPE,
                     $message,
                     $authToken
                 );
-                return $message;
+                $this->finishTransactionOnCond($insertSuccess);
+                return $insertSuccess ? $message : null;
             }
 
             $this->connection->rollback();
@@ -729,7 +761,7 @@
             // assert message owner OR chatroom owner
             if((!($messageInfo = $this->getMessageOwnerIdAndChatroomId($messageId)) ||
                     $userId != (is_null($messageInfo[Constants::$userSentId]) ? $userId : $messageInfo[Constants::$userSentId]))
-                        && !($chatroomId = $this->getOwnerChatroomId($userId))) {
+                        && !(in_array($messageInfo[Constants::$chatroomSentId], $this->getOwnerChatroomIds($userId)))) {
                 $this->connection->rollback();
                 return null;
             }
@@ -738,9 +770,8 @@
 
             ImageUtils::deleteImageFromPath(
                 $messageId,
-                Constants::chatroomMessageImagesDir($messageInfo[Constants::$chatroomSentId]) . "/" . $messageId,
+                ImageUtils::getBucketLocationForChatroomMessage($messageInfo[Constants::$chatroomSentId]),
                 Constants::$messages,
-                true
             );
 
             $affectedRows = $stmt->affected_rows > 0;
@@ -775,6 +806,21 @@
             );
             $this->finishTransactionOnCond($updateSuccess);
             return $updateSuccess;
+        }
+
+        public function isChatroomMessageNotSolelyImage(int $messageId) {
+            $results = $this->executeSingleIdParamStatement($messageId,
+                "SELECT message, chatroom_sent_id FROM messages WHERE id = ?")->get_result();
+
+            if($results->num_rows > 0 && ($row = $results->fetch_assoc())) {
+                $supposedMessageImageUrl = ImageUtils::getPublicContentDownloadUrl(
+                    ImageUtils::getBucketLocationForChatroomMessage($row[Constants::$chatroomSentId]), $messageId);
+                if(strcmp($row[Constants::$message], $supposedMessageImageUrl) == 0) return false;
+                else return strstr($row[Constants::$message], $supposedMessageImageUrl) ? $supposedMessageImageUrl : true;
+                    // check if message with image contained or just pure message
+            }
+
+            return null;
         }
 
         public function getChatroomEvent(int $userId, int $eventId) {
@@ -866,7 +912,7 @@
         public function createChatroomEvent(int $ownerId, Event $event, string $authToken) {
             $this->connection->begin_transaction();
 
-            if(!($chatroomId = $this->getOwnerChatroomId($ownerId))) {
+            if(!in_array($event->getChatroomId(), $this->getOwnerChatroomIds($ownerId))) {
                 $this->connection->rollback();
                 return false;
             }
@@ -882,6 +928,7 @@
             $hasImage = $event->getHasImage();
             $latitude = $event->getLat();
             $longitude = $event->getLong();
+            $chatroomId = $event->getChatroomId();
 
             $stmt->bind_param("isssiddi", $id, $name, $description,
                 $date, $hasImage, $latitude, $longitude, $chatroomId);
@@ -898,7 +945,6 @@
             $event->setStartDate($this->executeSingleIdParamStatement($event->getId(),
                 "SELECT start_date FROM events WHERE id = ?"
                 )->get_result()->fetch_assoc()[Constants::$startDate]);
-            $event->setChatroomId($chatroomId);
 
             $this->forwardMessageToSocketServerOnCond($eventCreateSuccess,
                 $chatroomId,
@@ -914,7 +960,8 @@
         public function deleteChatroomEvent(int $ownerId, int $eventId, string $authToken) {
             $this->connection->begin_transaction();
 
-            if(!($chatroomId = $this->getOwnerChatroomId($ownerId))) {
+            if(!($chatroomId = $this->getEventChatroomId($eventId)) ||
+                    !(in_array($chatroomId, $this->getOwnerChatroomIds($ownerId)))) {
                 $this->connection->rollback();
                 return false;
             }
@@ -945,10 +992,10 @@
             return $deleteSuccess ? $deleteSuccess : null;
         }
 
-        public function deleteOldChatroomEvents(int $ownerId, string $authToken) {
+        public function deleteOldChatroomEvents(int $ownerId, int $chatroomId, string $authToken) {
             $this->connection->begin_transaction();
 
-            if(!($chatroomId = $this->getOwnerChatroomId($ownerId))) {
+            if(!in_array($chatroomId, $this->getOwnerChatroomIds($ownerId))) {
                 $this->connection->rollback();
                 return false;
             }
@@ -1099,25 +1146,34 @@
         }
 
         // should be always called in transaction context for CRUD methods, otherwise not
-        function getOwnerChatroomId(int $userId) {
+        function getOwnerChatroomIds(int $userId) {
             $result = $this->executeSingleIdParamStatement($userId, "SELECT chrms.id FROM chatrooms chrms
                 INNER JOIN user_chatrooms us_chrms ON chrms.owner_id = us_chrms.user_id AND chrms.id = us_chrms.chatroom_id 
                     AND us_chrms.user_id = ?")->get_result();
 
-            return $this->getOneColumnValueFromSingleRow($result, Constants::$id);
+            if($result && ($rows = mysqli_fetch_all($result, MYSQLI_ASSOC)) != null) {
+                return array_filter(array_map(function($row) {
+                    return array_key_exists(Constants::$id, $row) ?
+                        $row[Constants::$id] : false;
+                }, $rows)) ?: array();
+            }
+            return array();
         }
 
         function getEventChatroomIdByOwnerIdAndEvent(int $ownerId, Event $event) {
-            if(!($chatroomId = $this->getOwnerChatroomId($ownerId)) ||
-                ($chatroomId !=
-                    $this->getOneColumnValueFromSingleRow(
-                        $this->executeSingleIdParamStatement($event->getId(), "SELECT chatroom_id FROM events WHERE id = ?")->get_result(),
-                        Constants::$chatroomId
-                    ))
-            ) {
+            $chatroomId = $this->getEventChatroomId($event->getId());
+
+            if(!in_array($chatroomId, $this->getOwnerChatroomIds($ownerId))) {
                 return false;
             }
+
             return $chatroomId;
+        }
+
+        private function getEventChatroomId(int $eventId) {
+            $result = $this->executeSingleIdParamStatement($eventId, "SELECT chatroom_id FROM events WHERE id = ?")
+                ->get_result();
+            return $this->getOneColumnValueFromSingleRow($result, Constants::$chatroomId);
         }
 
         private function getMessageOwnerIdAndChatroomId(int $messageId) {

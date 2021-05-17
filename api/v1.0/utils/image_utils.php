@@ -1,57 +1,86 @@
 <?php
-    class ImageUtils {
-        public static function uploadImageToPath(string $title, string $path,
+
+use Google\Cloud\Core\Exception\NotFoundException;
+use Google\Cloud\Storage\StorageObject;
+use Kreait\Firebase\Factory;
+use Kreait\Firebase\Storage;
+
+class ImageUtils {
+        private static Storage $storage;
+
+        public static string $defaultBucketName = "hobbyfi.appspot.com";
+
+        public function __construct() {
+            echo __CLASS__ . " can be initialized only once!";
+        }
+
+        private static function getStorage() {
+            if (!isset(self::$storage)) {
+                self::$storage = (new Factory)->withServiceAccount(
+                    array_key_exists('hobbyfi_firebase_adminsdk_service_acc', $_ENV) ?
+                            $_ENV['hobbyfi_firebase_adminsdk_service_acc'] :
+                       (__DIR__ . '/../keys/hobbyfi-firebase-adminsdk-o1f83-e1d558ffae.json')
+                )->createStorage();
+            }
+
+            return self::$storage;
+        }
+
+        public static function uploadImageToPath(string $title, string $bucketPath,
                                                  string $base64Image, string $modelType, bool $modifyModel = true) {
             require "../init.php";
             /* @var Database $db */
 
-            $decoded = base64_decode($base64Image);
-            if($decoded == false || ($modelType != Constants::$chatrooms && $modelType != Constants::$users
-                    && $modelType != Constants::$events && $modelType != Constants::$messages)) {
+            if($modelType != Constants::$chatrooms && $modelType != Constants::$users
+                    && $modelType != Constants::$events && $modelType != Constants::$messages) {
                 return false;
             }
 
-            $dir = __DIR__ . "/../../../uploads/$path/";
-            if(!is_dir($dir)){
-                // dir doesn't exist; create it
-                mkdir($dir, 0755, true);
+            $response = ImageUtils::uploadObject($bucketPath, $title, $base64Image);
+            $success = true;
+            if($modifyModel) {
+                $success = $db->setModelHasImage($title, true, $modelType);
             }
 
-            $upload_path = $dir . "$title.jpg";
-
-            $success = file_put_contents($upload_path, $decoded); // write decoded image to the filesystem (1.jpg, 2.jpg, etc.)
-
-            return ($modifyModel ? $db->setModelHasImage($title, true, $modelType) : true) && $success != false;
+            return $response && $success ? $response : false;
         }
 
-        public static function deleteImageFromPath(int $title, string $path, string $modelType,
-                                                    bool $isFile = false, bool $modifyModel = false) {
+        public static function deleteImageFromPath(int $title, string $dir, string $modelType, bool $deleteFolder = false,
+                                                   bool $modifyModel = false) {
             require "../init.php";
             /* @var Database $db */
-            $dir = __DIR__ . ($isFile ? "/../../../uploads/$path.jpg" : "/../../../uploads/$path/");
-            
-            if((!$isFile && !is_dir($dir)) || ($modelType != Constants::$chatrooms && $modelType != Constants::$users &&
+
+            if($modelType != Constants::$chatrooms && $modelType != Constants::$users &&
                         $modelType != Constants::$messages
-                    && $modelType != Constants::$events)) {
+                    && $modelType != Constants::$events) {
                 return false;
             }
 
-            if(file_exists($dir)) {
-                if($isFile) {
-                    $deletionSuccess = unlink($dir); // unlink file from the filesystem (1.jpg, 2.jpg, etc.)
+            if(!($bucket = ImageUtils::getDefaultBucket())) {
+                return null;
+            }
+
+            try {
+                if($deleteFolder) {
+                    $objects = $bucket->objects(["prefix" => $dir]); // flat file system => returns all objects in this dir folder
+                    // TODO: Should be in a separate thread but Thread API sucks in terms of importing & Windows support; may work on hosted image
+                    foreach ($objects as $object) {
+                        $object->delete();
+                    }
+                } else if(($object = $bucket->object($dir . $title . ".jpg"))) {
+                    $object->delete();
                 } else {
-                    rrmdir($dir);
-                    $deletionSuccess = true;
+                    return false;
                 }
-            } else {
-                return false;
+            } catch(NotFoundException $ex) {
+                return null;
             }
 
             if($modifyModel) {
-                $deletionSuccess |= $db->setModelHasImage($title, false, $modelType);
+                return $db->setModelHasImage($title, false, $modelType);
             }
 
-            return $deletionSuccess;
+            return true;
         }
 
         public static function uploadImageWithResponseReturn(int $id, string $dir, string $modelTableName) {
@@ -59,22 +88,97 @@
                     $_POST[Constants::$image], $modelTableName)) {
                 return Constants::$imageUploadFailed;
             }
-            return Constants::$ok;
+            return ImageUtils::getPublicContentDownloadUrl($dir, $id);
+        }
+
+        public static function getBucketLocationForChatroom(?int $chatroomId) {
+            return $chatroomId != null ? "chatroom_" . $chatroomId .  "/" : null;
+        }
+
+        public static function getBucketLocationForChatroomMessage(?int $chatroomId) {
+            return $chatroomId != null ? "chatroom_" . $chatroomId . "/messages/" : null;
+        }
+
+        public static function getBucketLocationForChatroomEvent() {
+            return "events/";
+        }
+        
+        public static function getBucketLocationForUser() {
+            return "users/";
+        }
+
+        private static function uploadObject(string $dir, string $title, $data) {
+            if(!($bucket = ImageUtils::getDefaultBucket())) {
+                return null;
+            }
+
+            try {
+                // fopen('data://text/plain;base64,' . $data,'r')
+                $decoded = base64_decode($data);
+                return $bucket->upload($decoded, [
+                    'name' => $dir . $title . ".jpg",
+                    'metadata' => [
+                        'metadata' => [
+                            'firebaseStorageDownloadTokens' => uniqid(),
+                        ]
+                    ]
+                ]);
+            } catch(InvalidArgumentException $e) {
+                return false;
+            } catch(\Google\Cloud\Core\Exception\BadRequestException $e) {
+                return null;
+            }
+        }
+
+        private static function getDefaultBucket() {
+            $client = ImageUtils::getStorage()->getStorageClient();
+            $bucket = $client->bucket(ImageUtils::$defaultBucketName);
+
+            if(!$bucket->exists()) {
+                try {
+                    return $client->createBucket(ImageUtils::$defaultBucketName);
+                } catch (\Google\Cloud\Core\Exception\GoogleException $e) {
+                    return null;
+                }
+            }
+            return $bucket;
+        }
+        
+        public static function getObjectSignedDownloadUrl(string $dir, ?string $title) {
+            try {
+                if($title == null || !($bucket = ImageUtils::getDefaultBucket()) ||
+                    !($object = $bucket->object($dir . $title . ".jpg")) || !$object->exists()) {
+                    return null;
+                }
+            } catch(NotFoundException $ex) {
+                return null;
+            }
+
+            // FIXME: Future security fix w/ Firebase Auth
+            return $object->signedUrl(new \Google\Cloud\Core\Timestamp(new DateTime('+1 week')), [
+                'predefinedAcl' => 'publicRead',
+                'version' => 'v4'
+            ]);
+        }
+
+        // TODO: Future interoperability of such a URL w/ Firebase Storage Security Rules
+        public static function getPublicContentDownloadUrl(string $dir, string $title) {
+            return "https://firebasestorage.googleapis.com/v0/b/" . ImageUtils::$defaultBucketName . "/o/" .
+                urlencode($dir . $title . ".jpg") . "?alt=media";
         }
     }
 
-    function rrmdir($dir) {
-        if (is_dir($dir)) {
-            $objects = scandir($dir);
-            foreach ($objects as $object) {
-                if ($object != "." && $object != "..") {
-                    if (filetype($dir."/".$object) == "dir")
-                        rrmdir($dir."/".$object);
-                    else unlink($dir."/".$object);
-                }
-            }
-            reset($objects);
-            rmdir($dir);
-        }
-    }
+//    class DeleteObjectsThread extends Thread {
+//        private \Google\Cloud\Storage\ObjectIterator $objects;
+//
+//        public function __construct(\Google\Cloud\Storage\ObjectIterator $objects) {
+//            $this->objects = $objects;
+//        }
+//
+//        public function run() {
+//            foreach($this->objects as $object) {
+//                $object->delete();
+//            }
+//        }
+//    }
 ?>

@@ -10,8 +10,6 @@
       <excludeFolder url="file://$MODULE_DIR$/vendor/facebook/graph-sdk" />
       <excludeFolder url="file://$MODULE_DIR$/vendor/fig/http-message-util" />
       <excludeFolder url="file://$MODULE_DIR$/vendor/firebase/php-jwt" />
-      <excludeFolder url="file://$MODULE_DIR$/vendor/giggsey/libphonenumber-for-php" />
-      <excludeFolder url="file://$MODULE_DIR$/vendor/giggsey/locale" />
       <excludeFolder url="file://$MODULE_DIR$/vendor/google/apiclient-services" />
       <excludeFolder url="file://$MODULE_DIR$/vendor/google/auth" />
       <excludeFolder url="file://$MODULE_DIR$/vendor/google/cloud-core" />

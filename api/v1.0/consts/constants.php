@@ -65,6 +65,7 @@
         public static string $authenticationErrorInvalidCredentials = "Invalid credentials";
         public static string $imageUploadFailed = "Image upload failed";
         public static string $invalidDataError = "Invalid data format! Some of the fields sent are impossible to coexist in a single request";
+        public static string $invalidImageEncodingError = "Invalid encoding for form field `image`! Images MUST be in Base64 format";
         public static string $invalidTypeError = "Invalid type sent for image uploading. Allowed are 'chatrooms', 'chatroom_edit', 'users', 'user_edit', 'events', and 'event_edit'";
         public static string $deviceTokenUploadSuccess = "Device token upload for user with this ID succeeded";
         public static string $deviceTokenUploadFail = "Device token upload for user with this ID failed";
@@ -72,11 +73,10 @@
         public static string $deviceTokensDeleteFail = "Failed device tokens deletion failed";
         public static string $deviceTokenDeleteSuccess = "Device token deletion for user with this ID succeeded";
         public static string $deviceTokenDeleteFail = "Device token deletion for user with this ID failed";
+        public static string $disallowedModificationOfImageMessages = "Purely image messages CANNOT be modified";
 
         public static string $userIdJwtKey = "userId";
 
-        public static string $userProfileImagesDir = "user_pfps";
-        public static string $chatroomImagesDir = "chatroom_imgs_";
         public static string $data = "data";
         public static string $data_list = "data_list";
         public static string $locations = "locations";
@@ -93,28 +93,6 @@
         public static string $deviceToken = "device_token";
         public static string $deviceTokens = "device_tokens";
         public static string $invalidFCMToken = "Invalid FCM token sent";
-
-        public static function userProfileImagesDir(int $userId) {
-          return Constants::$userProfileImagesDir . "/" . $userId . ".jpg";
-        }
-
-        public static function chatroomImagesDir(int $chatroomId) {
-            return Constants::$chatroomImagesDir . $chatroomId;
-        }
-
-        // TODO: Have different dir schema for messages
-        public static function chatroomMessageImagesDir(int $chatroomId) {
-            return Constants::chatroomImagesDir($chatroomId) . '/messages';
-        }
-
-        public static function chatroomEventImagesDir(int $eventId) {
-            return '/events_imgs_' . $eventId;
-        }
-
-        public static function getPhotoUrlForDir(string $dir) {
-            return Constants::getServerPath() . '/uploads/' . $dir;
-        }
-        // would've extracted these into a generator function if PHP hadn't been so goddamn fucking stupid
 
         public static function getServerPath() {
             return (array_key_exists('HTTPS', $_SERVER) ? 'https://' : 'http://') . $_SERVER['SERVER_NAME'] . ':'
@@ -142,7 +120,7 @@
         public static string $chatroomReadNoPermissions = "Insufficient permissions to read any chatrooms joined. Make sure user with this id has chatrooms joined";
         public static string $chatroomNotDeleted = "Chatroom not deleted. User with this id may not be the owner of their chatroom";
 
-        public static string $userAlreadyInChatroom = "User already is an owner or part of a chatroom";
+        public static string $chatroomMaxSize = "Chatroom ownership amount (100) exceeded!";
         public static string $messageNotCreated = "Message not created. Bad input";
         public static string $messageNoChatroom = "Message not created. User with this id is not in the chatroom attempted to create the message in";
         public static string $messageNotUpdated = "Message not updated. User with this id may not have the right to update the message or the message may be a timeline";

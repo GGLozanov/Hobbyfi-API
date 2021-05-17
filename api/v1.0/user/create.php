@@ -4,7 +4,7 @@
 
     require "../init.php"; // set up dependency for this script to init php script
     require "../config/core.php";
-    require "../utils/image_utils.php";
+    require_once("../utils/image_utils.php");
     /** @var $db */
 
     // allow facebook access token to be sent in authorization header and handled here to see whether
@@ -27,7 +27,7 @@
         $user->setId($userId);
     }
 
-    if($db->userExistsOrPasswordTaken($user->getName(), $password)) {
+    if($db->userExistsOrPasswordTaken($user->getName(), $user->getEmail())) {
         $status = Constants::$userExists; // user w/ same username or password exists
         $code = 409; // 409 - conflict; resource already exists
     } else {

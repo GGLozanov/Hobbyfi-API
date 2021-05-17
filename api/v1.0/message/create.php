@@ -1,6 +1,6 @@
 <?php
     require "../init.php";
-    require "../utils/image_utils.php";
+    require_once("../utils/image_utils.php");
 
     header("Access-Control-Allow-Origin: *");
     header("Access-Control-Allow-Methods: POST");
@@ -14,9 +14,10 @@
     if($ownerId = APIUtils::validateAuthorisedRequest($token)) {
         $message = ConverterUtils::getMessageCreate($ownerId, $chatroomId);
 
-        if($message = (array_key_exists(Constants::$message, $_POST) ?
-                $db->createChatroomMessage($message, $token)
-                    : $db->createChatroomImageMessage($message, $token))) {
+        if($message = (array_key_exists(Constants::$image, $_POST) ?
+                 $db->createChatroomImageMessage($message,
+                     ConverterUtils::getFieldFromRequestBodyWithBase64CheckOrDie(Constants::$image), $token)
+                    : $db->createChatroomMessage($message, $token))) {
             APIUtils::displayAPIResult(array(Constants::$response=>Constants::$ok,
                 Constants::$id=>$message->getId(), Constants::$createTime=>$message->getCreateTime()));
         } else {

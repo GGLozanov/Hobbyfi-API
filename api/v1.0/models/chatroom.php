@@ -4,6 +4,7 @@
     require_once("expanded_model.php");
     require_once ("tag_model.php");
     require_once("image_model.php");
+    require_once("../utils/image_utils.php");
 
     class Chatroom extends Model implements JsonSerializable {
         use \ExpandedModel;
@@ -72,9 +73,8 @@
                 Constants::$id=>$this->id,
                 Constants::$name=>$this->name,
                 Constants::$description=>$this->description,
-                Constants::$photoUrl=>$this->hasImage ?
-                    Constants::getServerPath() . '/uploads/' . Constants::chatroomImagesDir($this->id)
-                        . "/" . $this->id . ".jpg"
+                Constants::$photoUrl=>$this->hasImage ? ImageUtils::getPublicContentDownloadUrl(
+                        ImageUtils::getBucketLocationForChatroom($this->id), $this->id)
                     : null,
                 Constants::$ownerId=>$this->ownerId,
                 Constants::$eventIds=>$this->eventIds,
