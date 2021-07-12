@@ -21,9 +21,9 @@
             $this->user_name = ConverterUtils::simpleFileGetContentsWithEnvVarFallbackAndDieHandle(
                 __DIR__ . "/../keys/db_username.txt",
                 "db_username");
-            $this->user_password = file_exists("../keys/db_password.txt") ? (ConverterUtils::simpleFileGetContentsWithEnvVarFallback(
+            $this->user_password = ConverterUtils::simpleFileGetContentsWithEnvVarFallback(
                 __DIR__ . "/../keys/db_password.txt",
-                "db_password") ?: "") : "";
+                "db_password") ?: "";
             $this->db_name =  ConverterUtils::simpleFileGetContentsWithEnvVarFallbackAndDieHandle(
                 __DIR__ . "/../keys/db_name.txt",
                 "db_name");
