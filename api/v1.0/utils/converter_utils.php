@@ -167,7 +167,7 @@
         }
 
         public static function simpleFileGetContentsWithEnvVarFallbackAndDieHandle(string $fileDir, string $envVarName) {
-            $result = file_get_contents($fileDir);
+            $result = @file_get_contents($fileDir);
 
             if(!$result) {
                 if(!array_key_exists($envVarName, $_ENV)) {
@@ -179,7 +179,7 @@
         }
 
         public static function simpleFileGetContentsWithEnvVarFallback(string $fileDir, string $envVarName) {
-            $result = file_get_contents($fileDir);
+            $result = @file_get_contents($fileDir);
 
             if(!$result) {
                 if(!array_key_exists($envVarName, $_ENV)) {
