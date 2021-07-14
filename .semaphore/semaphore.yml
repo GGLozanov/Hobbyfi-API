@@ -11,7 +11,6 @@ blocks:
         - name: Composer
           commands:
             - checkout
-            - cd ~/usr/src/Hobbyfi-API
             - cache restore
             - composer install
             - cache store
