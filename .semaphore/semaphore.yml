@@ -13,7 +13,7 @@ blocks:
             - checkout
             - sem-version php 7.4
             - sudo apt-get install autoconf zlib1g-dev php-dev php-pear
-            - sudo apt update && sudo apt install gcc-9
+            - sudo apt update && sudo apt install gcc
             - sudo pecl install grpc
             - echo "extension=grpc.so" > /etc/php7.4/cli/php.ini
             - sudo pecl install protobuf
