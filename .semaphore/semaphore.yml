@@ -17,6 +17,14 @@ blocks:
       secrets:
         - name: dockerSecrets
         - name: projectHobbyfiAPISecrets
+      prologue:
+        commands:
+          - sem-version php 7.4
+          - sudo apt-get install autoconf zlib1g-dev php-dev php-pear
+          - sudo pecl install grpc
+          - echo "extension=grpc.so" > /etc/php7.4/cli/php.ini
+          - sudo pecl install protobuf
+          - echo "extension=protobuf.so" > /etc/php7.4/cli/php.ini
 promotions:
   - name: Deployment
     pipeline_file: pipeline_2.yml
