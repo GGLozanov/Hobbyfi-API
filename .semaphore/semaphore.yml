@@ -1,0 +1,25 @@
+version: v1.0
+name: Pre-Deployment
+agent:
+  machine:
+    type: e1-standard-2
+    os_image: ubuntu1804
+blocks:
+  - name: Install Dependencies
+    task:
+      jobs:
+        - name: Composer
+          commands:
+            - checkout
+            - cd ~/usr/src/Hobbyfi-API
+            - cache restore
+            - composer install
+            - cache store
+      secrets:
+        - name: dockerSecrets
+        - name: projectHobbyfiAPISecrets
+promotions:
+  - name: Deployment
+    pipeline_file: pipeline_2.yml
+    auto_promote:
+      when: branch = 'master' OR branch =~ '^release\/'

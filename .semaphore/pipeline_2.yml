@@ -1,0 +1,37 @@
+version: v1.0
+name: Deployment
+agent:
+  machine:
+    type: e1-standard-2
+    os_image: ubuntu1804
+skip:
+  - when: branch != 'master' AND branch !~ '^release\/'
+blocks:
+  - name: Docker Build
+    task:
+      jobs:
+        - name: Build
+          commands:
+            - 'echo "${DOCKER_PASSWORD}" | docker login -u "${DOCKER_USERNAME}" --password-stdin'
+            - docker-compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+            - docker tag hobbyfi-api_web_1 web
+      secrets:
+        - name: dockerSecrets
+        - name: projectHobbyfiAPISecrets
+  - name: Heroku Deploy
+    task:
+      secrets:
+        - name: dockerSecrets
+        - name: projectHobbyfiAPISecrets
+        - name: herokuSecrets
+      jobs:
+        - name: Deploy
+          commands:
+            - 'heroku container:login'
+            - 'heroku container:push web --app=$HEROKU_APP'
+            - 'heroku labs:enable --app=$HEROKU_APP runtime-new-layer-extract'
+            - 'heroku stack:set container --app $HEROKU_APP'
+            - 'heroku container:release web --app $HEROKU_APP'
+      env_vars:
+        - name: HEROKU_APP
+          value: hobbyfi-api
