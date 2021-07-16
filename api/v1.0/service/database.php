@@ -15,9 +15,9 @@
         private SocketServerForwarder $forwarder;
 
         function __construct() {
-            $this->host = ConverterUtils::simpleFileGetContentsWithEnvVarFallbackAndDieHandle(
+            $this->host = ConverterUtils::simpleFileGetContentsWithEnvVarFallback(
                 __DIR__ . "/../keys/db_host.txt",
-                "db_host");
+                "db_host") ?: gethostbyname(gethostname());
             $this->user_name = ConverterUtils::simpleFileGetContentsWithEnvVarFallbackAndDieHandle(
                 __DIR__ . "/../keys/db_username.txt",
                 "db_username");
